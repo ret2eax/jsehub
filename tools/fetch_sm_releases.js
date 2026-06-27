@@ -20,6 +20,25 @@ async function fetchJSON(url) {
   return r.json();
 }
 
+const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
+
+// The mozilla-firefox/firefox git mirror lags mozilla-central slightly, so the freshest
+// (Nightly) git_commit may not be mirrored yet. Only keep a git SHA we can confirm exists,
+// so the resolver never renders a 404 git link (the hg link always resolves).
+async function gitMirrored(sha) {
+  if (!sha) return false;
+  try {
+    const r = await fetch(`https://api.github.com/repos/mozilla-firefox/firefox/commits/${sha}`, {
+      headers: {
+        'User-Agent': 'js-engine-hub',
+        'Accept': 'application/vnd.github+json',
+        ...(GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {}),
+      },
+    });
+    return r.status === 200;
+  } catch { return false; }
+}
+
 async function fetchTip(channel) {
   try {
     const j = await fetchJSON(HG_TIP[channel]);
@@ -64,6 +83,11 @@ async function main() {
       fetchTip('Beta'),
       fetchTip('Stable'),
     ]);
+
+    // Drop any git SHA not yet present in the mirror (keeps git links from 404ing).
+    await Promise.all([nightlyTip, betaTip, stableTip].map(async tip => {
+      if (tip.git_commit && !(await gitMirrored(tip.git_commit))) tip.git_commit = null;
+    }));
 
     const betaDate   = releaseDate(pdReleases, beta);
     const stableDate = releaseDate(pdReleases, stable);

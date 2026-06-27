@@ -410,7 +410,7 @@ function ChromeResolver({ releases, openModal }) {
 
 function JscResolver({ data, openModal }) {
   const [q, setQ] = useState('');
-  const hint = 'Version (18.4), Milestone (STP 198), JSC commit hash, r298000';
+  const hint = 'Version (26.5), stable/beta, STP 246, JSC commit hash, r298000';
 
   const stp     = data.resolve?.stp || [];
   const idx     = data.resolve?.commitIndex || {};
@@ -476,11 +476,10 @@ function JscResolver({ data, openModal }) {
     const s = q.trim();
     if (!s) return;
 
-    // Safari version number e.g. "18.4" or "26.4"
+    // Safari version number e.g. "18.4" or "26.4" - match any cached release (Stable/Beta/STP)
     if (/^\d+\.\d+(?:\.\d+)?$/.test(s)) {
-      const row = releaseByChannel['stable'];
-      const match = row?.version === s;
-      if (!row || !match) return openModal('Version not found', <div className="muted">Only the latest Stable is available. Try <span className="mono">stable</span> or <span className="mono">STP N</span>.</div>);
+      const row = releases.find(r => r.version === s);
+      if (!row) return openModal('Version not found', <div className="muted">No matching Safari release. Try the current Stable/Beta version, <span className="mono">beta</span>, or <span className="mono">STP N</span>.</div>);
       return show(`Safari ${s}`, {
         version:       row.version,
         channel:       row.channel,
@@ -491,8 +490,8 @@ function JscResolver({ data, openModal }) {
       });
     }
 
-    // Channel: "stable" or "stp"
-    if (/^(stable|stp)$/i.test(s)) {
+    // Channel: "stable", "beta", or "stp"
+    if (/^(stable|beta|stp)$/i.test(s)) {
       const key = s.toLowerCase();
       const row = releaseByChannel[key];
       if (!row) return openModal('Not found', <div className="muted">No matching Safari/JSC release found.</div>);
@@ -577,13 +576,13 @@ function JscResolver({ data, openModal }) {
       ));
     }
 
-    openModal('How to use', <div className="muted">Try: <span className="mono">26.4</span>, <span className="mono">stable</span>, <span className="mono">STP 241</span>, <span className="mono">r298000</span>, or a JSC commit SHA/prefix.</div>);
+    openModal('How to use', <div className="muted">Try: <span className="mono">26.5</span>, <span className="mono">stable</span>, <span className="mono">beta</span>, <span className="mono">STP 246</span>, <span className="mono">r298000</span>, or a JSC commit SHA/prefix.</div>);
   }
 
   return (
     <>
       <p className="resolver-hint">
-        &gt;&gt; resolves Safari version, channel (stable/stp), STP number, JSC commit hash/prefix, or SVN revision to release metadata or commit details.
+        &gt;&gt; resolves Safari version, channel (stable/beta/stp), STP number, JSC commit hash/prefix, or SVN revision to release metadata or commit details.
       </p>
       <div className="resolver-input">
         <input className="input" placeholder={hint} value={q} onChange={(e)=>setQ(e.target.value)} />
@@ -676,7 +675,7 @@ function SmResolver({ data, openModal }) {
     const s = q.trim();
     if (!s) return;
 
-    if (/^\d+\.\d+(?:\.\d+)?$/.test(s)) {
+    if (/^\d+\.\d+(?:\.\d+|[ab]\d+)?$/.test(s)) {
       const v = s;
       const channel = (v === versions.stable) ? 'Stable' : (v === versions.beta) ? 'Beta' : (v === versions.nightly) ? 'Nightly' : null;
       if (!channel) return openModal('Version not found', <div className="muted">No matching Firefox release found. Try the current <span className="mono">nightly</span>, <span className="mono">beta</span>, or <span className="mono">stable</span> version.</div>);
