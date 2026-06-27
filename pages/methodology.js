@@ -46,7 +46,7 @@ export default function Methodology() {
         <title>Methodology · JS Engine Hub</title>
         <meta name="description" content="How JS Engine Hub derives its in-the-wild patch maps and confidence tiers across V8, SpiderMonkey, and JavaScriptCore." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://jsehub.dev/methodology" />
+        <meta name="robots" content="noindex, follow" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
       <GlobalStyles/>

@@ -82,7 +82,9 @@ function compareUrl(unpatched, patched, project) {
   if (p === 'v8/v8')                   return `https://github.com/v8/v8/compare/${unpatched}...${patched}`;
   if (p === 'webkit/webkit')           return `https://github.com/WebKit/WebKit/compare/${unpatched}...${patched}`;
   if (p === 'mozilla-firefox/firefox') return `https://github.com/mozilla-firefox/firefox/compare/${unpatched}...${patched}`;
-  if (p === 'chromium/src')            return `https://chromium.googlesource.com/chromium/src/+log/${unpatched}..${patched}`;
+  // Gitiles has no range-diff page; the patched commit's own diff (against its parent =
+  // the vulnerable commit) is exactly the fix. "<sha>^!" is Gitiles' single-commit diff view.
+  if (p === 'chromium/src')            return `https://chromium.googlesource.com/chromium/src/+/${patched}%5E%21`;
   return null;
 }
 
@@ -154,6 +156,41 @@ function FreshnessBadge({ when }) {
   if (isNaN(d)) return null;
   const day = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   return <span className="fresh" title={`Data as of ${d.toISOString()}`}>as of {day}</span>;
+}
+
+// Next scheduled data refresh (CI runs ~07:00 and 21:00 UTC).
+function nextRefreshUTC(now) {
+  const out = [];
+  for (const off of [0, 1]) for (const h of [7, 21]) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + off, h, 0, 0));
+    if (d.getTime() > now.getTime()) out.push(d.getTime());
+  }
+  return Math.min(...out);
+}
+function fmtDur(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60); if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60); if (h < 24) return `${h}h ${m % 60}m`;
+  return `${Math.floor(h / 24)}d ${h % 24}h`;
+}
+// Hero status line: schedule + live "last refresh" and "next in" countdown.
+// Renders schedule-only on the server/first paint (no `now`) to avoid hydration mismatch.
+function UpdateStamp({ builtAt }) {
+  const [now, setNow] = useState(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  let live = '';
+  if (now != null) {
+    const built = builtAt ? new Date(builtAt).getTime() : null;
+    const next = nextRefreshUTC(new Date(now));
+    const ago = built != null && !isNaN(built) ? `${fmtDur(now - built)} AGO` : '—';
+    live = ` · LAST REFRESH ${ago} · NEXT IN ${fmtDur(next - now)}`;
+  }
+  return <span className="cmt">// UPDATES 0700 &amp; 2100 ZULU [UTC]{live}</span>;
 }
 
 // Full-detail view for a single CVE (opened from any ITW table; deep-linkable via #cve=).
@@ -236,6 +273,7 @@ export async function getStaticProps() {
 
   return {
     props: {
+      builtAt: new Date().toISOString(),   // build time ~= when data was fetched in CI
       chrome: { releases, v8, builds, cves, blog, gcls },
       jsc:    { releases: jsc_releases, commits: jsc_commits, cves: jsc_cves, blog: jsc_blog, gcls: jsc_gcls, resolve: jsc_resolve },
       sm:     { releases: sm_releases,  commits: sm_commits,  builds: sm_builds,  cves: sm_cves,  blog: sm_blog,  gcls: sm_gcls,  resolve: sm_resolve }
@@ -295,8 +333,8 @@ function MonoCommitLink({ commit, project }) {
 function Modal({ open, onClose, title, children }) {
   if (!open) return null;
   return (
-    <div className="modal-root" role="dialog" aria-modal="true">
-      <div className="modal">
+    <div className="modal-root" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-h">
           <div className="modal-t">{title}</div>
           <button className="x" aria-label="Close" onClick={onClose}>✕</button>
@@ -1794,7 +1832,7 @@ function ReferenceSection() {
   );
 }
 
-export default function BrowserResearchHub({ chrome, jsc, sm }) {
+export default function BrowserResearchHub({ chrome, jsc, sm, builtAt }) {
   const [tab, setTab] = useState('overview');
   const [modal, setModal] = useState({ open:false, title:'', content:null });
   const openModal = (title, content) => setModal({ open:true, title, content });
@@ -1856,7 +1894,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
         </div>
         <p className="lede">A curated surgical dashboard for fuzzing and vulnerability research across modern JS engines.</p>
         <p className="update-note">
-          <span className="cmt">// UPDATES DAILY AT 0700 &amp; 2100 ZULU [UTC]</span>
+          <UpdateStamp builtAt={builtAt} />
         </p>
         <nav className="tabs" role="tablist" aria-label="Engines">
           <div className="tab-group">

@@ -37,6 +37,9 @@ jobs:
         env:
           # auto-provided by Actions; raises GitHub API limit 60/hr -> 1000+/hr
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Sanity gate: abort (and notify via the default workflow-failure email) if a fetch
+      # silently produced empty/implausible data, rather than deploying broken tables.
+      - run: pnpm run validate:data
       - run: pnpm run build
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3
