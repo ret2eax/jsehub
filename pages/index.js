@@ -872,7 +872,7 @@ function ChromeSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
-        &gt;&gt; vulnerable commits derived from patched canonical parent (via cherry pick), verify before use to avoid misleading deltas.
+        &gt;&gt; vulnerable commit is the parent of each verified fix commit; CVEs we cannot resolve confidently are left blank. Verify at the source before use.
       </p>
         <div className="tableWrap">
           <table className="table itw">
