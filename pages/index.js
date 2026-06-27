@@ -410,7 +410,7 @@ function ChromeResolver({ releases, openModal }) {
 
 function JscResolver({ data, openModal }) {
   const [q, setQ] = useState('');
-  const hint = 'Version (18.4), Milestone (STP 198), WebKit commit hash, r298000';
+  const hint = 'Version (18.4), Milestone (STP 198), JSC commit hash, r298000';
 
   const stp     = data.resolve?.stp || [];
   const idx     = data.resolve?.commitIndex || {};
@@ -556,7 +556,7 @@ function JscResolver({ data, openModal }) {
       }
       const c = findCommit(s.slice(0, 12));
       if (!c) return openModal('Commit not found', <div className="muted">No commit matches that prefix. Try a longer prefix.</div>);
-      return openModal(`WebKit ${c.full.slice(0,12)}`, (
+      return openModal(`JSC ${c.full.slice(0,12)}`, (
         <div>
           <div className="kv">
             <label>Commit</label><div className="mono">{c.full}</div>
@@ -570,13 +570,13 @@ function JscResolver({ data, openModal }) {
       ));
     }
 
-    openModal('How to use', <div className="muted">Try: <span className="mono">26.4</span>, <span className="mono">stable</span>, <span className="mono">STP 241</span>, <span className="mono">r298000</span>, or a WebKit SHA/prefix.</div>);
+    openModal('How to use', <div className="muted">Try: <span className="mono">26.4</span>, <span className="mono">stable</span>, <span className="mono">STP 241</span>, <span className="mono">r298000</span>, or a JSC commit SHA/prefix.</div>);
   }
 
   return (
     <>
       <p className="resolver-hint">
-        &gt;&gt; resolves Safari version, channel (stable/stp), STP number, WebKit commit hash/prefix, or SVN revision to release metadata or commit details.
+        &gt;&gt; resolves Safari version, channel (stable/stp), STP number, JSC commit hash/prefix, or SVN revision to release metadata or commit details.
       </p>
       <div className="resolver-input">
         <input className="input" placeholder={hint} value={q} onChange={(e)=>setQ(e.target.value)} />
@@ -588,7 +588,7 @@ function JscResolver({ data, openModal }) {
 
 function SmResolver({ data, openModal }) {
   const [q, setQ] = useState('');
-  const hint = 'Version (149.0.2), Milestone (M149), nightly/beta/stable, hg/git commit hash';
+  const hint = 'Version (149.0.2), Milestone (M149), nightly/beta/stable, SpiderMonkey commit (hg/git)';
 
   const versions = data.resolve?.versions || {};
   const idx = data.resolve?.commitIndex || {};
@@ -761,7 +761,7 @@ function SmResolver({ data, openModal }) {
   return (
     <>
       <p className="resolver-hint">
-        &gt;&gt; resolves Firefox version, release train (nightly/beta/stable), or mozilla-central changeset hash/prefix to release metadata or commit details.
+        &gt;&gt; resolves Firefox version, release train (nightly/beta/stable), or SpiderMonkey (js/src) changeset hash/prefix to release metadata or commit details.
       </p>
       <div className="resolver-input">
         <input className="input" placeholder={hint} value={q} onChange={(e)=>setQ(e.target.value)} />
