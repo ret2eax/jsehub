@@ -869,7 +869,7 @@ function ChromeSection({ data, openModal }) {
         &gt;&gt; vulnerable commits derived from patched canonical parent (via cherry pick), verify before use to avoid misleading deltas.
       </p>
         <div className="tableWrap">
-          <table className="table">
+          <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Component</th>
@@ -1041,7 +1041,7 @@ function JscSection({ data, openModal }) {
           &gt;&gt; recent ITW patch map is a work in progress for this engine.
         </p>
         <div className="tableWrap">
-          <table className="table">
+          <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
@@ -1256,7 +1256,7 @@ function SmSection({ data, openModal }) {
           &gt;&gt; recent ITW patch map is a work in progress for this engine.
         </p>
         <div className="tableWrap">
-          <table className="table">
+          <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
@@ -1407,7 +1407,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
         </div>
         <p className="lede">A curated surgical dashboard for fuzzing and vulnerability research across modern JS engines.</p>
         <p className="update-note">
-          <span className="cmt">// UPDATES TWICE DAILY AT 0700 &amp; 2100 ZULU [UTC]</span>
+          <span className="cmt">// UPDATES DAILY AT 0700 &amp; 2100 ZULU [UTC]</span>
         </p>
         <nav className="tabs" role="tablist" aria-label="Engines">
           <div className="tab-group">
@@ -1475,7 +1475,7 @@ function GlobalStyles() {
       *{box-sizing:border-box}
       a{color:var(--accent);text-decoration:none}
       a:hover{text-decoration:underline dotted}
-      .page{max-width:1280px;margin:0 auto;padding:34px 22px}
+      .page{max-width:1360px;margin:0 auto;padding:34px 22px}
 
       /* Hero */
       .hero{margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:18px}
@@ -1538,6 +1538,18 @@ function GlobalStyles() {
       .table th:nth-child(3), .table td:nth-child(3){
         width:40%;
         max-width:40%;
+      }
+
+      /* ITW tables: CVE / date / patched / vulnerable stay on one line; Description wraps */
+      .table.itw th:nth-child(1), .table.itw td:nth-child(1),
+      .table.itw th:nth-child(4), .table.itw td:nth-child(4),
+      .table.itw th:nth-child(6), .table.itw td:nth-child(6),
+      .table.itw th:nth-child(7), .table.itw td:nth-child(7){
+        white-space:nowrap;
+      }
+      .table.itw th:nth-child(3), .table.itw td:nth-child(3){
+        width:32%;
+        max-width:32%;
       }
 
       .list{list-style:none;margin:0;padding:0}
