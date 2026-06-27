@@ -166,6 +166,7 @@ async function commitMeta(sha) {
     parent: c?.parents?.[0]?.sha || null,
     message: c?.commit?.message || '',
     files: (c?.files || []).map(f => f.filename),
+    date: c?.commit?.committer?.date || c?.commit?.author?.date || null,
   };
 }
 
@@ -197,6 +198,7 @@ async function resolveFix(bug) {
     ambiguous,
     patched_commit: fixSha,
     unpatched_commit: meta.parent,
+    patched_date: meta.date,
     subject: meta.message.split('\n')[0],
     files: meta.files.slice(0, 6),
     candidate_count: commits.length,
@@ -255,6 +257,7 @@ async function main() {
         confident,
         subject: fix.subject,
         candidate_count: fix.candidate_count,
+        patched_date: fix.patched_date || null,
         patched_commit: uiPatched || null,
         unpatched_commit: uiUnpatched || null,
         urls: {
@@ -272,6 +275,7 @@ async function main() {
       confident,
       subject: fix.subject,
       candidate_count: fix.candidate_count,
+      patched_date: fix.patched_date || null,
       patched_commit: uiPatched || null,
       unpatched_commit: uiUnpatched || null,
       files: fix.files,

@@ -199,39 +199,85 @@ async function commitParent(sha) {
   const c = await httpJSON(`${GH_API}/repos/${GIT_REPO}/commits/${sha}`, { headers: { ...GH_AUTH } });
   const parent = c?.parents?.[0]?.sha || null;
   const files = (c?.files || []).map(f => f.filename);
-  return { parent, files };
+  const date = c?.commit?.committer?.date || c?.commit?.author?.date || null;
+  return { parent, files, date };
 }
 
 const ghCommitUrl = (sha) => sha ? `https://github.com/${GIT_REPO}/commit/${sha}` : null;
 
-// Given a bug id, return the single confident fix commit + parent, or a low-confidence note.
+// A path that lives only under a test tree (no engine source changed).
+function isTestPath(f) {
+  return /(^|\/)(jit-test|tests?|testing|reftests?|crashtests?|mochitest|web-platform)\//i.test(f) ||
+         /(^|\/)[^/]*test[^/]*\.(js|html|xml|xul|txt|ini|list)$/i.test(f);
+}
+// Collapse the trailing reviewer/approval trailer ("r=…", "a=…"), "part N", and punctuation
+// so multi-part landings / uplifts of ONE fix compare equal.
+const normSubject = (s) => (s || '').toLowerCase()
+  .replace(/\s+[ar]=.*/, '')      // cut everything from the first " r=" / " a=" trailer onward
+  .replace(/part\s*\d+/g, '')
+  .replace(/[^a-z0-9]/g, '');
+
+// Given a bug id, return the confident fix commit + vulnerable parent, or a low-confidence note.
+// Strategy: drop backouts, then classify each candidate by whether it changed engine source
+// (vs test-only). A single source-touching commit -> high. Several commits that are the same
+// logical fix split across parts -> high as a range (parent of the earliest .. the latest).
+// Genuinely distinct source commits -> low (ambiguous parent withheld).
 async function resolveFix(bug) {
   const candidates = await searchFixCommits(bug);
   if (!candidates.length) return null;
 
-  const scored = candidates
-    .map(c => ({ ...c, score: scoreCommitSubject(c.subject, bug) }))
-    .sort((a, b) => b.score - a.score);
+  // Drop obvious non-fixes (backouts/reverts), unless that leaves nothing.
+  let cands = candidates.filter(c => !looksLikeNonFix(c.subject));
+  if (!cands.length) cands = candidates;
 
-  const fixLike = scored.filter(c => c.score > 0 && !looksLikeNonFix(c.subject));
+  // Enrich each candidate with files + parent + date so we can classify code vs test-only.
+  const enriched = [];
+  for (const c of cands) {
+    const meta = await commitParent(c.sha);
+    const testOnly = meta.files.length > 0 && meta.files.every(isTestPath);
+    enriched.push({ ...c, ...meta, testOnly });
+    await sleep(60);
+  }
 
-  // Exactly one substantive landing -> exact parent is the pre-fix state -> confident.
-  // Multiple substantive landings (multi-part) -> the single "vulnerable parent" is
-  // ambiguous, so withhold commits and flag low (honest, matches the V8 behavior).
-  const confident = fixLike.length === 1;
-  const chosen = fixLike[0] || scored[0];
+  const code = enriched.filter(c => !c.testOnly);
+
+  let chosen = null, unpatched = null, confident = false;
+  if (code.length === 1) {
+    chosen = code[0];
+    unpatched = chosen.parent;
+    confident = true;
+  } else if (code.length > 1) {
+    const subjects = new Set(code.map(c => normSubject(c.subject)));
+    if (subjects.size === 1) {
+      // Same logical fix landed/uplifted/relanded more than once: anchor on the earliest
+      // landing and its own parent for a clean single-commit fix/vulnerable pair.
+      const ordered = code.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      chosen = ordered[0];
+      unpatched = ordered[0].parent;
+      confident = true;
+    } else {
+      // Distinct source commits under one bug -> the single vulnerable parent is ambiguous.
+      chosen = code.map(c => ({ ...c, score: scoreCommitSubject(c.subject, bug) })).sort((a, b) => b.score - a.score)[0];
+      unpatched = chosen.parent;
+      confident = false;
+    }
+  } else {
+    // Only test commits resolved (shouldn't normally happen) -> not confident.
+    chosen = enriched[0];
+    unpatched = chosen?.parent || null;
+    confident = false;
+  }
   if (!chosen) return null;
-
-  const { parent, files } = await commitParent(chosen.sha);
 
   return {
     bug,
-    confident: confident && Boolean(parent),
+    confident: confident && Boolean(unpatched),
     patched_commit: chosen.sha,
-    unpatched_commit: parent,
+    unpatched_commit: unpatched,
+    patched_date: chosen.date,
     subject: chosen.subject,
-    candidate_count: fixLike.length || scored.length,
-    files: files.slice(0, 6),
+    candidate_count: code.length || enriched.length,
+    files: (chosen.files || []).slice(0, 6),
   };
 }
 
@@ -308,6 +354,7 @@ async function main() {
         confident,
         subject: best.subject,
         candidate_count: best.candidate_count,
+        patched_date: best.patched_date || null,
         patched_commit: uiPatched || null,
         unpatched_commit: uiUnpatched || null,
         urls: {
@@ -324,6 +371,7 @@ async function main() {
       confident,
       subject: best.subject,
       candidate_count: best.candidate_count,
+      patched_date: best.patched_date || null,
       patched_commit: uiPatched || null,
       unpatched_commit: uiUnpatched || null,
       files: best.files,
