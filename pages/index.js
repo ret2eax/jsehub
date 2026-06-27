@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { useMemo, useState } from 'react';
+import Head from 'next/head';
 
 /* ------------------ utils ------------------ */
 function formatDate(v) {
@@ -59,16 +60,13 @@ export async function getStaticProps() {
   const builds   = readJSON('data/builds.json', { asan_latest: {}, linux_release_asan_latest: null });
   const cves     = readJSON('data/cves.json', { itw_chrome_related: [] });
   const blog     = readJSON('data/chrome_releases_atom.json', { entries: [] });
-  const tree     = readJSON('data/tree_status.json', { general_state: '', message: '', date: '' });
   const gcls     = readJSON('data/v8_security_cls.json', { items: [] });
 
   // JSC
   const jsc_releases = readJSON('data/jsc_releases.json', { releases: [] });
   const jsc_commits  = readJSON('data/jsc_commits.json', { ref: 'main', commits: [] });
-  const jsc_builds   = readJSON('data/jsc_builds.json', { latest: {} });
   const jsc_cves     = readJSON('data/jsc_cves.json', { itw_related: [] });
   const jsc_blog     = readJSON('data/safari_releases.json', { entries: [] });
-  const jsc_tree     = readJSON('data/jsc_tree.json', { general_state: '', message: '', date: '' });
   const jsc_gcls     = readJSON('data/jsc_security_cls.json', { items: [] });
   const jsc_resolve  = readJSON('data/jsc_resolver.json', { stp: [], commitIndex: {} });
 
@@ -78,15 +76,14 @@ export async function getStaticProps() {
   const sm_builds   = readJSON('data/sm_builds.json', { latest: {} });
   const sm_cves     = readJSON('data/sm_cves.json', { itw_related: [] });
   const sm_blog     = readJSON('data/firefox_releases.json', { entries: [] });
-  const sm_tree     = readJSON('data/sm_tree.json', { general_state: '', message: '', date: '' });
   const sm_gcls     = readJSON('data/sm_security_cls.json', { items: [] });
   const sm_resolve  = readJSON('data/sm_resolver.json', { versions: {}, commitIndex: {} });
 
   return {
     props: {
-      chrome: { releases, v8, builds, cves, blog, tree, gcls },
-      jsc:    { releases: jsc_releases, commits: jsc_commits, builds: jsc_builds, cves: jsc_cves, blog: jsc_blog, tree: jsc_tree, gcls: jsc_gcls, resolve: jsc_resolve },
-      sm:     { releases: sm_releases,  commits: sm_commits,  builds: sm_builds,  cves: sm_cves,  blog: sm_blog,  tree: sm_tree,  gcls: sm_gcls,  resolve: sm_resolve }
+      chrome: { releases, v8, builds, cves, blog, gcls },
+      jsc:    { releases: jsc_releases, commits: jsc_commits, cves: jsc_cves, blog: jsc_blog, gcls: jsc_gcls, resolve: jsc_resolve },
+      sm:     { releases: sm_releases,  commits: sm_commits,  builds: sm_builds,  cves: sm_cves,  blog: sm_blog,  gcls: sm_gcls,  resolve: sm_resolve }
     }
   };
 }
@@ -118,6 +115,26 @@ function normalizeAsan(builds) {
   return out;
 }
 
+/* ------------------ commit link helpers ------------------ */
+function commitUrl(commit, project) {
+  if (!commit) return null;
+  const p = (project || '').toLowerCase();
+  if (p === 'v8/v8')           return `https://github.com/v8/v8/commit/${commit}`;
+  if (p === 'chromium/src')    return `https://chromium.googlesource.com/chromium/src/+/${commit}`;
+  if (p === 'webkit/webkit')   return `https://github.com/WebKit/WebKit/commit/${commit}`;
+  if (p === 'mozilla-central') return `https://hg.mozilla.org/mozilla-central/rev/${commit}`;
+  return null;
+}
+
+function MonoCommitLink({ commit, project }) {
+  if (!commit) return <span className="muted">—</span>;
+  const short = String(commit).slice(0, 12);
+  const url = commitUrl(commit, project);
+  return url
+    ? <a className="mono" href={url} target="_blank" rel="noreferrer">{short}</a>
+    : <span className="mono">{short}</span>;
+}
+
 /* ------------------ modal ------------------ */
 function Modal({ open, onClose, title, children }) {
   if (!open) return null;
@@ -132,25 +149,10 @@ function Modal({ open, onClose, title, children }) {
       </div>
       <style jsx>{`
         .modal-root{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-        .modal{
-          width:800px;
-          max-width:96vw;
-          height:500px;
-          max-height:90vh;
-          display:flex;
-          flex-direction:column;
-          border:1px solid var(--line);
-          border-radius:14px;
-          background:linear-gradient(180deg,var(--surface),var(--surface2));
-          box-shadow:0 28px 80px rgba(0,0,0,.55);
-        }
+        .modal{width:min(860px,96vw);border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--surface),var(--surface2));box-shadow:0 28px 80px rgba(0,0,0,.55);overflow:hidden}
         .modal-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
         .modal-t{font-weight:900;letter-spacing:.3px}
-        .modal-b{
-          flex:1;
-          padding:18px;
-          overflow-y:auto;
-        }
+        .modal-b{padding:18px;max-height:70vh;overflow:auto}
         .x{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);padding:7px 11px;cursor:pointer}
         .x:hover{background:#131a29}
       `}</style>
@@ -158,10 +160,73 @@ function Modal({ open, onClose, title, children }) {
   );
 }
 
+/* ------------------ shared cells ------------------ */
+/* Commit-only display: no links, just 12-char hashes */
+function MonoCommit({ commit }) {
+  if (!commit) return <span className="muted">—</span>;
+  return <span className="mono">{String(commit).slice(0, 12)}</span>;
+}
+
+/* Coalesce helpers so we always prefer commit hashes (top-level or patchmap) */
+function coalescePatched(x) {
+  const commit =
+    x.patched_commit ||
+    x.patchmap?.patched_commit ||
+    null;
+  const version = x.patched_version || null;
+  return { commit, version };
+}
+
+function coalesceUnpatched(x) {
+  const single =
+    x.unpatched_commit ||
+    x.patchmap?.unpatched_commit ||
+    null;
+
+  const commits = Array.isArray(x.unpatched_commits)
+    ? x.unpatched_commits
+    : (single ? [single] : []);
+
+  const version = x.unpatched_version || null;
+  return { commits: commits.length ? commits : null, version };
+}
+
+function PatchedCell({ patched_commit, patched_version, project }) {
+  if (patched_commit) return <MonoCommitLink commit={patched_commit} project={project} />;
+  if (patched_version) return <span className="mono">{patched_version}</span>;
+  return <span className="muted">—</span>;
+}
+
+function UnpatchedCell({ unpatched_commits, unpatched_version, project }) {
+  if (Array.isArray(unpatched_commits) && unpatched_commits.length) {
+    const firstThree = unpatched_commits.slice(0, 3);
+    return (
+      <span className="mono">
+        {firstThree.map((c, i) => {
+          const url = commitUrl(c, project);
+          const short = String(c).slice(0, 12);
+          return (
+            <span key={i}>
+              {url
+                ? <a className="mono" href={url} target="_blank" rel="noreferrer">{short}</a>
+                : short}
+              {i < firstThree.length - 1 ? ', ' : ''}
+            </span>
+          );
+        })}
+        {unpatched_commits.length > 3 ? ' …' : ''}
+      </span>
+    );
+  }
+  if (unpatched_commits) return <MonoCommitLink commit={unpatched_commits} project={project} />;
+  if (unpatched_version) return <span className="mono">{unpatched_version}</span>;
+  return <span className="muted">—</span>;
+}
+
 /* ------------------ resolvers ------------------ */
 function ChromeResolver({ releases, openModal }) {
   const [q, setQ] = useState('');
-  const hint = 'Version (127.0.x.x), Milestone (M127), Commit Position (refs/heads/main@{#123456})';
+  const hint = 'Version (127.0.x.x), Milestone (M127), Chromium/V8 commit hash, refs/heads/main@{#123456}';
 
   const byVersion = useMemo(() => {
        const m = new Map();
@@ -169,7 +234,7 @@ function ChromeResolver({ releases, openModal }) {
        for (const r of rows) {
          if (!r.version) continue;
          const prev = m.get(r.version);
-         const isLinux = (r.platform || '').toLowerCase() === 'linux';
+         const isLinux = (r.platform || '').toLowerCase() === 'linux' ? 1 : 0;
          if (!prev || ((prev.platform || '').toLowerCase() !== 'linux' && isLinux)) m.set(r.version, r);
        }
        return m;
@@ -195,6 +260,35 @@ function ChromeResolver({ releases, openModal }) {
     return best;
   }, [releases]);
 
+  const byPosition = useMemo(() => {
+    const m = new Map();
+    for (const r of (releases.releases || [])) {
+      if (r.chromium_main_branch_position == null) continue;
+      const key = String(r.chromium_main_branch_position);
+      const prev = m.get(key);
+      const isLinux = (r.platform || '').toLowerCase() === 'linux' ? 1 : 0;
+      if (!prev || ((prev.platform || '').toLowerCase() !== 'linux' && isLinux)) m.set(key, r);
+    }
+    return m;
+  }, [releases]);
+
+  const byCommit = useMemo(() => {
+    const m = new Map();
+    for (const r of (releases.releases || [])) {
+      if (r.chromium_commit) m.set(r.chromium_commit.toLowerCase(), { row: r, type: 'chromium' });
+      if (r.v8_commit) m.set(r.v8_commit.toLowerCase(), { row: r, type: 'v8' });
+    }
+    return m;
+  }, [releases]);
+
+  function findByHash(prefix) {
+    const p = prefix.toLowerCase();
+    for (const [key, val] of byCommit) {
+      if (key.startsWith(p)) return val;
+    }
+    return null;
+  }
+
   function show(title, obj) {
     openModal(title,
       <div>
@@ -219,7 +313,7 @@ function ChromeResolver({ releases, openModal }) {
 
     if (/^\d+\.\d+\.\d+\.\d+$/.test(s)) {
       const row = byVersion.get(s);
-      if (!row) return openModal('Not found', <div className="muted">No match in cache. Run <span className="mono">pnpm fetch:data</span>.</div>);
+      if (!row) return openModal('Not found', <div className="muted">No matching Chrome/V8 release found for that version.</div>);
       return show('Version → details', {
         kind: 'version', version: row.version,
         channel: row.channel, platform: row.platform, milestone: row.milestone,
@@ -244,19 +338,67 @@ function ChromeResolver({ releases, openModal }) {
     }
 
     if (/^refs\/heads\/main@\{#\d+\}$/.test(s) || /^refs\/branch-heads\/\d+x@\{#\d+\}$/.test(s)) {
-      const url = `https://crrev.org/${encodeURIComponent(s)}`;
-      return openModal('Commit position', <div>Open in crrev: <a href={url} target="_blank" rel="noreferrer">{url}</a></div>);
+      const posMatch = s.match(/@\{#(\d+)\}/);
+      const row = posMatch ? byPosition.get(posMatch[1]) : null;
+      if (row) {
+        return show('Commit position → release', {
+          kind: 'position',
+          version: row.version,
+          channel: row.channel,
+          platform: row.platform,
+          milestone: row.milestone,
+          chromium_main_branch_position: row.chromium_main_branch_position,
+          hashes: { chromium: row.chromium_commit, v8: row.v8_commit, skia: row.skia_commit, angle: row.angle_commit },
+          updated: row.updated,
+        });
+      }
+      const url = `https://crrev.org/${posMatch[1]}`;
+      return openModal('Commit position', <div><span className="muted">Not found locally. </span><a href={url} target="_blank" rel="noreferrer">Open in crrev</a></div>);
+    }
+
+    if (/^[0-9a-f]{7,40}$/i.test(s)) {
+      const hit = findByHash(s);
+      if (!hit) {
+        // Not the tip of any cached release. The commit may still be a valid
+        // intermediate Chromium/V8 commit (e.g. a CVE patch), so route to the
+        // authoritative sources instead of a dead end. Gitiles resolves
+        // abbreviated SHAs; crrev redirects to the matching commit.
+        const v8Url       = `https://chromium.googlesource.com/v8/v8/+/${s}`;
+        const chromiumUrl = `https://chromium.googlesource.com/chromium/src/+/${s}`;
+        const crrevUrl    = `https://crrev.com/${s}`;
+        return openModal('Commit not a release tip', (
+          <div>
+            <div className="muted">No cached release ships this exact commit as its tip. Inspect it directly on the source:</div>
+            <div className="kv" style={{marginTop:10}}>
+              <label>Chromium</label><div><a href={chromiumUrl} target="_blank" rel="noreferrer">{chromiumUrl}</a></div>
+              <label>V8</label><div><a href={v8Url} target="_blank" rel="noreferrer">{v8Url}</a></div>
+              <label>crrev</label><div><a href={crrevUrl} target="_blank" rel="noreferrer">{crrevUrl}</a></div>
+            </div>
+          </div>
+        ));
+      }
+      const { row, type } = hit;
+      return show(`${type === 'v8' ? 'V8' : 'Chromium'} hash → release`, {
+        kind: type,
+        version: row.version,
+        channel: row.channel,
+        platform: row.platform,
+        milestone: row.milestone,
+        chromium_main_branch_position: row.chromium_main_branch_position,
+        hashes: { chromium: row.chromium_commit, v8: row.v8_commit, skia: row.skia_commit, angle: row.angle_commit },
+        updated: row.updated,
+      });
     }
 
     openModal('How to use', <div className="muted">
-      Version: <span className="mono">127.0.0.1</span> · Milestone: <span className="mono">M127</span> · Commit pos: <span className="mono">refs/heads/main@{`{#123456}`}</span>
+      Version: <span className="mono">127.0.0.1</span> · Milestone: <span className="mono">M127</span> · Hash: <span className="mono">abc123</span> · Commit pos: <span className="mono">refs/heads/main@{`{#123456}`}</span>
     </div>);
   }
 
   return (
     <>
       <p className="resolver-hint">
-        Enter a Chrome version, milestone, or commit position to resolve it to the corresponding release details and hashes.
+        &gt;&gt; resolves version, milestone, Chromium/V8 commit hash, or refs/heads/main position to release metadata and full commit set.
       </p>
       <div className="resolver-input">
         <input className="input" placeholder={hint} value={q} onChange={(e)=>setQ(e.target.value)} />
@@ -268,10 +410,32 @@ function ChromeResolver({ releases, openModal }) {
 
 function JscResolver({ data, openModal }) {
   const [q, setQ] = useState('');
-  const hint = 'STP 198 · r298000 · WebKit SHA (prefix ok)';
-  const stp = data.resolve?.stp || [];
-  const idx = data.resolve?.commitIndex || {};
+  const hint = 'Version (18.4), Milestone (STP 198), WebKit commit hash, r298000';
+
+  const stp     = data.resolve?.stp || [];
+  const idx     = data.resolve?.commitIndex || {};
   const commits = data.commits?.commits || [];
+  const releases = data.releases?.releases || [];
+
+  const releaseByChannel = useMemo(() => {
+    const m = {};
+    for (const r of releases) if (r.channel) m[r.channel.toLowerCase()] = r;
+    return m;
+  }, [releases]);
+
+  const releaseByStp = useMemo(() => {
+    const m = {};
+    for (const r of releases) if (r.stp_number != null) m[String(r.stp_number)] = r;
+    return m;
+  }, [releases]);
+
+  const releaseCommitIndex = useMemo(() => {
+    const m = new Map();
+    for (const r of releases) {
+      if (r.webkit_commit) m.set(r.webkit_commit.toLowerCase(), r);
+    }
+    return m;
+  }, [releases]);
 
   function findCommit(prefix) {
     const p = prefix.toLowerCase();
@@ -280,51 +444,139 @@ function JscResolver({ data, openModal }) {
     return hit ? { full: hit.commit.toLowerCase(), subject: hit.subject, author: hit.author, time: hit.time, url: hit.url } : null;
   }
 
+  function findReleaseByHash(prefix) {
+    const p = prefix.toLowerCase();
+    for (const [key, row] of releaseCommitIndex) {
+      if (key.startsWith(p)) return row;
+    }
+    return null;
+  }
+
+  function show(title, obj) {
+    const gitUrl = obj.webkit_commit
+      ? `https://github.com/WebKit/WebKit/commit/${obj.webkit_commit}`
+      : null;
+    openModal(title,
+      <div>
+        <div className="kv">
+          {'version'       in obj && obj.version       != null && <><label>Version</label><div>{obj.version}</div></>}
+          {'channel'       in obj && obj.channel       != null && <><label>Channel</label><div>{obj.channel}</div></>}
+          {'stp_number'    in obj && obj.stp_number    != null && <><label>STP</label><div className="mono">{obj.stp_number}</div></>}
+          {'webkit_commit' in obj && obj.webkit_commit != null && <><label>WebKit</label><div className="mono">{gitUrl ? <a href={gitUrl} target="_blank" rel="noreferrer">{obj.webkit_commit}</a> : obj.webkit_commit}</div></>}
+          {'subject'       in obj && obj.subject       != null && <><label>Subject</label><div>{obj.subject}</div></>}
+          {'link'          in obj && obj.link          != null && <><label>Release notes</label><div><a href={obj.link} target="_blank" rel="noreferrer">{obj.link}</a></div></>}
+          {'updated'       in obj && obj.updated       != null && <><label>Updated</label><div>{formatDate(obj.updated)}</div></>}
+        </div>
+        <details style={{marginTop:14}}><summary className="muted">Raw JSON</summary><pre className="pre" style={{marginTop:8}}>{JSON.stringify(obj, null, 2)}</pre></details>
+      </div>
+    );
+  }
+
   function resolve() {
     const s = q.trim();
     if (!s) return;
 
-    const mStp = /^stp\s*(\d{2,3})$/i.exec(s);
-    if (mStp) {
-      const n = parseInt(mStp[1], 10);
-      const row = stp.find(x => x.number === n) || stp.find(x => (x.title || '').match(new RegExp(`\\b${n}\\b`)));
-      if (!row) return openModal('STP not found', <div className="muted">No Safari Technology Preview {n} in cache.</div>);
-      return openModal(`STP ${n}`, (
-        <div className="kv">
-          <label>Title</label><div>{row.title}</div>
-          <label>Link</label><div><a href={row.link} target="_blank" rel="noreferrer">{row.link}</a></div>
-          <label>Updated</label><div>{formatDate(row.updated)}</div>
-        </div>
-      ));
+    // Safari version number e.g. "18.4" or "26.4"
+    if (/^\d+\.\d+(?:\.\d+)?$/.test(s)) {
+      const row = releaseByChannel['stable'];
+      const match = row?.version === s;
+      if (!row || !match) return openModal('Version not found', <div className="muted">Only the latest Stable is available. Try <span className="mono">stable</span> or <span className="mono">STP N</span>.</div>);
+      return show(`Safari ${s}`, {
+        version:       row.version,
+        channel:       row.channel,
+        stp_number:    row.stp_number ?? null,
+        webkit_commit: row.webkit_commit ?? null,
+        link:          row.link ?? null,
+        updated:       row.updated ?? null,
+      });
     }
 
+    // Channel: "stable" or "stp"
+    if (/^(stable|stp)$/i.test(s)) {
+      const key = s.toLowerCase();
+      const row = releaseByChannel[key];
+      if (!row) return openModal('Not found', <div className="muted">No matching Safari/JSC release found.</div>);
+      return show(`Safari ${row.version}`, {
+        version:       row.version,
+        channel:       row.channel,
+        stp_number:    row.stp_number ?? null,
+        webkit_commit: row.webkit_commit ?? null,
+        link:          row.link ?? null,
+        updated:       row.updated ?? null,
+      });
+    }
+
+    // STP number: "STP 198" or "198"
+    const mStp = /^(?:stp\s*)?(\d{2,3})$/i.exec(s);
+    if (mStp) {
+      const n = parseInt(mStp[1], 10);
+      // first check release cache
+      const relRow = releaseByStp[String(n)];
+      if (relRow) {
+        return show(`STP ${n}`, {
+          version:       relRow.version,
+          channel:       relRow.channel,
+          stp_number:    relRow.stp_number,
+          webkit_commit: relRow.webkit_commit ?? null,
+          link:          relRow.link ?? null,
+          updated:       relRow.updated ?? null,
+        });
+      }
+      // fall back to stp list from resolver
+      const stpRow = stp.find(x => x.number === n);
+      if (!stpRow) return openModal('STP not found', <div className="muted">No Safari Technology Preview {n} found.</div>);
+      return show(`STP ${n}`, {
+        version:    `STP ${n}`,
+        channel:    'STP',
+        stp_number: n,
+        link:       stpRow.link ?? null,
+        updated:    stpRow.updated ?? null,
+      });
+    }
+
+    // Legacy SVN revision: r298000
     const mRev = /^r(\d{3,})$/i.exec(s);
     if (mRev) {
       const url = `https://trac.webkit.org/changeset/${mRev[1]}`;
       return openModal(`WebKit r${mRev[1]}`, <div>Open: <a href={url} target="_blank" rel="noreferrer">{url}</a></div>);
     }
 
+    // Commit hash
     if (/^[0-9a-f]{7,40}$/i.test(s)) {
-      const c = findCommit(s.slice(0,12));
-      if (!c) return openModal('Commit not in cache', <div className="muted">Provide a longer prefix or run <span className="mono">pnpm run fetch:jsc</span>.</div>);
+      const rel = findReleaseByHash(s.slice(0, 12));
+      if (rel) {
+        return show(`${rel.channel} release commit`, {
+          version:       rel.version,
+          channel:       rel.channel,
+          stp_number:    rel.stp_number ?? null,
+          webkit_commit: rel.webkit_commit ?? null,
+          link:          rel.link ?? null,
+          updated:       rel.updated ?? null,
+        });
+      }
+      const c = findCommit(s.slice(0, 12));
+      if (!c) return openModal('Commit not found', <div className="muted">No commit matches that prefix. Try a longer prefix.</div>);
       return openModal(`WebKit ${c.full.slice(0,12)}`, (
-        <div className="kv">
-          <label>Commit</label><div className="mono">{c.full}</div>
-          <label>Subject</label><div>{c.subject}</div>
-          <label>Author</label><div>{c.author}</div>
-          <label>Time</label><div>{formatDate(c.time)}</div>
-          <label>Link</label><div><a href={c.url} target="_blank" rel="noreferrer">{c.url}</a></div>
+        <div>
+          <div className="kv">
+            <label>Commit</label><div className="mono">{c.full}</div>
+            <label>Subject</label><div>{c.subject}</div>
+            <label>Author</label><div>{c.author}</div>
+            <label>Time</label><div>{formatDate(c.time)}</div>
+            <label>Link</label><div><a href={c.url} target="_blank" rel="noreferrer">{c.url}</a></div>
+          </div>
+          <details style={{marginTop:14}}><summary className="muted">Raw JSON</summary><pre className="pre" style={{marginTop:8}}>{JSON.stringify(c, null, 2)}</pre></details>
         </div>
       ));
     }
 
-    openModal('How to use', <div className="muted">Try: <span className="mono">STP 198</span>, <span className="mono">r298000</span>, or a WebKit SHA/prefix.</div>);
+    openModal('How to use', <div className="muted">Try: <span className="mono">26.4</span>, <span className="mono">stable</span>, <span className="mono">STP 241</span>, <span className="mono">r298000</span>, or a WebKit SHA/prefix.</div>);
   }
 
   return (
     <>
       <p className="resolver-hint">
-        Enter a Safari Technology Preview (STP) number, WebKit revision (rXXXXXX), or commit SHA/prefix to resolve it to the matching release or changeset.
+        &gt;&gt; resolves Safari version, channel (stable/stp), STP number, WebKit commit hash/prefix, or SVN revision to release metadata or commit details.
       </p>
       <div className="resolver-input">
         <input className="input" placeholder={hint} value={q} onChange={(e)=>setQ(e.target.value)} />
@@ -336,11 +588,42 @@ function JscResolver({ data, openModal }) {
 
 function SmResolver({ data, openModal }) {
   const [q, setQ] = useState('');
-  const hint = 'Firefox 128.0.2 · nightly/beta/stable · hg changeset prefix';
+  const hint = 'Version (149.0.2), Milestone (M149), nightly/beta/stable, hg/git commit hash';
 
   const versions = data.resolve?.versions || {};
   const idx = data.resolve?.commitIndex || {};
   const commits = data.commits?.commits || [];
+  const releases = data.releases?.releases || [];
+
+  const releaseByChannel = useMemo(() => {
+    const m = {};
+    for (const r of releases) if (r.channel) m[r.channel.toLowerCase()] = r;
+    return m;
+  }, [releases]);
+
+  const releaseByMilestone = useMemo(() => {
+    const m = {};
+    for (const r of releases) if (r.milestone != null) m[String(r.milestone)] = r;
+    return m;
+  }, [releases]);
+
+  // index release-branch commits (Beta/Stable tips) so hash lookup finds them
+  const releaseCommitIndex = useMemo(() => {
+    const m = new Map();
+    for (const r of releases) {
+      if (r.sm_commit)  m.set(r.sm_commit.toLowerCase(),  { kind: 'hg',  row: r });
+      if (r.git_commit) m.set(r.git_commit.toLowerCase(), { kind: 'git', row: r });
+    }
+    return m;
+  }, [releases]);
+
+  function findReleaseByHash(prefix) {
+    const p = prefix.toLowerCase();
+    for (const [key, val] of releaseCommitIndex) {
+      if (key.startsWith(p)) return val;
+    }
+    return null;
+  }
 
   function findCommit(prefix) {
     const p = prefix.toLowerCase();
@@ -349,52 +632,125 @@ function SmResolver({ data, openModal }) {
     return hit ? { full: hit.commit.toLowerCase(), subject: hit.subject, author: hit.author, time: hit.time, url: hit.url } : null;
   }
 
+  function notesLink(channel) {
+    const ch = (channel || '').toLowerCase();
+    if (ch === 'stable') return 'https://www.mozilla.org/firefox/releases/';
+    if (ch === 'beta')   return 'https://www.mozilla.org/firefox/beta/notes/';
+    return 'https://www.mozilla.org/firefox/nightly/notes/';
+  }
+
+  function show(title, obj) {
+    const hgBase = obj.branch === 'default'
+      ? 'https://hg.mozilla.org/mozilla-central'
+      : obj.channel === 'Beta'   ? 'https://hg.mozilla.org/releases/mozilla-beta'
+      : obj.channel === 'Stable' ? 'https://hg.mozilla.org/releases/mozilla-release'
+      : 'https://hg.mozilla.org/mozilla-central';
+    const hgUrl  = obj.sm_commit  ? `${hgBase}/rev/${obj.sm_commit}`  : null;
+    const gitUrl = obj.git_commit ? `https://github.com/mozilla/gecko-dev/commit/${obj.git_commit}` : null;
+    openModal(title,
+      <div>
+        <div className="kv">
+          {'version'    in obj && obj.version    != null && <><label>Version</label><div>{obj.version}</div></>}
+          {'channel'    in obj && obj.channel    != null && <><label>Train</label><div>{obj.channel}</div></>}
+          {'milestone'  in obj && obj.milestone  != null && <><label>Milestone</label><div>{obj.milestone}</div></>}
+          {'push_id'    in obj && obj.push_id    != null && <><label>Push ID</label><div className="mono">{obj.push_id}</div></>}
+          {'sm_commit'  in obj && obj.sm_commit  != null && <><label>mozilla-central</label><div className="mono">{hgUrl ? <a href={hgUrl} target="_blank" rel="noreferrer">{obj.sm_commit}</a> : obj.sm_commit}</div></>}
+          {'git_commit' in obj && obj.git_commit != null && <><label>gecko-dev (git)</label><div className="mono">{gitUrl ? <a href={gitUrl} target="_blank" rel="noreferrer">{obj.git_commit}</a> : obj.git_commit}</div></>}
+          {'subject'    in obj && obj.subject    != null && <><label>Subject</label><div>{obj.subject}</div></>}
+          {'notes'      in obj && obj.notes      != null && <><label>Release notes</label><div><a href={obj.notes} target="_blank" rel="noreferrer">{obj.notes}</a></div></>}
+          {'updated'    in obj && obj.updated    != null && <><label>Updated</label><div>{formatDate(obj.updated)}</div></>}
+        </div>
+        <details style={{marginTop:14}}><summary className="muted">Raw JSON</summary><pre className="pre" style={{marginTop:8}}>{JSON.stringify(obj, null, 2)}</pre></details>
+      </div>
+    );
+  }
+
   function resolve() {
     const s = q.trim();
     if (!s) return;
 
     if (/^\d+\.\d+(?:\.\d+)?$/.test(s)) {
       const v = s;
-      const badge = (v === versions.stable) ? 'Stable' : (v === versions.beta) ? 'Beta' : (v === versions.nightly) ? 'Nightly' : 'Unknown';
-      const link = (badge === 'Stable')
-        ? 'https://www.mozilla.org/firefox/releases/'
-        : (badge === 'Beta')
-          ? 'https://www.mozilla.org/firefox/beta/notes/'
-          : 'https://www.mozilla.org/firefox/nightly/notes/';
-      return openModal(`Firefox ${v}`, (
-        <div className="kv">
-          <label>Train</label><div>{badge}</div>
-          <label>Release notes</label><div><a href={link} target="_blank" rel="noreferrer">{link}</a></div>
-        </div>
-      ));
+      const channel = (v === versions.stable) ? 'Stable' : (v === versions.beta) ? 'Beta' : (v === versions.nightly) ? 'Nightly' : null;
+      if (!channel) return openModal('Version not found', <div className="muted">No matching Firefox release found. Try the current <span className="mono">nightly</span>, <span className="mono">beta</span>, or <span className="mono">stable</span> version.</div>);
+      const row = releaseByChannel[channel.toLowerCase()];
+      return show(`Firefox ${v}`, {
+        version:    v,
+        channel:    channel,
+        milestone:  row?.milestone  ?? null,
+        push_id:    row?.push_id    ?? null,
+        sm_commit:  row?.sm_commit  ?? null,
+        git_commit: row?.git_commit ?? null,
+        subject:    row?.subject    ?? null,
+        notes:      notesLink(channel),
+        updated:    row?.updated    ?? null,
+      });
+    }
+
+    const mMs = s.match(/^m?(\d{2,3})$/i);
+    if (mMs) {
+      const row = releaseByMilestone[mMs[1]];
+      if (!row) return openModal('Milestone not found', <div className="muted">Milestone {mMs[1]} not found.</div>);
+      return show(`Milestone M${mMs[1]} → ${row.channel}`, {
+        version:    row.version,
+        channel:    row.channel,
+        milestone:  row.milestone,
+        push_id:    row.push_id    ?? null,
+        sm_commit:  row.sm_commit  ?? null,
+        git_commit: row.git_commit ?? null,
+        subject:    row.subject    ?? null,
+        notes:      notesLink(row.channel),
+        updated:    row.updated    ?? null,
+      });
     }
 
     if (/^(nightly|beta|stable)$/i.test(s)) {
       const key = s.toLowerCase();
-      const v = ({ nightly: versions.nightly, beta: versions.beta, stable: versions.stable })[key];
-      const link = key==='stable'
-        ? 'https://www.mozilla.org/firefox/releases/'
-        : key==='beta'
-          ? 'https://www.mozilla.org/firefox/beta/notes/'
-          : 'https://www.mozilla.org/firefox/nightly/notes/';
-      return openModal(`Firefox ${s}`, (
-        <div className="kv">
-          <label>Version</label><div>{v || '—'}</div>
-          <label>Notes</label><div><a href={link} target="_blank" rel="noreferrer">{link}</a></div>
-        </div>
-      ));
+      const row = releaseByChannel[key];
+      const v = versions[key] || row?.version || null;
+      return show(`Firefox ${s}`, {
+        version:    v,
+        channel:    s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(),
+        milestone:  row?.milestone  ?? null,
+        push_id:    row?.push_id    ?? null,
+        sm_commit:  row?.sm_commit  ?? null,
+        git_commit: row?.git_commit ?? null,
+        subject:    row?.subject    ?? null,
+        notes:      notesLink(key),
+        updated:    row?.updated    ?? null,
+      });
     }
 
-    if (/^[0-9a-f]{12,40}$/i.test(s)) {
+    if (/^[0-9a-f]{7,40}$/i.test(s)) {
+      // first check if it's a known release-branch tip (Beta/Stable hg or git hash)
+      const rel = findReleaseByHash(s.slice(0, 12));
+      if (rel) {
+        const { row } = rel;
+        return show(`${row.channel} release commit`, {
+          version:    row.version,
+          channel:    row.channel,
+          milestone:  row.milestone  ?? null,
+          push_id:    row.push_id    ?? null,
+          sm_commit:  row.sm_commit  ?? null,
+          git_commit: row.git_commit ?? null,
+          subject:    row.subject    ?? null,
+          notes:      notesLink(row.channel),
+          updated:    row.updated    ?? null,
+        });
+      }
+      // fall back to mozilla-central commit index
       const c = findCommit(s.slice(0,12));
-      if (!c) return openModal('Changeset not in cache', <div className="muted">Provide a longer prefix or run <span className="mono">pnpm run fetch:sm</span>.</div>);
+      if (!c) return openModal('Changeset not found', <div className="muted">No changeset matches that prefix. Try a longer prefix.</div>);
       return openModal(`mozilla-central ${c.full.slice(0,12)}`, (
-        <div className="kv">
-          <label>Rev</label><div className="mono">{c.full}</div>
-          <label>Subject</label><div>{c.subject}</div>
-          <label>Author</label><div>{c.author}</div>
-          <label>Time</label><div>{formatDate(c.time)}</div>
-          <label>Link</label><div><a href={c.url} target="_blank" rel="noreferrer">{c.url}</a></div>
+        <div>
+          <div className="kv">
+            <label>Rev</label><div className="mono">{c.full}</div>
+            <label>Subject</label><div>{c.subject}</div>
+            <label>Author</label><div>{c.author}</div>
+            <label>Time</label><div>{formatDate(c.time)}</div>
+            <label>Link</label><div><a href={c.url} target="_blank" rel="noreferrer">{c.url}</a></div>
+          </div>
+          <details style={{marginTop:14}}><summary className="muted">Raw JSON</summary><pre className="pre" style={{marginTop:8}}>{JSON.stringify(c, null, 2)}</pre></details>
         </div>
       ));
     }
@@ -405,7 +761,7 @@ function SmResolver({ data, openModal }) {
   return (
     <>
       <p className="resolver-hint">
-        Enter a Firefox version, release train (nightly/beta/stable), or Mercurial changeset prefix to resolve it to the appropriate release or commit.
+        &gt;&gt; resolves Firefox version, release train (nightly/beta/stable), or mozilla-central changeset hash/prefix to release metadata or commit details.
       </p>
       <div className="resolver-input">
         <input className="input" placeholder={hint} value={q} onChange={(e)=>setQ(e.target.value)} />
@@ -421,27 +777,22 @@ function ChromeSection({ data, openModal }) {
   const latest = Object.fromEntries(channels.map(ch => [ch, latestByChannel(data.releases, ch)]));
   const asan = normalizeAsan(data.builds);
   const platOrder = ['linux','mac','windows','win64','chromeos'];
-  const platLabel = { linux:'linux-release', mac:'mac-release', windows:'win32-release_x64', win64:'win64-release', chromeos:'linux-release-chromeos'};
+  const platLabel = { linux:'Linux', mac:'MacOS', windows:'Windows', win64:'Windows64', chromeos:'ChromeOS'};
   const archLabel = { x64:'x64', arm64:'arm64', arm:'arm', sandbox:'sandbox' };
 
-  const v8Items = (data.gcls.items || []);
-  const hasMoreV8 = v8Items.length > 14;
-
-  function openMoreV8() {
-    openModal('Recent V8 CLs — more', (
-      <div>
-        <ul className="list">
-          {v8Items.slice(0, 50).map(x=>(
-            <li key={x.url}>
-              <a href={x.url} target="_blank" rel="noreferrer">{x.subject}</a>
-              <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
-            </li>
-          ))}
-          {v8Items.length === 0 && <li className="muted">No items.</li>}
-        </ul>
-      </div>
+  const showMoreV8CLs = () => {
+    const items = (data.gcls.items || []).slice(0, 50);
+    openModal('Recent V8 CLs', (
+      <ul className="list">
+        {items.map(x=>(
+          <li key={x.url}>
+            <a href={x.url} target="_blank" rel="noreferrer">{x.subject}</a>
+            <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
+          </li>
+        ))}
+      </ul>
     ));
-  }
+  };
 
   return (
     <>
@@ -465,7 +816,18 @@ function ChromeSection({ data, openModal }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Latest ASan d8 Builds</h3></header>
+        <div className="refs">
+          <span className="l">Docs</span><a href="https://v8.dev" target="_blank" rel="noreferrer">https://v8.dev</a>
+          <span className="l">V8 Source</span><a href="https://chromium.googlesource.com/v8/v8.git" target="_blank" rel="noreferrer">https://chromium.googlesource.com/v8/v8.git</a>
+          <span className="l">V8 Source mirror</span><a href="https://github.com/v8/v8" target="_blank" rel="noreferrer">https://github.com/v8/v8</a>
+          <span className="l">Issue tracker</span><a href="https://issues.chromium.org/issues" target="_blank" rel="noreferrer">https://issues.chromium.org/issues</a>
+        </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// Latest ASan d8 Release Builds</h3></header>
+        <p className="resolver-hint">
+          &gt;&gt; pulled from [<a href="https://storage.googleapis.com/v8-asan/index.html" target="_blank">Google's official ASan bucket</a>].<br/></p>
         <div className="tableWrap">
           <table className="table">
             <thead>
@@ -497,28 +859,52 @@ function ChromeSection({ data, openModal }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Resolver</h3></header>
-        <ChromeResolver releases={data.releases} openModal={data.openModal}/>
+        <header className="bsub"><h3>// RESOLVER [Chrome/V8]</h3></header>
+        <ChromeResolver releases={data.releases} openModal={openModal}/>
       </section>
 
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Chrome/V8]</h3></header>
+        <p className="resolver-hint">
+        &gt;&gt; vulnerable commits derived from patched canonical parent (via cherry pick), verify before use to avoid misleading deltas.
+      </p>
         <div className="tableWrap">
           <table className="table">
             <thead>
-              <tr><th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th></tr>
+              <tr>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Component</th>
+                <th>Patched</th><th>Vulnerable</th>
+              </tr>
             </thead>
             <tbody>
-              {data.cves.itw_chrome_related.slice(0,12).map(x=>(
-                <tr key={x.cve}>
-                  <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
-                  <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
-                  <td>{x.shortDescription || x.description || '—'}</td>
-                  <td>{formatDate(x.dateAdded)}</td>
-                  <td>{x.product}</td>
-                </tr>
-              ))}
-              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={5} className="muted">No KEV entries.</td></tr>}
+              {data.cves.itw_chrome_related.slice(0,12).map(x=>{
+                const p = coalescePatched(x);
+                const u = coalesceUnpatched(x);
+                return (
+                  <tr key={x.cve}>
+                    <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
+                    <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
+                    <td>{x.shortDescription || x.description || '—'}</td>
+                    <td>{formatDate(x.dateAdded)}</td>
+                    <td>{x.product}</td>
+                    <td>
+                      <PatchedCell
+                        patched_commit={p.commit}
+                        patched_version={p.version}
+                        project={x.patchmap?.project}
+                      />
+                    </td>
+                    <td>
+                      <UnpatchedCell
+                        unpatched_commits={u.commits}
+                        unpatched_version={u.version}
+                        project={x.patchmap?.project}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -527,33 +913,20 @@ function ChromeSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// Recent V8 CLs</h3></header>
         <ul className="list">
-          {v8Items.slice(0,14).map(x=>(
+          {(data.gcls.items||[]).slice(0,14).map(x=>(
             <li key={x.url}>
               <a href={x.url} target="_blank" rel="noreferrer">{x.subject}</a>
               <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
             </li>
           ))}
-          {v8Items.length===0 && <li className="muted">No items.</li>}
+          {(data.gcls.items||[]).length>14 && (
+            <li>
+              <span className="more-link" onClick={showMoreV8CLs} role="button" tabIndex={0}
+                onKeyDown={(e)=> (e.key==='Enter'||e.key===' ') && showMoreV8CLs()}>≫ show more</span>
+            </li>
+          )}
+          {(data.gcls.items||[]).length===0 && <li className="muted">No items.</li>}
         </ul>
-        {hasMoreV8 && (
-          <div style={{marginTop:8}}>
-            <button className="linkish" onClick={openMoreV8} aria-label="Show more V8 CLs">≫ show more</button>
-          </div>
-        )}
-      </section>
-
-      <section className="block">
-        <header className="bsub"><h3>// Chromium Tree</h3></header>
-        <div className="notice" data-state={(String(data.tree.general_state||'').toLowerCase()==='open')?'good':'warn'}>
-          {(data.tree.general_state||'unknown').toUpperCase()}
-        </div>
-        <div className="kv slim" style={{marginTop:10}}>
-          <label>Updated</label><div>{formatDate(data.tree.date)}</div>
-          <label>Message</label><div>{data.tree.message || ''}</div>
-        </div>
-        <div className="muted" style={{marginTop:10}}>
-          CI <a href="https://ci.chromium.org/" target="_blank" rel="noreferrer">ci.chromium.org</a> · Sheriff <a href="https://sheriff-o-matic.appspot.com/" target="_blank" rel="noreferrer">Sheriff-O-Matic</a>
-        </div>
       </section>
 
       <section className="block">
@@ -588,6 +961,20 @@ function ChromeSection({ data, openModal }) {
 }
 
 function JscSection({ data, openModal }) {
+  const showMoreJscCLs = () => {
+    const items = (data.gcls.items || []).slice(0, 50);
+    openModal('Recent JavaScriptCore CLs', (
+      <ul className="list">
+        {items.map((x,i)=>(
+          <li key={i}>
+            <a href={x.url} target="_blank" rel="noreferrer">{x.subject}</a>
+            <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
+          </li>
+        ))}
+      </ul>
+    ));
+  };
+
   return (
     <>
       <section className="block">
@@ -595,46 +982,96 @@ function JscSection({ data, openModal }) {
           <h2>Safari / JavaScriptCore</h2><span className="tag">WebKit</span>
         </header>
         <div className="ruler" />
-        <div className="muted">
-          {(data.releases.releases||[]).length ? 'Data present' : 'Populate data/jsc_releases.json (STP/Beta/Stable).'}
+        {(data.releases.releases||[]).length ? (
+          <div className="statrow">
+            {['Stable','Beta','STP'].map(ch => {
+              const r = latestByChannel(data.releases, ch) || {};
+              return (
+                <div className="stat" key={ch}>
+                  <div className="label">{ch}</div>
+                  <div className="value">{r.version || '—'}</div>
+                  <div className="meta">· <span className="mono">{r.webkit_commit ? r.webkit_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="muted">No releases available right now.</div>
+        )}
+      </section>
+
+      <section className="block">
+        <div className="refs">
+          <span className="l">Docs</span><a href="https://webkit.org" target="_blank" rel="noreferrer">https://webkit.org</a>
+          <span className="l">Build docs</span><a href="https://docs.webkit.org" target="_blank" rel="noreferrer">https://docs.webkit.org</a>
+          <span className="l">JSC Source</span><a href="https://github.com/WebKit/WebKit/tree/main/Source/JavaScriptCore" target="_blank" rel="noreferrer">https://github.com/WebKit/WebKit/tree/main/Source/JavaScriptCore</a>
+          <span className="l">Bug tracker</span><a href="https://bugs.webkit.org" target="_blank" rel="noreferrer">https://bugs.webkit.org</a>
         </div>
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Latest Debug/ASan JSC Builds</h3></header>
-        <div className="muted">{Object.keys(data.builds.latest||{}).length ? 'Data present' : 'Populate data/jsc_builds.json.'}</div>
+        <header className="bsub"><h3>// ASan jsc Shell <span className="muted mono" style={{fontWeight:400}}>(build from source)</span></h3></header>
+        <p className="resolver-hint">
+          &gt;&gt; unlike V8&apos;s <code className="code">d8</code> and the SpiderMonkey <code className="code">jsshell</code>, WebKit/JSC publishes no prebuilt ASan distribution, build the engine-only <code className="code">jsc</code> shell from source via the JSCOnly port.
+        </p>
+        <pre className="pre sh" style={{marginTop:10}}>
+<span className="c-com"># 1) get the WebKit source</span>{'\n'}
+<span className="c-cmd">git</span> clone <span className="c-str">https://github.com/WebKit/WebKit.git</span>{'\n'}
+<span className="c-cmd">cd</span> WebKit{'\n'}
+{'\n'}
+<span className="c-com"># 2) enable AddressSanitizer (persists across builds)</span>{'\n'}
+<span className="c-cmd">Tools/Scripts/set-webkit-configuration</span> <span className="c-flag">--asan</span>{'\n'}
+{'\n'}
+<span className="c-com"># 3) build the engine-only jsc shell (JSCOnly port), debug</span>{'\n'}
+<span className="c-cmd">Tools/Scripts/build-jsc</span> <span className="c-flag">--jsc-only</span> <span className="c-flag">--debug</span>{'\n'}
+{'\n'}
+<span className="c-com"># 4) resulting shell</span>{'\n'}
+<span className="c-path">WebKitBuild/JSCOnly/Debug/bin/jsc</span>
+</pre>
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Resolver</h3></header>
+        <header className="bsub"><h3>// RESOLVER [Safari/JSC]</h3></header>
         <JscResolver data={data} openModal={openModal}/>
       </section>
 
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Safari/JSC]</h3></header>
+        <p className="resolver-hint">
+          &gt;&gt; recent ITW patch map for this engine is currently a work in progress.
+        </p>
         <div className="tableWrap">
           <table className="table">
             <thead>
-              <tr><th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th></tr>
+              <tr>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
+                <th>Patched</th><th>Unpatched</th>
+              </tr>
             </thead>
             <tbody>
-              {(data.cves.itw_related||[]).slice(0,12).map(x=>(
-                <tr key={x.cve}>
-                  <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
-                  <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
-                  <td>{x.shortDescription || x.description || '—'}</td>
-                  <td>{formatDate(x.dateAdded)}</td>
-                  <td>{x.product}</td>
-                </tr>
-              ))}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={5} className="muted">No KEV entries.</td></tr>}
+              {(data.cves.itw_related||[]).slice(0,12).map(x=>{
+                const p = coalescePatched(x);
+                const u = coalesceUnpatched(x);
+                return (
+                  <tr key={x.cve}>
+                    <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
+                    <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
+                    <td>{x.shortDescription || x.description || '—'}</td>
+                    <td>{formatDate(x.dateAdded)}</td>
+                    <td>{x.product}</td>
+                    <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
+                    <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
+                  </tr>
+                );
+              })}
+              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Recent JSC/WebKit CLs</h3></header>
+        <header className="bsub"><h3>// Recent JavaScriptCore CLs</h3></header>
         <ul className="list">
           {(data.gcls.items||[]).slice(0,14).map((x,i)=>(
             <li key={i}>
@@ -642,19 +1079,14 @@ function JscSection({ data, openModal }) {
               <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
             </li>
           ))}
+          {(data.gcls.items||[]).length>14 && (
+            <li>
+              <span className="more-link" onClick={showMoreJscCLs} role="button" tabIndex={0}
+                onKeyDown={(e)=> (e.key==='Enter'||e.key===' ') && showMoreJscCLs()}>≫ show more</span>
+            </li>
+          )}
           {(data.gcls.items||[]).length===0 && <li className="muted">No items.</li>}
         </ul>
-      </section>
-
-      <section className="block">
-        <header className="bsub"><h3>// WebKit Queue / EWS</h3></header>
-        <div className="notice" data-state={(String(data.tree.general_state||'').toLowerCase()==='open')?'good':'warn'}>
-          {(data.tree.general_state||'unknown').toUpperCase()}
-        </div>
-        <div className="kv slim" style={{marginTop:10}}>
-          <label>Updated</label><div>{formatDate(data.tree.date)}</div>
-          <label>Message</label><div>{data.tree.message || ''}</div>
-        </div>
       </section>
 
       <section className="block">
@@ -688,6 +1120,20 @@ function JscSection({ data, openModal }) {
 }
 
 function SmSection({ data, openModal }) {
+  const showMoreSmCLs = () => {
+    const items = (data.gcls.items || []).slice(0, 50);
+    openModal('Recent SpiderMonkey CLs', (
+      <ul className="list">
+        {items.map((x,i)=>(
+          <li key={i}>
+            <a href={x.url} target="_blank" rel="noreferrer">{x.subject}</a>
+            <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
+          </li>
+        ))}
+      </ul>
+    ));
+  };
+
   return (
     <>
       <section className="block">
@@ -695,18 +1141,42 @@ function SmSection({ data, openModal }) {
           <h2>Firefox / SpiderMonkey</h2><span className="tag">Gecko</span>
         </header>
         <div className="ruler" />
-        <div className="muted">
-          {(data.releases.releases||[]).length ? 'Data present' : 'Populate data/sm_releases.json (Nightly/Beta/Stable).'}
+        {(data.releases.releases||[]).length ? (
+          <div className="statrow">
+            {['Nightly','Beta','Stable'].map(ch => {
+              const r = latestByChannel(data.releases, ch) || {};
+              return (
+                <div className="stat" key={ch}>
+                  <div className="label">{ch}</div>
+                  <div className="value">{r.version || '—'}</div>
+                  <div className="meta">M{r.milestone ?? '—'} · <span className="mono">{r.sm_commit ? r.sm_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="muted">No releases available right now.</div>
+        )}
+      </section>
+
+      <section className="block">
+        <div className="refs">
+          <span className="l">Docs</span><a href="https://spidermonkey.dev" target="_blank" rel="noreferrer">https://spidermonkey.dev</a>
+          <span className="l">SM Source (js/src)</span><a href="https://searchfox.org/firefox-main/source/js/src" target="_blank" rel="noreferrer">https://searchfox.org/firefox-main/source/js/src</a>
+          <span className="l">SM Source mirror</span><a href="https://github.com/mozilla/gecko-dev" target="_blank" rel="noreferrer">https://github.com/mozilla/gecko-dev</a>
+          <span className="l">Bug tracker</span><a href="https://bugzilla.mozilla.org" target="_blank" rel="noreferrer">https://bugzilla.mozilla.org</a>
         </div>
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Latest ASan js shell Builds</h3></header>
+        <header className="bsub"><h3>// Latest Spidermonkey ASan JS Shell Builds</h3></header>
+        <p className="resolver-hint">
+          &gt;&gt; pulled from [<a href="https://firefox-ci-tc.services.mozilla.com" target="_blank">Mozilla's Official Taskcluster</a>].<br/></p>
         <div className="tableWrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Platform</th><th>Arch</th><th>Filename</th><th>Created</th><th>SHA256</th><th></th>
+                <th>Platform</th><th>Arch</th><th>Filename</th><th>Build</th><th>Commit</th><th>Created</th><th>md5</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -716,8 +1186,10 @@ function SmSection({ data, openModal }) {
                   <td>linux64</td>
                   <td>x64</td>
                   <td className="mono">{data.builds.latest.linux.filename}</td>
+                  <td className="mono">{data.builds.latest.linux.taskId || '—'}</td>
+                  <td className="mono">{data.builds.latest.linux.commit ? data.builds.latest.linux.commit.slice(0,12) : '—'}</td>
                   <td>{formatDate(data.builds.latest.linux.created)}</td>
-                  <td className="mono">{data.builds.latest.linux.sha256 || '—'}</td>
+                  <td className="mono">{data.builds.latest.linux.md5 || '—'}</td>
                   <td><a className="btn small" href={data.builds.latest.linux.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -728,8 +1200,10 @@ function SmSection({ data, openModal }) {
                   <td>win64</td>
                   <td>x64</td>
                   <td className="mono">{data.builds.latest.win64.filename}</td>
+                  <td className="mono">{data.builds.latest.win64.taskId || '—'}</td>
+                  <td className="mono">{data.builds.latest.win64.commit ? data.builds.latest.win64.commit.slice(0,12) : '—'}</td>
                   <td>{formatDate(data.builds.latest.win64.created)}</td>
-                  <td className="mono">{data.builds.latest.win64.sha256 || '—'}</td>
+                  <td className="mono">{data.builds.latest.win64.md5 || '—'}</td>
                   <td><a className="btn small" href={data.builds.latest.win64.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -740,8 +1214,10 @@ function SmSection({ data, openModal }) {
                   <td>macOS</td>
                   <td>x64</td>
                   <td className="mono">{data.builds.latest.mac.x64.filename}</td>
+                  <td className="mono">{data.builds.latest.mac.x64.taskId || '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.x64.commit ? data.builds.latest.mac.x64.commit.slice(0,12) : '—'}</td>
                   <td>{formatDate(data.builds.latest.mac.x64.created)}</td>
-                  <td className="mono">{data.builds.latest.mac.x64.sha256 || '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.x64.md5 || '—'}</td>
                   <td><a className="btn small" href={data.builds.latest.mac.x64.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -750,54 +1226,67 @@ function SmSection({ data, openModal }) {
                   <td>macOS</td>
                   <td>arm64</td>
                   <td className="mono">{data.builds.latest.mac.arm64.filename}</td>
+                  <td className="mono">{data.builds.latest.mac.arm64.taskId || '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.arm64.commit ? data.builds.latest.mac.arm64.commit.slice(0,12) : '—'}</td>
                   <td>{formatDate(data.builds.latest.mac.arm64.created)}</td>
-                  <td className="mono">{data.builds.latest.mac.arm64.sha256 || '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.arm64.md5 || '—'}</td>
                   <td><a className="btn small" href={data.builds.latest.mac.arm64.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
 
               {/* empty state */}
               {!data.builds || Object.keys(data.builds.latest || {}).length === 0 ? (
-                <tr><td colSpan={6} className="muted">No SpiderMonkey ASan builds found yet. Run <span className="mono">node tools/fetch_sm_builds.js</span>.</td></tr>
+                <tr><td colSpan={8} className="muted">No SpiderMonkey ASan builds available right now.</td></tr>
               ) : null}
             </tbody>
           </table>
         </div>
         <div className="muted" style={{marginTop:8}}>
-          Tip: Taskcluster “fuzzing-asan-opt” artifacts are <span className="mono">target.tar.xz</span> (Linux), <span className="mono">target.zip</span> (Windows), and <span className="mono">target.dmg</span> (macOS).
         </div>
-      </section>  
+      </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Resolver</h3></header>
+        <header className="bsub"><h3>// RESOLVER [Firefox/SpiderMonkey]</h3></header>
         <SmResolver data={data} openModal={openModal}/>
       </section>
 
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
+        <p className="resolver-hint">
+          &gt;&gt; recent ITW patch map for this engine is currently a work in progress.
+        </p>
         <div className="tableWrap">
           <table className="table">
             <thead>
-              <tr><th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th></tr>
+              <tr>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
+                <th>Patched</th><th>Unpatched</th>
+              </tr>
             </thead>
             <tbody>
-              {(data.cves.itw_related||[]).slice(0,12).map(x=>(
-                <tr key={x.cve}>
-                  <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
-                  <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
-                  <td>{x.shortDescription || x.description || '—'}</td>
-                  <td>{formatDate(x.dateAdded)}</td>
-                  <td>{x.product}</td>
-                </tr>
-              ))}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={5} className="muted">No KEV entries.</td></tr>}
+              {(data.cves.itw_related||[]).slice(0,12).map(x=>{
+                const p = coalescePatched(x);
+                const u = coalesceUnpatched(x);
+                return (
+                  <tr key={x.cve}>
+                    <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
+                    <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
+                    <td>{x.shortDescription || x.description || '—'}</td>
+                    <td>{formatDate(x.dateAdded)}</td>
+                    <td>{x.product}</td>
+                    <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
+                    <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
+                  </tr>
+                );
+              })}
+              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// Recent Gecko/SM CLs</h3></header>
+        <header className="bsub"><h3>// Recent SpiderMonkey CLs</h3></header>
         <ul className="list">
           {(data.gcls.items||[]).slice(0,14).map((x,i)=>(
             <li key={i}>
@@ -805,19 +1294,14 @@ function SmSection({ data, openModal }) {
               <div className="subline">{x.owner} · {formatDate(x.submitted)}</div>
             </li>
           ))}
+          {(data.gcls.items||[]).length>14 && (
+            <li>
+              <span className="more-link" onClick={showMoreSmCLs} role="button" tabIndex={0}
+                onKeyDown={(e)=> (e.key==='Enter'||e.key===' ') && showMoreSmCLs()}>≫ show more</span>
+            </li>
+          )}
           {(data.gcls.items||[]).length===0 && <li className="muted">No items.</li>}
         </ul>
-      </section>
-
-      <section className="block">
-        <header className="bsub"><h3>// Firefox Tree (Treeherder)</h3></header>
-        <div className="notice" data-state={(String(data.tree.general_state||'').toLowerCase()==='open')?'good':'warn'}>
-          {(data.tree.general_state||'unknown').toUpperCase()}
-        </div>
-        <div className="kv slim" style={{marginTop:10}}>
-          <label>Updated</label><div>{formatDate(data.tree.date)}</div>
-          <label>Message</label><div>{data.tree.message || ''}</div>
-        </div>
       </section>
 
       <section className="block">
@@ -840,6 +1324,7 @@ function SmSection({ data, openModal }) {
           {data.blog.entries.slice(0,10).map((e,i)=>(
             <li key={i}>
               <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a>
+              {/in.the.wild/i.test(e.title) ? <span className="pill itw">ITW</span> : null}
               <div className="subline">{formatDate(e.updated)}</div>
             </li>
           ))}
@@ -852,7 +1337,7 @@ function SmSection({ data, openModal }) {
 
 /* ------------------ page ------------------ */
 
-function KeepMeAliveSnippet({ addr = "bc1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }) {
+function KeepMeAliveSnippet({ addr = "3BXV3v7KvWXPNYDwJdLQVtH8zxCXdhkwc9" }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -890,14 +1375,18 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
 
   return (
     <div className="page">
+      <Head><title>JS Engine Hub</title></Head>
       <GlobalStyles/>
 
       <header className="hero">
         <div className="brand">
           <em />
-          <span>Browser Research Hub</span>
+          <span>JS Engine Hub</span>
         </div>
-        <p className="lede">A surgical dashboard for fuzzing and vuln research across modern JS engines.</p>
+        <p className="lede">A curated surgical dashboard for fuzzing and vulnerability research across modern JS engines.</p>
+        <p className="update-note">
+          <span className="cmt">// UPDATES TWICE DAILY AT 0700 &amp; 2100 ZULU [UTC]</span>
+        </p>
         <nav className="tabs" role="tablist" aria-label="Engines">
           <div className="tab-group">
             <button className={`tab ${tab==='chrome'?'on':''}`} onClick={()=>setTab('chrome')} role="tab" aria-selected={tab==='chrome'}>Chrome / V8</button>
@@ -906,7 +1395,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
           </div>
           <a
             className="gh-link"
-            href="https://github.com/your-org/your-repo/issues/new?labels=feature&template=feature_request.md"
+            href="https://github.com/ret2eax/jsehub/issues/new?labels=enhancement"
             target="_blank"
             rel="noreferrer"
           >
@@ -922,9 +1411,9 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
       </main>
 
       <footer className="ft muted">
-        <KeepMeAliveSnippet addr="bc1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+        <KeepMeAliveSnippet addr="3BXV3v7KvWXPNYDwJdLQVtH8zxCXdhkwc9" />
         <div className="ft-copy">
-          © {new Date().getFullYear()} Browser Research Hub — minimal surface, maximum signal.
+            {new Date().getFullYear()} JS Engine Hub : minimal surface, maximum signal.
         </div>
       </footer>
 
@@ -970,7 +1459,12 @@ function GlobalStyles() {
       .hero{margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:18px}
       .brand{display:flex;align-items:center;gap:12px;font-weight:1000;font-size:26px;letter-spacing:.2px}
       .brand em{display:inline-block;width:12px;height:12px;border-radius:999px;background:var(--accent);box-shadow:0 0 22px var(--accent-ghost)}
-      .lede{margin:8px 0 14px;color:#bbcadc}
+      .lede{margin:8px 0 6px;color:#bbcadc}
+      .update-note{margin:0 0 14px 0;font-size:12px}
+      .update-note .cmt{color:var(--syntax-comment)}
+      .update-note .kw{color:var(--syntax-keyword)}
+      .update-note .id{color:var(--mono)}
+      .update-note .num{color:var(--syntax-number)}
 
       /* Tabs (syntax-colored active state) */
       .tabs{
@@ -979,10 +1473,7 @@ function GlobalStyles() {
         align-items:center;
         gap:8px;
       }
-      .tab-group{
-        display:flex;
-        gap:8px;
-      }
+      .tab-group{display:flex;gap:8px;}
       .tab{border:1px solid var(--line);background:linear-gradient(180deg,#0e1521,#0b1018);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
       .tab.on{color:var(--syntax-keyword);box-shadow:0 0 0 4px var(--accent-ghost) inset;border-color:#253148}
       .gh-link{
@@ -1023,8 +1514,8 @@ function GlobalStyles() {
 
       /* KEV table: shrink description column ~20% */
       .table th:nth-child(3), .table td:nth-child(3){
-        width:60%;
-        max-width:60%;
+        width:40%;
+        max-width:40%;
       }
 
       .list{list-style:none;margin:0;padding:0}
@@ -1052,9 +1543,22 @@ function GlobalStyles() {
       .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}
       .pill.itw{color:#ffb27e;background:#2a160b;border-color:#3a2216}
       .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;color:var(--mono)}
+      /* Obsidian-style inline code chip */
+      .code{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.9em;background:var(--accent-ghost);color:var(--accent);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+      /* bash/sh code block highlighting */
+      .pre.sh .c-com{color:var(--syntax-comment);font-style:italic}
+      .pre.sh .c-cmd{color:var(--syntax-func)}
+      .pre.sh .c-flag{color:var(--syntax-number)}
+      .pre.sh .c-str{color:var(--syntax-string)}
+      .pre.sh .c-path{color:var(--syntax-string)}
+      /* per-engine references */
+      .refs{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;align-items:baseline;font-size:13px;margin-top:4px}
+      .refs .l{color:var(--muted);white-space:nowrap}
+      .refs a{word-break:break-all;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.95em}
       .muted{color:var(--muted)}
-      .linkish{background:none;border:none;padding:0;color:var(--accent);cursor:pointer;font-weight:800}
-      .linkish:hover{text-decoration:underline dotted}
+
+      .more-link{cursor:pointer;user-select:none}
+      .more-link:hover{text-decoration:underline}
 
       /* Resolver hint + inline input/button */
       .resolver-hint{
@@ -1067,32 +1571,17 @@ function GlobalStyles() {
         gap:8px;
         align-items:center;
       }
-      .resolver-input .input{
-        flex:1;
-      }
+      .resolver-input .input{flex:1;}
 
       .ft{border-top:1px solid var(--line);padding-top:14px;margin-top:28px;font-size:12px;color:#98abc2}
 
       /* Footer actions row */
-      .ft-row{
-        display:flex;
-        justify-content:flex-end;
-        margin-bottom:10px;
-      }
+      .ft-row{display:flex;justify-content:flex-end;margin-bottom:10px;}
       .gh-link{
-        display:inline-block;
-        border:1px solid var(--line);
-        border-radius:10px;
-        padding:6px 10px;
-        font-size:12px;
-        background:linear-gradient(180deg,#0f1828,#0b1220);
-        color:var(--text);
-        text-decoration:none;
+        display:inline-block;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px;
+        background:linear-gradient(180deg,#0f1828,#0b1220);color:var(--text);text-decoration:none;
       }
-      .gh-link:hover{
-        box-shadow:0 0 0 4px var(--accent-ghost);
-        text-decoration:none;
-      }
+      .gh-link:hover{box-shadow:0 0 0 4px var(--accent-ghost);text-decoration:none;}
 
       /* Donation snippet: mono, syntax colored, click-to-copy */
       .donate{
@@ -1106,6 +1595,7 @@ function GlobalStyles() {
         cursor:copy;
         position:relative;
         box-shadow:var(--shadow);
+        text-align:center; /* center the inline code line */
       }
       .donate:hover{ box-shadow:0 0 0 4px var(--accent-ghost); }
       .donate .kw{ color:var(--syntax-keyword); }
@@ -1131,14 +1621,11 @@ function GlobalStyles() {
         pointer-events:none;
         z-index:1200;
       }
-      .toast.on{
-        opacity:1;
-        transform:translateY(0);
-      }
+      .toast.on{opacity:1;transform:translateY(0);}
 
       /* Footer copy line separated slightly */
       .ft-copy{ margin-top:10px; }
-      
+
       .donate-snippet {
         background:#0a0e16;
         border:1px solid var(--line);
