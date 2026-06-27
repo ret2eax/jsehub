@@ -17,6 +17,20 @@ function readJSON(rel, fallback) {
 }
 const truncate = (s, n) => (s ? (s.length > n ? s.slice(0, n-1) + '…' : s) : '');
 
+// Compare CVE ids newest-first: year descending, then sequence number descending.
+function cmpCveDesc(a, b) {
+  const pa = String(a?.cve || '').match(/CVE-(\d+)-(\d+)/);
+  const pb = String(b?.cve || '').match(/CVE-(\d+)-(\d+)/);
+  if (!pa) return 1; if (!pb) return -1;
+  return (Number(pb[1]) - Number(pa[1])) || (Number(pb[2]) - Number(pa[2]));
+}
+const cveYear = (cve) => { const m = String(cve || '').match(/CVE-(\d{4})/); return m ? Number(m[1]) : 0; };
+
+// A Safari/JSC row to display: a resolved patch map (any year), or a WebKit CVE from 2022+.
+// Pre-2022 WebKit CVEs are dropped: Apple published no bugzilla ids before then, so they are
+// systematically unresolvable (no public CVE->commit linkage exists for them).
+const jscShown = (x) => Boolean(x.patchmap?.confident || (x.webkit === true && cveYear(x.cve) >= 2022));
+
 /* --------- CISA KEV: derive vulnerability class from shortDescription ---------- */
 function kevClassFromShort(s) {
   if (!s) return 'Unspecified';
@@ -89,21 +103,28 @@ function regressionFiles(files) {
   );
 }
 
+// Engine-relevant ITW CVEs. JSC's KEV slice bundles non-engine Apple components
+// (Kernel/CoreAudio/ImageIO/...); keep only WebKit-family (JS engine) entries there.
+function engineItwRows(props, key) {
+  const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
+  if (key === 'jsc') return arr.filter(jscShown);
+  return arr;
+}
+
 // Flatten every engine's ITW CVEs into one list tagged with engine, newest first.
 function allItwRows(props) {
   const rows = [];
   for (const key of ENGINE_ORDER) {
-    const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
-    for (const x of arr) rows.push({ ...x, engine: key });
+    for (const x of engineItwRows(props, key)) rows.push({ ...x, engine: key });
   }
-  return rows.sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
+  return rows.sort(cmpCveDesc);
 }
 
 // Per-engine patch-map coverage (how many ITW CVEs resolve to a verified fix).
 function coverage(props) {
   const out = {};
   for (const key of ENGINE_ORDER) {
-    const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
+    const arr = engineItwRows(props, key);
     out[key] = {
       total: arr.length,
       high: arr.filter(x => x.patchmap?.confident).length,
@@ -125,25 +146,6 @@ function taxonomy(rows) {
   return [...byClass.entries()]
     .map(([cls, c]) => ({ cls, ...c }))
     .sort((a, b) => b.total - a.total);
-}
-
-// Median days from fix landing (patchmap date) to KEV catalog date, per engine.
-function latency(props) {
-  const out = {};
-  for (const key of ENGINE_ORDER) {
-    const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
-    const deltas = [];
-    for (const x of arr) {
-      const fix = x.patchmap?.patched_date;
-      const kev = x.dateAdded;
-      if (!fix || !kev) continue;
-      const d = (new Date(kev) - new Date(fix)) / 86400000;
-      if (isFinite(d)) deltas.push(d);
-    }
-    deltas.sort((a, b) => a - b);
-    out[key] = deltas.length ? Math.round(deltas[Math.floor(deltas.length / 2)]) : null;
-  }
-  return out;
 }
 
 function FreshnessBadge({ when }) {
@@ -172,14 +174,13 @@ function CveDetail({ row, engineKey }) {
         <span className="pill" style={{ marginLeft:0, color:eng.color, borderColor:'#243149' }}>{eng.short}</span>
         <span className="pill itw">{kevClassFromShort(row.shortDescription || row.description)}</span>
         {row.patchmap
-          ? <span className={`pill ${row.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{row.patchmap.confident ? 'high confidence' : 'low confidence'}</span>
-          : <span className="pill muted">unresolved</span>}
+          ? <span className={`pill ${row.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{row.patchmap.confident ? 'Mapping: High' : 'Mapping: Low'}</span>
+          : <span className="pill muted">Mapping: unresolved</span>}
       </div>
 
       <p className="cd-desc">{row.shortDescription || row.description || 'No description.'}</p>
 
       <div className="kv slim cd-kv">
-        <label>KEV added</label><div>{formatDate(row.dateAdded)}</div>
         {pm.patched_date && (<><label>Fix landed</label><div>{formatDate(pm.patched_date)}</div></>)}
         <label>Patched</label><div>{patched ? <MonoCommitLink commit={patched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
         <label>Vulnerable</label><div>{unpatched ? <MonoCommitLink commit={unpatched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
@@ -944,6 +945,7 @@ function SmResolver({ data, openModal }) {
 /* ------------------ engine sections ------------------ */
 function ChromeSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'chrome';
+  const [itwLimit, setItwLimit] = useState(12);
   const channels = ['Canary','Dev','Beta','Stable'];
   const latest = Object.fromEntries(channels.map(ch => [ch, latestByChannel(data.releases, ch)]));
   const asan = normalizeAsan(data.builds);
@@ -1037,19 +1039,19 @@ function ChromeSection({ data, openModal, openCve }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
-        &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve confidently are intentionally left blank, verify before use to avoid misleading deltas.
+        &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
       </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
-                <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Component</th>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Component</th>
                 <th>Patched</th><th>Vulnerable</th>
-                <th className="help" title={"Patch-map resolution confidence:\nhigh  = verified fix (the patched commit fixes this CVE; vulnerable is its exact parent)\nlow   = a CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the commits are withheld\n—     = no Gerrit CL was found for this CVE"}>Confidence</th>
+                <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (the patched commit fixes this CVE; vulnerable is its exact parent)\nLOW  = a CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the commits are withheld\n—    = no fixing CL could be resolved for this CVE"}>Mapping confidence</th>
               </tr>
             </thead>
             <tbody>
-              {data.cves.itw_chrome_related.slice(0,12).map(x=>{
+              {[...data.cves.itw_chrome_related].sort(cmpCveDesc).slice(0,itwLimit).map(x=>{
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
@@ -1057,7 +1059,6 @@ function ChromeSection({ data, openModal, openCve }) {
                     <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
-                    <td>{formatDate(x.dateAdded)}</td>
                     <td>{x.product}</td>
                     <td>
                       <PatchedCell
@@ -1077,17 +1078,24 @@ function ChromeSection({ data, openModal, openCve }) {
                       ? <span
                           className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
                           title={x.patchmap.confident
-                            ? 'Verified fix: the patched commit fixes this CVE and the vulnerable commit is its exact parent.'
-                            : 'A Gerrit CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the patched/vulnerable commits are withheld.'}
-                        >{x.patchmap.confident ? 'high' : 'low'}</span>
-                      : <span className="muted help" title="No Gerrit CL was found for this CVE, so no patched/vulnerable commit could be resolved.">—</span>}</td>
+                            ? 'Verified mapping: the patched commit fixes this CVE and the vulnerable commit is its exact parent.'
+                            : 'A CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the patched/vulnerable commits are withheld.'}
+                        >{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
+                      : <span className="pill muted help" title="No fixing commit could be mapped to this CVE, so no patched/vulnerable commit is shown.">UNRESOLVED</span>}</td>
                   </tr>
                 );
               })}
-              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={8} className="muted">No KEV entries.</td></tr>}
+              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
+        {data.cves.itw_chrome_related.length > itwLimit && (
+          <div style={{ marginTop:10 }}>
+            <span className="more-link" role="button" tabIndex={0}
+              onClick={()=>setItwLimit(data.cves.itw_chrome_related.length)}
+              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit(data.cves.itw_chrome_related.length)}>≫ show more ({data.cves.itw_chrome_related.length - itwLimit} more)</span>
+          </div>
+        )}
       </section>
 
       <section className="block">
@@ -1142,6 +1150,12 @@ function ChromeSection({ data, openModal, openCve }) {
 
 function JscSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'jsc';
+  // Keep only WebKit-family (JS engine) CVEs, dropping non-engine Apple components and
+  // pre-2022 WebKit CVEs (systematically unresolvable). Resolved rows always count. Newest first.
+  const itwOrdered = [...(data.cves.itw_related||[])]
+    .filter(jscShown)
+    .sort(cmpCveDesc);
+  const [itwLimit, setItwLimit] = useState(12);
   const showMoreJscCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent JavaScriptCore CLs', (
@@ -1219,23 +1233,20 @@ function JscSection({ data, openModal, openCve }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Safari/JSC]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; vulnerable commit is the parent of each verified fix on WebKit trunk; the fix bug is corroborated across Apple advisories and the commit references it. CVEs with no published WebKit bug (older or non-WebKit) are left blank. Verify at the source before use.
+          &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
         </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
-                <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Product</th>
                 <th>Patched</th><th>Vulnerable</th>
-                <th className="help" title={"Patch-map resolution confidence:\nhigh  = verified fix (>=2 Apple advisories agree on the WebKit bug and a single commit references it; vulnerable is its exact parent)\nlow   = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—     = no WebKit bug was published for this CVE (older or non-WebKit)"}>Confidence</th>
+                <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (>=2 Apple advisories agree on the WebKit bug and a single commit references it; vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—    = no WebKit bug was published for this CVE (older or non-WebKit)"}>Mapping confidence</th>
               </tr>
             </thead>
             <tbody>
-              {/* JSC's KEV list mixes WebKit and non-WebKit Apple CVEs; float resolved rows up
-                  (stable sort keeps date order within each tier) so the patch map is visible. */}
-              {[...(data.cves.itw_related||[])]
-                .sort((a,b)=>((a.patchmap?.confident?0:a.patchmap?1:2)-(b.patchmap?.confident?0:b.patchmap?1:2)))
-                .slice(0, Math.max(12, (data.cves.itw_related||[]).filter(x=>x.patchmap?.confident).length))
+              {itwOrdered
+                .slice(0, itwLimit)
                 .map(x=>{
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
@@ -1244,7 +1255,6 @@ function JscSection({ data, openModal, openCve }) {
                     <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
-                    <td>{formatDate(x.dateAdded)}</td>
                     <td>{x.product}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
@@ -1252,17 +1262,24 @@ function JscSection({ data, openModal, openCve }) {
                       ? <span
                           className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
                           title={x.patchmap.confident
-                            ? 'Verified fix: multiple Apple advisories agree on the WebKit bug, a single commit references it, and the vulnerable commit is its exact parent on trunk.'
+                            ? 'Verified mapping: multiple Apple advisories agree on the WebKit bug, a single commit references it, and the vulnerable commit is its exact parent on trunk.'
                             : 'The fix for this CVE spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
-                        >{x.patchmap.confident ? 'high' : 'low'}</span>
-                      : <span className="muted help" title="No WebKit bug was published for this CVE (older or non-WebKit), so no patched/vulnerable commit is shown.">—</span>}</td>
+                        >{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
+                      : <span className="pill muted help" title="No WebKit bug was published for this CVE (older or non-WebKit), so no patched/vulnerable commit is shown.">UNRESOLVED</span>}</td>
                   </tr>
                 );
               })}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={8} className="muted">No KEV entries.</td></tr>}
+              {itwOrdered.length===0 && <tr><td colSpan={7} className="muted">No WebKit/JSC KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
+        {itwOrdered.length > itwLimit && (
+          <div style={{ marginTop:10 }}>
+            <span className="more-link" role="button" tabIndex={0}
+              onClick={()=>setItwLimit(itwOrdered.length)}
+              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit(itwOrdered.length)}>≫ show more ({itwOrdered.length - itwLimit} more)</span>
+          </div>
+        )}
       </section>
 
       <section className="block">
@@ -1316,6 +1333,7 @@ function JscSection({ data, openModal, openCve }) {
 
 function SmSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'sm';
+  const [itwLimit, setItwLimit] = useState(12);
   const showMoreSmCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent SpiderMonkey CLs', (
@@ -1449,19 +1467,19 @@ function SmSection({ data, openModal, openCve }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; vulnerable commit is the parent of each verified fix landing on mozilla-central; CVEs whose fix spans multiple landings (ambiguous parent) or that we cannot resolve are left blank. Verify at the source before use.
+          &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
         </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
-                <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Product</th>
                 <th>Patched</th><th>Vulnerable</th>
-                <th className="help" title={"Patch-map resolution confidence:\nhigh  = verified fix (a single landing fixes this CVE; vulnerable is its exact parent)\nlow   = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—     = no fixing commit could be resolved for this CVE"}>Confidence</th>
+                <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (a single landing fixes this CVE; vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—    = no fixing commit could be resolved for this CVE"}>Mapping confidence</th>
               </tr>
             </thead>
             <tbody>
-              {(data.cves.itw_related||[]).slice(0,12).map(x=>{
+              {[...(data.cves.itw_related||[])].sort(cmpCveDesc).slice(0,itwLimit).map(x=>{
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
@@ -1469,7 +1487,6 @@ function SmSection({ data, openModal, openCve }) {
                     <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
-                    <td>{formatDate(x.dateAdded)}</td>
                     <td>{x.product}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
@@ -1477,17 +1494,24 @@ function SmSection({ data, openModal, openCve }) {
                       ? <span
                           className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
                           title={x.patchmap.confident
-                            ? 'Verified fix: a single landing fixes this CVE and the vulnerable commit is its exact parent on mozilla-central.'
+                            ? 'Verified mapping: a single landing fixes this CVE and the vulnerable commit is its exact parent on mozilla-central.'
                             : 'The fix for this CVE spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
-                        >{x.patchmap.confident ? 'high' : 'low'}</span>
-                      : <span className="muted help" title="No fixing commit could be resolved for this CVE, so no patched/vulnerable commit is shown.">—</span>}</td>
+                        >{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
+                      : <span className="pill muted help" title="No fixing commit could be resolved for this CVE, so no patched/vulnerable commit is shown.">UNRESOLVED</span>}</td>
                   </tr>
                 );
               })}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={8} className="muted">No KEV entries.</td></tr>}
+              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
+        {(data.cves.itw_related||[]).length > itwLimit && (
+          <div style={{ marginTop:10 }}>
+            <span className="more-link" role="button" tabIndex={0}
+              onClick={()=>setItwLimit((data.cves.itw_related||[]).length)}
+              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit((data.cves.itw_related||[]).length)}>≫ show more ({(data.cves.itw_related||[]).length - itwLimit} more)</span>
+          </div>
+        )}
       </section>
 
       <section className="block">
@@ -1584,7 +1608,6 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
   const props = { chrome, jsc, sm };
   const rows = useMemo(() => allItwRows(props), [chrome, jsc, sm]);
   const cov = useMemo(() => coverage(props), [chrome, jsc, sm]);
-  const lat = useMemo(() => latency(props), [chrome, jsc, sm]);
   const taxo = useMemo(() => taxonomy(rows), [rows]);
   const [limit, setLimit] = useState(24);
 
@@ -1615,7 +1638,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
           <div className="stat"><div className="label">Recent ITW CVEs</div><div className="value">{totalItw}</div><div className="meta">CISA KEV, browser scope</div></div>
           <div className="stat"><div className="label">Verified patch maps</div><div className="value">{totalHigh}</div><div className="meta">high-confidence CVE → fix</div></div>
-          <div className="stat"><div className="label">Median fix → KEV</div><div className="value">{[lat.chrome,lat.jsc,lat.sm].some(v=>v!=null) ? `${[lat.chrome,lat.jsc,lat.sm].filter(v=>v!=null).reduce((a,b)=>a+b,0) / [lat.chrome,lat.jsc,lat.sm].filter(v=>v!=null).length | 0}d` : '—'}</div><div className="meta">fix landing to catalog</div></div>
+          <div className="stat"><div className="label">Mapped coverage</div><div className="value">{totalItw ? Math.round((totalHigh/totalItw)*100) : 0}%</div><div className="meta">ITW CVEs with a verified patch map</div></div>
         </div>
       </section>
 
@@ -1641,21 +1664,20 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD</h3></header>
-        <p className="resolver-hint">&gt;&gt; recent known exploited CVEs across the three engines, newest first; not a complete vulnerability history. Click a row for the full patch-map, differential, and regression tests.</p>
+        <p className="resolver-hint">&gt;&gt; recently known exploited CVEs across all three engines, ordered newest first. This is not a complete vulnerability history. Click any row to view the corresponding patch-map, differential and regresttion tests. Vulnerable commits are derived from the patched canonical parent where possible. Commits that cannot be confidently resolved or mapped are intentionally left blank, verify before use to avoid misleading deltas.</p>
         <div className="tableWrap">
           <table className="table xtimeline">
-            <thead><tr><th>Date added</th><th>Engine</th><th>CVE</th><th>Class</th><th>Patch map</th></tr></thead>
+            <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Mapping confidence</th></tr></thead>
             <tbody>
               {rows.slice(0, limit).map((x, i) => (
                 <tr key={`${x.engine}-${x.cve}-${i}`} className="rowlink" onClick={() => openCve(x, x.engine)} tabIndex={0}
                     onKeyDown={e => (e.key==='Enter'||e.key===' ') && openCve(x, x.engine)}>
-                  <td className="mono">{formatDate(x.dateAdded).slice(0,10)}</td>
                   <td><span className="epill" style={{ color:ENGINES[x.engine].color, borderColor:'#243149' }}>{ENGINES[x.engine].short}</span></td>
                   <td><span className="mono">{x.cve}</span></td>
                   <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                   <td>{x.patchmap
-                    ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'high' : 'low'}</span>
-                    : <span className="muted">—</span>}</td>
+                    ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
+                    : <span className="pill muted">UNRESOLVED</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -1727,7 +1749,7 @@ function ReferenceSection() {
       <section className="block">
         <header className="bsub"><h3>// JIT PIPELINES</h3></header>
         <div className="tableWrap">
-          <table className="table">
+          <table className="table reftable">
             <thead><tr><th>Engine</th><th>Interpreter</th><th>Baseline</th><th>Mid-tier</th><th>Optimizing</th></tr></thead>
             <tbody>
               {JIT_TIERS.map(t => (
@@ -1965,19 +1987,22 @@ export function GlobalStyles() {
       .table th,.table td{border-bottom:1px solid var(--line);padding:10px 10px;text-align:left;vertical-align:top}
       .table th{color:#cfe0f2;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 
-      /* KEV table: shrink description column ~20% (scoped so it never hits the overview tables) */
-      .table:not(.vstrip):not(.taxo):not(.xtimeline) th:nth-child(3),
-      .table:not(.vstrip):not(.taxo):not(.xtimeline) td:nth-child(3){
+      /* KEV table: shrink description column ~20% (scoped so it never hits the overview/reference tables) */
+      .table:not(.vstrip):not(.taxo):not(.xtimeline):not(.reftable) th:nth-child(3),
+      .table:not(.vstrip):not(.taxo):not(.xtimeline):not(.reftable) td:nth-child(3){
         width:40%;
         max-width:40%;
       }
+      /* reference tables: even, content-sized columns */
+      .reftable th, .reftable td{width:20%}
+      .reftable th:first-child, .reftable td:first-child{width:16%;white-space:nowrap}
 
-      /* ITW tables: CVE / date / patched / vulnerable stay on one line; Description wraps */
+      /* ITW tables (CVE / Class / Description / Component / Patched / Vulnerable / Mapping):
+         CVE, Patched, Vulnerable, Mapping stay on one line; Description wraps */
       .table.itw th:nth-child(1), .table.itw td:nth-child(1),
-      .table.itw th:nth-child(4), .table.itw td:nth-child(4),
+      .table.itw th:nth-child(5), .table.itw td:nth-child(5),
       .table.itw th:nth-child(6), .table.itw td:nth-child(6),
-      .table.itw th:nth-child(7), .table.itw td:nth-child(7),
-      .table.itw th:nth-child(8), .table.itw td:nth-child(8){
+      .table.itw th:nth-child(7), .table.itw td:nth-child(7){
         white-space:nowrap;
       }
       .table.itw th:nth-child(3), .table.itw td:nth-child(3){
@@ -2028,7 +2053,10 @@ export function GlobalStyles() {
       .refs .l{color:var(--muted);white-space:nowrap}
       .refs a{word-break:break-all;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.95em}
       .muted{color:var(--muted)}
-      .pill.muted{color:var(--muted)}
+      .pill.muted{color:var(--muted);margin-left:0;background:rgba(159,176,197,.07);border-color:#2a3650}
+      /* centre the mapping-confidence pills */
+      .table.itw th:nth-child(7), .table.itw td:nth-child(7){text-align:center}
+      .xtimeline th:nth-child(4), .xtimeline td:nth-child(4){text-align:center}
 
       /* engine markers (overview / reference) */
       .edot{display:inline-block;width:9px;height:9px;border-radius:999px;vertical-align:middle;margin-right:7px;box-shadow:0 0 10px rgba(255,255,255,.06)}
@@ -2050,7 +2078,7 @@ export function GlobalStyles() {
       .vstrip th:nth-child(4),.vstrip td:nth-child(4){width:14%;white-space:nowrap}
       .vstrip th:last-child,.vstrip td:last-child{width:28%}
       .xtimeline td{white-space:nowrap}
-      .xtimeline th:nth-child(4),.xtimeline td:nth-child(4){white-space:normal;width:34%}
+      .xtimeline th:nth-child(3),.xtimeline td:nth-child(3){white-space:normal;width:40%}
       .taxo th:first-child,.taxo td:first-child{width:24%;white-space:nowrap}
       .taxo th:nth-child(2),.taxo td:nth-child(2){width:46%}
       .taxo th:nth-child(n+3),.taxo td:nth-child(n+3){width:8%;text-align:right;white-space:nowrap}

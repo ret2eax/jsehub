@@ -46,9 +46,12 @@ function classify(s) {
 
 async function main() {
   const all = [];
+  const cveYear = (cve) => { const m = String(cve || '').match(/CVE-(\d{4})/); return m ? Number(m[1]) : 0; };
   for (const e of ENGINES) {
     const data = await readJSON(e.file, {});
-    const rows = data[e.cvesKey] || [];
+    // JSC: keep only WebKit-family entries, drop non-engine components and pre-2022 (unresolvable) CVEs.
+    const rows = (data[e.cvesKey] || [])
+      .filter(x => e.key !== 'jsc' || x.patchmap?.confident || (x.webkit === true && cveYear(x.cve) >= 2022));
     for (const x of rows) {
       const pm = x.patchmap || {};
       all.push({

@@ -115,26 +115,47 @@ function bugForCveInPage(html, cve) {
   return null;
 }
 
+// Is this CVE listed under a WebKit-family component (WebKit / JavaScriptCore) in this advisory?
+// Apple groups CVEs by component; the heading is the line just before "Available for:".
+// This is how we keep the table to the JS engine and drop Kernel/CoreAudio/ImageIO/etc.
+function isWebkitComponentCve(html, cve) {
+  let h = html.replace(/<\/(p|div|li|h\d|tr|td|br)>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+  const lines = h.split('\n').map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  let comp = null;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^Available for:/i.test(lines[i]) && i > 0) comp = lines[i - 1];
+    const m = lines[i].match(/^(CVE-20\d{2}-\d+)\s*:/);
+    if (m && m[1] === cve) return Boolean(comp && /\b(webkit|javascriptcore)\b/i.test(comp) && comp.length < 40);
+  }
+  return false;
+}
+
 // Fetch advisory pages until two agree on a bug (early-exit), capped at MAX_PAGES.
+// Also records whether the CVE is a WebKit-family component (so the table can drop non-engine CVEs).
 async function resolveBug(cve) {
   const urls = (await appleAdvisoryUrls(cve)).slice(0, MAX_PAGES);
   const votes = new Map();
   let pages = 0;
+  let webkit = false;
   for (const u of urls) {
     let html;
     try { html = await httpText(u); } catch { html = null; }
     if (html) {
       pages++;
+      if (!webkit && isWebkitComponentCve(html, cve)) webkit = true;
       const bug = bugForCveInPage(html, cve);
       if (bug) {
         votes.set(bug, (votes.get(bug) || 0) + 1);
-        if (votes.get(bug) >= CORROBORATE) return { bug, agree: votes.get(bug), pages };
+        // A published WebKit Bugzilla implies a WebKit-family component.
+        if (votes.get(bug) >= CORROBORATE) return { bug, agree: votes.get(bug), pages, webkit: true };
       }
     }
     await sleep(120);
   }
   const top = [...votes.entries()].sort((a, b) => b[1] - a[1])[0];
-  return top ? { bug: top[0], agree: top[1], pages } : { bug: null, agree: 0, pages };
+  return top
+    ? { bug: top[0], agree: top[1], pages, webkit: true }
+    : { bug: null, agree: 0, pages, webkit };
 }
 
 /* ----------------------- bug -> fix commit -> parent ----------------------- */
@@ -224,9 +245,12 @@ async function main() {
     const cve = r?.cve;
     if (!cve) continue;
 
-    const { bug, agree, pages } = await resolveBug(cve);
+    const { bug, agree, pages, webkit } = await resolveBug(cve);
+    const row = byCve.get(cve);
+    if (row) row.webkit = Boolean(webkit);   // tag engine vs non-engine for the table filter
+
     if (!bug) {
-      console.log(`[jsc-patchmap] ${cve}: no WebKit bugzilla (scanned ${pages} advisor${pages === 1 ? 'y' : 'ies'})`);
+      console.log(`[jsc-patchmap] ${cve}: ${webkit ? 'WebKit but ' : 'non-WebKit; '}no bugzilla (scanned ${pages} advisor${pages === 1 ? 'y' : 'ies'})`);
       continue;
     }
 
@@ -241,7 +265,6 @@ async function main() {
     const uiPatched   = confident ? fix.patched_commit : null;
     const uiUnpatched = confident ? fix.unpatched_commit : null;
 
-    const row = byCve.get(cve);
     if (row) {
       row.patched_repo = PROJECT;
       row.patched_url  = ghCommitUrl(fix.patched_commit);
