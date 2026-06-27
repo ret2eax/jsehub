@@ -12,15 +12,18 @@ const WEBKIT_FEED = 'https://webkit.org/feed/';
 const APPLE_DOCS_BASE = 'https://developer.apple.com/tutorials/data/documentation/safari-release-notes';
 const GITHUB_REFS_BASE = 'https://api.github.com/repos/WebKit/WebKit/git/matching-refs/tags';
 const OUT = 'data/jsc_releases.json';
+// Authenticate GitHub API calls when a token is present (60/hr unauth -> 1000+/hr).
+const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
+const GH_AUTH = GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {};
 
 async function fetchText(url, opts = {}) {
-  const r = await fetch(url, { headers: { 'User-Agent': 'js-engine-hub', ...opts.headers } });
+  const r = await fetch(url, { headers: { 'User-Agent': 'js-engine-hub', ...GH_AUTH, ...opts.headers } });
   if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
   return r.text();
 }
 
 async function fetchJSON(url, opts = {}) {
-  const r = await fetch(url, { headers: { 'User-Agent': 'js-engine-hub', 'Accept': 'application/json', ...opts.headers } });
+  const r = await fetch(url, { headers: { 'User-Agent': 'js-engine-hub', 'Accept': 'application/json', ...GH_AUTH, ...opts.headers } });
   if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
   return r.json();
 }
