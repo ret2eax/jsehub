@@ -555,7 +555,14 @@ function JscResolver({ data, openModal }) {
         });
       }
       const c = findCommit(s.slice(0, 12));
-      if (!c) return openModal('Commit not found', <div className="muted">No commit matches that prefix. Try a longer prefix.</div>);
+      if (!c) {
+        // Not a recent Source/JavaScriptCore commit; it may still be a valid WebKit commit
+        // (JSC lives in the WebKit repo), so link out instead of dead-ending.
+        const wkUrl = `https://github.com/WebKit/WebKit/commit/${s}`;
+        return openModal('Not a recent JSC commit', (
+          <div><span className="muted">No recent Source/JavaScriptCore commit matches that prefix. Look it up in the WebKit repo: </span><a href={wkUrl} target="_blank" rel="noreferrer">{wkUrl}</a></div>
+        ));
+      }
       return openModal(`JSC ${c.full.slice(0,12)}`, (
         <div>
           <div className="kv">
@@ -646,7 +653,7 @@ function SmResolver({ data, openModal }) {
       : obj.channel === 'Stable' ? 'https://hg.mozilla.org/releases/mozilla-release'
       : 'https://hg.mozilla.org/mozilla-central';
     const hgUrl  = obj.sm_commit  ? `${hgBase}/rev/${obj.sm_commit}`  : null;
-    const gitUrl = obj.git_commit ? `https://github.com/mozilla/gecko-dev/commit/${obj.git_commit}` : null;
+    const gitUrl = obj.git_commit ? `https://github.com/mozilla-firefox/firefox/commit/${obj.git_commit}` : null;
     openModal(title,
       <div>
         <div className="kv">
@@ -655,7 +662,7 @@ function SmResolver({ data, openModal }) {
           {'milestone'  in obj && obj.milestone  != null && <><label>Milestone</label><div>{obj.milestone}</div></>}
           {'push_id'    in obj && obj.push_id    != null && <><label>Push ID</label><div className="mono">{obj.push_id}</div></>}
           {'sm_commit'  in obj && obj.sm_commit  != null && <><label>mozilla-central</label><div className="mono">{hgUrl ? <a href={hgUrl} target="_blank" rel="noreferrer">{obj.sm_commit}</a> : obj.sm_commit}</div></>}
-          {'git_commit' in obj && obj.git_commit != null && <><label>gecko-dev (git)</label><div className="mono">{gitUrl ? <a href={gitUrl} target="_blank" rel="noreferrer">{obj.git_commit}</a> : obj.git_commit}</div></>}
+          {'git_commit' in obj && obj.git_commit != null && <><label>firefox (git)</label><div className="mono">{gitUrl ? <a href={gitUrl} target="_blank" rel="noreferrer">{obj.git_commit}</a> : obj.git_commit}</div></>}
           {'subject'    in obj && obj.subject    != null && <><label>Subject</label><div>{obj.subject}</div></>}
           {'notes'      in obj && obj.notes      != null && <><label>Release notes</label><div><a href={obj.notes} target="_blank" rel="noreferrer">{obj.notes}</a></div></>}
           {'updated'    in obj && obj.updated    != null && <><label>Updated</label><div>{formatDate(obj.updated)}</div></>}
@@ -1163,7 +1170,7 @@ function SmSection({ data, openModal }) {
         <div className="refs">
           <span className="l">Docs</span><a href="https://spidermonkey.dev" target="_blank" rel="noreferrer">https://spidermonkey.dev</a>
           <span className="l">SM Source (js/src)</span><a href="https://searchfox.org/firefox-main/source/js/src" target="_blank" rel="noreferrer">https://searchfox.org/firefox-main/source/js/src</a>
-          <span className="l">SM Source mirror</span><a href="https://github.com/mozilla/gecko-dev" target="_blank" rel="noreferrer">https://github.com/mozilla/gecko-dev</a>
+          <span className="l">SM Source mirror</span><a href="https://github.com/mozilla-firefox/firefox" target="_blank" rel="noreferrer">https://github.com/mozilla-firefox/firefox</a>
           <span className="l">Bug tracker</span><a href="https://bugzilla.mozilla.org" target="_blank" rel="noreferrer">https://bugzilla.mozilla.org</a>
         </div>
       </section>
