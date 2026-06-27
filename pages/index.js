@@ -122,6 +122,7 @@ function commitUrl(commit, project) {
   if (p === 'v8/v8')           return `https://github.com/v8/v8/commit/${commit}`;
   if (p === 'chromium/src')    return `https://chromium.googlesource.com/chromium/src/+/${commit}`;
   if (p === 'webkit/webkit')   return `https://github.com/WebKit/WebKit/commit/${commit}`;
+  if (p === 'mozilla-firefox/firefox') return `https://github.com/mozilla-firefox/firefox/commit/${commit}`;
   if (p === 'mozilla-central') return `https://hg.mozilla.org/mozilla-central/rev/${commit}`;
   return null;
 }
@@ -1053,18 +1054,24 @@ function JscSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Safari/JSC]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; recent ITW patch map is a work in progress for this engine.
+          &gt;&gt; vulnerable commit is the parent of each verified fix on WebKit trunk; the fix bug is corroborated across Apple advisories and the commit references it. CVEs with no published WebKit bug (older or non-WebKit) are left blank. Verify at the source before use.
         </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
-                <th>Patched</th><th>Unpatched</th>
+                <th>Patched</th><th>Vulnerable</th>
+                <th className="help" title={"Patch-map resolution confidence:\nhigh  = verified fix (>=2 Apple advisories agree on the WebKit bug and a single commit references it; vulnerable is its exact parent)\nlow   = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—     = no WebKit bug was published for this CVE (older or non-WebKit)"}>Confidence</th>
               </tr>
             </thead>
             <tbody>
-              {(data.cves.itw_related||[]).slice(0,12).map(x=>{
+              {/* JSC's KEV list mixes WebKit and non-WebKit Apple CVEs; float resolved rows up
+                  (stable sort keeps date order within each tier) so the patch map is visible. */}
+              {[...(data.cves.itw_related||[])]
+                .sort((a,b)=>((a.patchmap?.confident?0:a.patchmap?1:2)-(b.patchmap?.confident?0:b.patchmap?1:2)))
+                .slice(0, Math.max(12, (data.cves.itw_related||[]).filter(x=>x.patchmap?.confident).length))
+                .map(x=>{
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
@@ -1076,10 +1083,18 @@ function JscSection({ data, openModal }) {
                     <td>{x.product}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
+                    <td>{x.patchmap
+                      ? <span
+                          className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
+                          title={x.patchmap.confident
+                            ? 'Verified fix: multiple Apple advisories agree on the WebKit bug, a single commit references it, and the vulnerable commit is its exact parent on trunk.'
+                            : 'The fix for this CVE spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
+                        >{x.patchmap.confident ? 'high' : 'low'}</span>
+                      : <span className="muted help" title="No WebKit bug was published for this CVE (older or non-WebKit), so no patched/vulnerable commit is shown.">—</span>}</td>
                   </tr>
                 );
               })}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
+              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={8} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -1268,14 +1283,15 @@ function SmSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; recent ITW patch map is a work in progress for this engine.
+          &gt;&gt; vulnerable commit is the parent of each verified fix landing on mozilla-central; CVEs whose fix spans multiple landings (ambiguous parent) or that we cannot resolve are left blank. Verify at the source before use.
         </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Product</th>
-                <th>Patched</th><th>Unpatched</th>
+                <th>Patched</th><th>Vulnerable</th>
+                <th className="help" title={"Patch-map resolution confidence:\nhigh  = verified fix (a single landing fixes this CVE; vulnerable is its exact parent)\nlow   = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—     = no fixing commit could be resolved for this CVE"}>Confidence</th>
               </tr>
             </thead>
             <tbody>
@@ -1291,10 +1307,18 @@ function SmSection({ data, openModal }) {
                     <td>{x.product}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
+                    <td>{x.patchmap
+                      ? <span
+                          className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
+                          title={x.patchmap.confident
+                            ? 'Verified fix: a single landing fixes this CVE and the vulnerable commit is its exact parent on mozilla-central.'
+                            : 'The fix for this CVE spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
+                        >{x.patchmap.confident ? 'high' : 'low'}</span>
+                      : <span className="muted help" title="No fixing commit could be resolved for this CVE, so no patched/vulnerable commit is shown.">—</span>}</td>
                   </tr>
                 );
               })}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
+              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={8} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
