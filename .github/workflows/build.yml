@@ -1,0 +1,38 @@
+name: build-and-deploy
+on:
+  schedule:
+    # Times are UTC. Offset off :00 to dodge GitHub's top-of-hour scheduler congestion.
+    - cron: '7 7 * * *'   # 07:07 UTC — morning snapshot (captures full prior US day)
+    - cron: '7 21 * * *'  # 21:07 UTC — catches same-day CISA KEV / Chrome security drops
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run fetch:data
+      - run: pnpm run build
+      - name: Deploy to Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          # custom domain — writes the CNAME file on every deploy so it persists;
+          # served from root, so no Next.js basePath is needed. (.nojekyll is
+          # created automatically so the _next/ dir isn't stripped.)
+          cname: jsehub.dev

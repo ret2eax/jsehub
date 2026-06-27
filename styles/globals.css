@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark baseline to prove CSS loads even without Tailwind */
+:root { color-scheme: dark; }
+html, body { background:#0b0e14; color:#e6eef7; margin:0; }
+
+/* Helpers */
+.text-muted { color:#a6b6cb; }
+.text-mono  { color:#d7e7ff; }
+.border-line{ border-color:#1f2835; }
+.bg-surface { background-color:#121622; }
+.bg-surface2{ background-color:#0e111a; }
+
+/* Diagnostic helpers (prove Tailwind transforms @apply) */
+.probe { @apply bg-yellow-500 text-black px-3 py-1 rounded; }
