@@ -4,27 +4,13 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-06-27T13:10:11.480Z</updated>
+  <updated>2026-06-27T15:41:21.108Z</updated>
   <entry>
     <title>CVE-2026-11645 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-11645</id>
     <link href="https://jsehub.dev/#cve=CVE-2026-11645"/>
     <updated>2026-06-09T00:00:00.000Z</updated>
     <summary>Google Chromium V8 out-of-bounds read and write vulnerability that could allow a remote attacker to execute arbitrary code inside a sandbox via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
-  </entry>
-  <entry>
-    <title>CVE-2025-43510 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-43510</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-43510"/>
-    <updated>2026-03-20T00:00:00.000Z</updated>
-    <summary>Apple watchOS, iOS, iPadOS, macOS, visionOS, and tvOS contain an improper locking vulnerability that could allow a malicious application to cause unexpected changes in memory shared between processes.</summary>
-  </entry>
-  <entry>
-    <title>CVE-2025-43520 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-43520</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-43520"/>
-    <updated>2026-03-20T00:00:00.000Z</updated>
-    <summary>Apple watchOS, iOS, iPadOS, macOS, visionOS, and tvOS contain a classic buffer overflow vulnerability which could allow a malicious application to cause unexpected system termination or write kernel memory.</summary>
   </entry>
   <entry>
     <title>CVE-2025-31277 · Safari / JSC · Memory corruption</title>
@@ -48,32 +34,11 @@
     <summary>Apple macOS, iOS, iPadOS, and Safari 16.6 contain a use-after-free vulnerability due to the processing of maliciously crafted web content that may lead to memory corruption. [patch map: high]</summary>
   </entry>
   <entry>
-    <title>CVE-2021-30952 · Safari / JSC · Integer overflow</title>
-    <id>https://jsehub.dev/#cve=CVE-2021-30952</id>
-    <link href="https://jsehub.dev/#cve=CVE-2021-30952"/>
-    <updated>2026-03-05T00:00:00.000Z</updated>
-    <summary>Apple tvOS, macOS, Safari, iPadOS and watchOS contain an integer overflow or wraparound vulnerability due to the processing of maliciously crafted web content that may lead to arbitrary code execution.</summary>
-  </entry>
-  <entry>
-    <title>CVE-2023-41974 · Safari / JSC · Use-after-free</title>
-    <id>https://jsehub.dev/#cve=CVE-2023-41974</id>
-    <link href="https://jsehub.dev/#cve=CVE-2023-41974"/>
-    <updated>2026-03-05T00:00:00.000Z</updated>
-    <summary>Apple iOS and iPadOS contain a use-after-free vulnerability. An app may be able to execute arbitrary code with kernel privileges.</summary>
-  </entry>
-  <entry>
     <title>CVE-2026-2441 · Chrome / V8 · Use-after-free</title>
     <id>https://jsehub.dev/#cve=CVE-2026-2441</id>
     <link href="https://jsehub.dev/#cve=CVE-2026-2441"/>
     <updated>2026-02-17T00:00:00.000Z</updated>
     <summary>Google Chromium CSS contains a use-after-free vulnerability that could allow a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
-  </entry>
-  <entry>
-    <title>CVE-2026-20700 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2026-20700</id>
-    <link href="https://jsehub.dev/#cve=CVE-2026-20700"/>
-    <updated>2026-02-12T00:00:00.000Z</updated>
-    <summary>Apple iOS, macOS, tvOS, watchOS, and visionOS contain an improper restriction of operations within the bounds of a memory buffer vulnerability that could allow an attacker with memory write the capability to execute arbitrary code.</summary>
   </entry>
   <entry>
     <title>CVE-2025-43529 · Safari / JSC · Use-after-free</title>
@@ -118,13 +83,6 @@
     <summary>Google Chromium contains a type confusion vulnerability in the V8 JavaScript and WebAssembly engine. [patch map: high]</summary>
   </entry>
   <entry>
-    <title>CVE-2025-43300 · Safari / JSC · Out-of-bounds write</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-43300</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-43300"/>
-    <updated>2025-08-21T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, and macOS contain an out-of-bounds write vulnerability in the Image I/O framework.</summary>
-  </entry>
-  <entry>
     <title>CVE-2025-6558 · Chrome / V8 · Sandbox escape</title>
     <id>https://jsehub.dev/#cve=CVE-2025-6558</id>
     <link href="https://jsehub.dev/#cve=CVE-2025-6558"/>
@@ -139,32 +97,11 @@
     <summary>Google Chromium V8 contains a type confusion vulnerability that could allow a remote attacker to perform arbitrary read/write via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
   </entry>
   <entry>
-    <title>CVE-2025-43200 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-43200</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-43200"/>
-    <updated>2025-06-16T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, watchOS, and visionOS, contain an unspecified vulnerability when processing a maliciously crafted photo or video shared via an iCloud Link.</summary>
-  </entry>
-  <entry>
     <title>CVE-2025-5419 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2025-5419</id>
     <link href="https://jsehub.dev/#cve=CVE-2025-5419"/>
     <updated>2025-06-05T00:00:00.000Z</updated>
     <summary>Google Chromium V8 contains an out-of-bounds read and write vulnerability that could allow a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
-  </entry>
-  <entry>
-    <title>CVE-2025-31201 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-31201</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-31201"/>
-    <updated>2025-04-17T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, and other Apple products contain an arbitrary read and write vulnerability that allows an attacker to bypass Pointer Authentication.</summary>
-  </entry>
-  <entry>
-    <title>CVE-2025-31200 · Safari / JSC · Memory corruption</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-31200</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-31200"/>
-    <updated>2025-04-17T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, and other Apple products contain a memory corruption vulnerability that allows for code execution when processing an audio stream in a maliciously crafted media file.</summary>
   </entry>
   <entry>
     <title>CVE-2025-2783 · Chrome / V8 · Sandbox escape</title>
@@ -179,20 +116,6 @@
     <link href="https://jsehub.dev/#cve=CVE-2025-24201"/>
     <updated>2025-03-13T00:00:00.000Z</updated>
     <summary>Apple iOS, iPadOS, macOS, and other Apple products contain an out-of-bounds write vulnerability in WebKit that may allow maliciously crafted web content to break out of Web Content sandbox. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
-  </entry>
-  <entry>
-    <title>CVE-2025-24200 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-24200</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-24200"/>
-    <updated>2025-02-12T00:00:00.000Z</updated>
-    <summary>Apple iOS and iPadOS contains an incorrect authorization vulnerability that allows a physical attacker to disable USB Restricted Mode on a locked device.</summary>
-  </entry>
-  <entry>
-    <title>CVE-2025-24085 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2025-24085</id>
-    <link href="https://jsehub.dev/#cve=CVE-2025-24085"/>
-    <updated>2025-01-29T00:00:00.000Z</updated>
-    <summary>Apple iOS, macOS, and other Apple products contain a user-after-free vulnerability that could allow a malicious application to elevate privileges.</summary>
   </entry>
   <entry>
     <title>CVE-2024-44309 · Safari / JSC · Unspecified</title>
@@ -258,20 +181,6 @@
     <summary>Google Chromium Visuals contains a use-after-free vulnerability that allows a remote attacker to exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
   </entry>
   <entry>
-    <title>CVE-2024-23225 · Safari / JSC · Memory corruption</title>
-    <id>https://jsehub.dev/#cve=CVE-2024-23225</id>
-    <link href="https://jsehub.dev/#cve=CVE-2024-23225"/>
-    <updated>2024-03-06T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, tvOS, watchOS, and visionOS kernel contain a memory corruption vulnerability that allows an attacker with arbitrary kernel read and write capability to bypass kernel memory protections.</summary>
-  </entry>
-  <entry>
-    <title>CVE-2024-23296 · Safari / JSC · Memory corruption</title>
-    <id>https://jsehub.dev/#cve=CVE-2024-23296</id>
-    <link href="https://jsehub.dev/#cve=CVE-2024-23296"/>
-    <updated>2024-03-06T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, tvOS, and watchOS RTKit contain a memory corruption vulnerability that allows an attacker with arbitrary kernel read and write capability to bypass kernel memory protections.</summary>
-  </entry>
-  <entry>
     <title>CVE-2023-4762 · Chrome / V8 · Type confusion</title>
     <id>https://jsehub.dev/#cve=CVE-2023-4762</id>
     <link href="https://jsehub.dev/#cve=CVE-2023-4762"/>
@@ -279,10 +188,101 @@
     <summary>Google Chromium V8 contains a type confusion vulnerability that allows a remote attacker to execute code via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
   </entry>
   <entry>
-    <title>CVE-2022-48618 · Safari / JSC · Race condition</title>
-    <id>https://jsehub.dev/#cve=CVE-2022-48618</id>
-    <link href="https://jsehub.dev/#cve=CVE-2022-48618"/>
-    <updated>2024-01-31T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, tvOS, and watchOS contain a time-of-check/time-of-use (TOCTOU) memory corruption vulnerability that allows an attacker with read and write capabilities to bypass Pointer Authentication.</summary>
+    <title>CVE-2024-0519 · Chrome / V8 · Out-of-bounds</title>
+    <id>https://jsehub.dev/#cve=CVE-2024-0519</id>
+    <link href="https://jsehub.dev/#cve=CVE-2024-0519"/>
+    <updated>2024-01-17T00:00:00.000Z</updated>
+    <summary>Google Chromium V8 Engine contains an out-of-bounds memory access vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-7024 · Chrome / V8 · Code execution</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-7024</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-7024"/>
+    <updated>2024-01-02T00:00:00.000Z</updated>
+    <summary>Google Chromium WebRTC, an open-source project providing web browsers with real-time communication, contains a heap buffer overflow vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could impact web browsers using WebRTC, including but not limited to Google Chrome. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-42917 · Safari / JSC · Memory corruption</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-42917</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-42917"/>
+    <updated>2023-12-04T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, and Safari WebKit contain a memory corruption vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-42916 · Safari / JSC · Out-of-bounds read</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-42916</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-42916"/>
+    <updated>2023-12-04T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, and Safari WebKit contain an out-of-bounds read vulnerability that may disclose sensitive information when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-6345 · Chrome / V8 · Integer overflow</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-6345</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-6345"/>
+    <updated>2023-11-30T00:00:00.000Z</updated>
+    <summary>Google Chromium Skia contains an integer overflow vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a malicious file. This vulnerability affects Google Chrome and ChromeOS, Android, Flutter, and possibly other products. [patch map: low]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-5217 · Chrome / V8 · Unspecified</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-5217</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-5217"/>
+    <updated>2023-10-02T00:00:00.000Z</updated>
+    <summary>Google Chromium libvpx contains a heap buffer overflow vulnerability in vp8 encoding that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could impact web browsers using libvpx, including but not limited to Google Chrome. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-41993 · Safari / JSC · Code execution</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-41993</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-41993"/>
+    <updated>2023-09-25T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, and Safari WebKit contain an unspecified vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-4863 · Chrome / V8 · Out-of-bounds write</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-4863</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-4863"/>
+    <updated>2023-09-13T00:00:00.000Z</updated>
+    <summary>Google Chromium WebP contains a heap-based buffer overflow vulnerability that allows a remote attacker to perform an out-of-bounds memory write via a crafted HTML page. This vulnerability can affect applications that use the WebP Codec. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-37450 · Safari / JSC · Code execution</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-37450</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-37450"/>
+    <updated>2023-07-13T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, and Safari WebKit contain an unspecified vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-32435 · Safari / JSC · Memory corruption</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-32435</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-32435"/>
+    <updated>2023-06-23T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, and Safari WebKit contain a memory corruption vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-32439 · Safari / JSC · Type confusion</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-32439</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-32439"/>
+    <updated>2023-06-23T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, and Safari WebKit contain a type confusion vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2016-9079 · Firefox / SpiderMonkey · Use-after-free</title>
+    <id>https://jsehub.dev/#cve=CVE-2016-9079</id>
+    <link href="https://jsehub.dev/#cve=CVE-2016-9079"/>
+    <updated>2023-06-22T00:00:00.000Z</updated>
+    <summary>Mozilla Firefox, Firefox ESR, and Thunderbird contain a use-after-free vulnerability in SVG Animation, targeting Firefox and Tor browser users on Windows. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-3079 · Chrome / V8 · Type confusion</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-3079</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-3079"/>
+    <updated>2023-06-07T00:00:00.000Z</updated>
+    <summary>Google Chromium V8 Engine contains a type confusion vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
+  </entry>
+  <entry>
+    <title>CVE-2023-32409 · Safari / JSC · Unspecified</title>
+    <id>https://jsehub.dev/#cve=CVE-2023-32409</id>
+    <link href="https://jsehub.dev/#cve=CVE-2023-32409"/>
+    <updated>2023-05-22T00:00:00.000Z</updated>
+    <summary>Apple iOS, iPadOS, macOS, tvOS, watchOS, and Safari WebKit contain an unspecified vulnerability that can allow a remote attacker to break out of the Web Content sandbox. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
   </entry>
 </feed>
