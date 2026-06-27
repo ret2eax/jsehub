@@ -167,7 +167,9 @@ async function main() {
     ]);
 
     const items = parseRss(xml);
-    const tipCommit = jscCommits.commits?.[0]?.commit || null;
+    // STP tracks WebKit main; resolve the live main tip directly so it never depends on
+    // jsc_commits.json being populated first (that ordering left STP commits null on deploys).
+    const tipCommit = (await fetchBranchSha('main')) || jscCommits.commits?.[0]?.commit || null;
 
     // STP: "Release Notes for Safari Technology Preview N"
     const stpRe = /Technology Preview\s+(\d+)/i;

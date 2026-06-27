@@ -990,7 +990,7 @@ function JscSection({ data, openModal }) {
                 <div className="stat" key={ch}>
                   <div className="label">{ch}</div>
                   <div className="value">{r.version || '—'}</div>
-                  <div className="meta">· <span className="mono">{r.webkit_commit ? r.webkit_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
+                  <div className="meta"><span className="mono">{r.webkit_commit ? r.webkit_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
                 </div>
               );
             })}
