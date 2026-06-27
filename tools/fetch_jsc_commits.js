@@ -4,7 +4,9 @@
 import fs from 'node:fs/promises';
 
 const OUT = 'data/jsc_commits.json';
-const GH_COMMITS = 'https://api.github.com/repos/WebKit/WebKit/commits?sha=main&per_page=50';
+// Scoped to Source/JavaScriptCore so the resolver's commit index is the JS engine,
+// not all of WebKit (WebCore/WTF/etc.).
+const GH_COMMITS = 'https://api.github.com/repos/WebKit/WebKit/commits?sha=main&path=Source/JavaScriptCore&per_page=50';
 // Authenticate GitHub API calls when a token is present (60/hr unauth -> 1000+/hr).
 const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 const GH_AUTH = GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {};
