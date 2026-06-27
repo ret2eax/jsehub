@@ -11,6 +11,7 @@
     "fetch:smpatchmap": "node tools/fetch_sm_itw_patchmap.js",
     "fetch:jscpatchmap": "node tools/fetch_jsc_itw_patchmap.js",
     "gen:feeds": "node tools/gen_feeds.js",
+    "validate:data": "node tools/check_data.js",
 
     "fetch:data:chrome": "node tools/fetch_releases.js && node tools/fetch_v8_commits.js && python3 tools/fetch_builds.py && python3 tools/fetch_cves.py && node tools/fetch_v8_itw_patchmap.js && node tools/fetch_chrome_releases.js && node tools/fetch_gerrit_v8_cls.js",
     "fetch:jsc": "node tools/fetch_jsc_releases.js && node tools/fetch_jsc_commits.js && python3 tools/fetch_cisa_browsers.py && node tools/fetch_safari_releases.js && node tools/fetch_jsc_security_cls.js && node tools/fetch_jsc_resolver.js",

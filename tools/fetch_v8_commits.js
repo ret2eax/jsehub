@@ -18,15 +18,20 @@ async function getJSON(url) {
   throw new Error(`Failed to fetch ${url}`);
 }
 
-const j = await getJSON(URL);
-const commits = (j.log || []).map(c => ({
-  commit: c.commit,
-  author: c.author?.name,
-  email: c.author?.email,
-  subject: c.subject,
-  time: c.author?.time,
-}));
-
 await fs.mkdir('data', { recursive: true });
-await fs.writeFile('data/v8_commits.json', JSON.stringify({ ref: REF, commits }, null, 2));
-console.log('[v8] wrote data/v8_commits.json with', commits.length, 'commits');
+try {
+  const j = await getJSON(URL);
+  const commits = (j.log || []).map(c => ({
+    commit: c.commit,
+    author: c.author?.name,
+    email: c.author?.email,
+    subject: c.subject,
+    time: c.author?.time,
+  }));
+  await fs.writeFile('data/v8_commits.json', JSON.stringify({ ref: REF, commits }, null, 2));
+  console.log('[v8] wrote data/v8_commits.json with', commits.length, 'commits');
+} catch (e) {
+  // Degrade gracefully so a transient upstream failure can't abort the whole fetch:data chain.
+  await fs.writeFile('data/v8_commits.json', JSON.stringify({ ref: REF, commits: [] }, null, 2));
+  console.error('[v8] error:', e?.message || e, '; wrote empty list');
+}

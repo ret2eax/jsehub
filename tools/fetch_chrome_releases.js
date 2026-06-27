@@ -11,21 +11,27 @@ async function getText(url) {
   throw new Error('Failed: '+url);
 }
 
-// very tiny Atom parser: we only need title/link/updated
-const xml = await getText(FEED);
-const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(m=>{
-  const e = m[1];
-  const title = (e.match(/<title.*?>([\s\S]*?)<\/title>/) || [,''])[1].trim();
-  const updated = (e.match(/<updated>([^<]+)<\/updated>/) || [,''])[1].trim();
-  const link = (e.match(/<link[^>]*href="([^"]+)"/) || [,''])[1].trim();
-  return { title, updated, link };
-});
-
-// mark “in the wild” by phrase match
-const itw = entries
-  .filter(e => /Stable Channel Update/i.test(e.title))
-  .map(e => ({ ...e, itw: /in the wild/i.test(e.title) || /in the wild/i.test(e.summary || '') }));
-
 await fs.mkdir('data', { recursive: true });
-await fs.writeFile('data/chrome_releases_atom.json', JSON.stringify({ entries: itw }, null, 2));
-console.log('[releases-blog] wrote data/chrome_releases_atom.json with', itw.length, 'entries');
+try {
+  // very tiny Atom parser: we only need title/link/updated
+  const xml = await getText(FEED);
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(m=>{
+    const e = m[1];
+    const title = (e.match(/<title.*?>([\s\S]*?)<\/title>/) || [,''])[1].trim();
+    const updated = (e.match(/<updated>([^<]+)<\/updated>/) || [,''])[1].trim();
+    const link = (e.match(/<link[^>]*href="([^"]+)"/) || [,''])[1].trim();
+    return { title, updated, link };
+  });
+
+  // mark “in the wild” by phrase match
+  const itw = entries
+    .filter(e => /Stable Channel Update/i.test(e.title))
+    .map(e => ({ ...e, itw: /in the wild/i.test(e.title) || /in the wild/i.test(e.summary || '') }));
+
+  await fs.writeFile('data/chrome_releases_atom.json', JSON.stringify({ entries: itw }, null, 2));
+  console.log('[releases-blog] wrote data/chrome_releases_atom.json with', itw.length, 'entries');
+} catch (e) {
+  // Degrade gracefully so a transient feed failure can't abort the whole fetch:data chain.
+  await fs.writeFile('data/chrome_releases_atom.json', JSON.stringify({ entries: [] }, null, 2));
+  console.error('[releases-blog] error:', e?.message || e, '; wrote empty list');
+}
