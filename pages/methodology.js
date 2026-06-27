@@ -64,14 +64,15 @@ export default function Methodology() {
         </section>
 
         <section className="block">
-          <header className="bsub"><h3>// CONFIDENCE TIERS</h3></header>
-          <div className="kv slim" style={{ gridTemplateColumns:'90px 1fr' }}>
-            <label><span className="pill conf-hi">high</span></label>
+          <header className="bsub"><h3>// MAPPING CONFIDENCE</h3></header>
+          <p className="resolver-hint">&gt;&gt; the confidence tier reflects how reliably the patched and vulnerable commits are mapped to a CVE, not the severity of the bug.</p>
+          <div className="kv slim" style={{ gridTemplateColumns:'120px 1fr' }}>
+            <label><span className="pill conf-hi">HIGH</span></label>
             <div>The fix commit is confidently identified and the vulnerable commit is its exact parent. Safe to diff and bisect.</div>
-            <label><span className="pill conf-lo">low</span></label>
+            <label><span className="pill conf-lo">LOW</span></label>
             <div>A fix was located but spans multiple landings (ambiguous single parent), so the commits are withheld rather than shown misleadingly.</div>
-            <label><span className="pill muted">—</span></label>
-            <div>No fixing commit could be resolved (older pre-disclosure-era CVE, or a non-engine component), so nothing is shown.</div>
+            <label><span className="pill muted">UNRESOLVED</span></label>
+            <div>No fixing commit could be mapped (older pre-disclosure-era CVE, or a non-engine component), so nothing is shown.</div>
           </div>
         </section>
 
@@ -90,6 +91,10 @@ export default function Methodology() {
           <header className="bsub"><h3>// CAVEATS</h3></header>
           <ul className="ref-list">
             <li>Coverage grows over time: a CVE only resolves once the vendor has published the bug/commit linkage its method depends on. Older in-the-wild CVEs and non-engine components stay blank.</li>
+            <li>Some high-severity bugs receive multiple partial fixes or follow-up hardening. This method surfaces the single primary fix and may not capture every related commit.</li>
+            <li>Very old bugs (especially pre-2019) have noisier histories and predate some of the bug-to-commit linkage these methods rely on. The vulnerable commit is still the exact parent of the fix, but pinning the single canonical fix can be less certain.</li>
+            <li>Reverts, relands and backouts are filtered where possible, but complex landings may still warrant manual review.</li>
+            <li>The Safari/JSC table is scoped to WebKit-family components (WebKit, JavaScriptCore) using Apple’s own per-CVE advisory attribution; non-engine Apple CVEs in the same KEV advisories (Kernel, CoreAudio, ImageIO, ...) are excluded since this is a JS-engine dashboard. Pre-2022 WebKit CVEs are also dropped: Apple published no bugzilla ids before then, so no public CVE-to-commit linkage exists and they are systematically unresolvable.</li>
             <li>The JSC map depends on Apple’s advisory HTML format; cross-advisory corroboration makes a format change fail safe (rows drop to blank, never to a wrong commit).</li>
             <li>Always verify a commit at the source before relying on it. Links are provided for exactly that.</li>
           </ul>
