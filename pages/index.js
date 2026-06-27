@@ -1376,8 +1376,8 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
   return (
     <div className="page">
       <Head>
-        <title>JS Engine Hub — V8 · SpiderMonkey · JSC vulnerability research</title>
-        <meta name="description" content="A surgical dashboard for browser JavaScript-engine vulnerability research across V8, SpiderMonkey, and JavaScriptCore: releases, ASan shell builds, a version/commit resolver, and in-the-wild CVEs, refreshed twice daily." />
+        <title>JS Engine Hub</title>
+        <meta name="description" content="A curated surgical dashboard for fuzzing and vulnerability research across modern JavaScript engines, updates daily." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="index, follow" />
         <meta name="theme-color" content="#070b12" />
