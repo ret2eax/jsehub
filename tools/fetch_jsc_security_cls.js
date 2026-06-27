@@ -8,10 +8,13 @@ import fs from 'node:fs/promises';
 
 const OUT = 'data/jsc_security_cls.json';
 const GH_COMMITS = 'https://api.github.com/repos/WebKit/WebKit/commits?sha=main&path=Source/JavaScriptCore&per_page=80';
+// Authenticate GitHub API calls when a token is present (60/hr unauth -> 1000+/hr).
+const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
+const GH_AUTH = GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {};
 
 async function main() {
   try {
-    const r = await fetch(GH_COMMITS, { headers: { 'User-Agent': 'jsehub-jsc-cls/1.0' } });
+    const r = await fetch(GH_COMMITS, { headers: { 'User-Agent': 'jsehub-jsc-cls/1.0', ...GH_AUTH } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const rows = await r.json();
     const items = rows

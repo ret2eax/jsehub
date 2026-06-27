@@ -26,6 +26,9 @@ jobs:
           python-version: '3.11'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run fetch:data
+        env:
+          # auto-provided by Actions; raises GitHub API limit 60/hr -> 1000+/hr
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: pnpm run build
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3
