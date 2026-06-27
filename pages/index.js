@@ -1038,7 +1038,7 @@ function JscSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Safari/JSC]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; recent ITW patch map for this engine is currently a work in progress.
+          &gt;&gt; recent ITW patch map is a work in progress for this engine.
         </p>
         <div className="tableWrap">
           <table className="table">
@@ -1253,7 +1253,7 @@ function SmSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; recent ITW patch map for this engine is currently a work in progress.
+          &gt;&gt; recent ITW patch map is a work in progress for this engine.
         </p>
         <div className="tableWrap">
           <table className="table">
@@ -1375,7 +1375,29 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
 
   return (
     <div className="page">
-      <Head><title>JS Engine Hub</title></Head>
+      <Head>
+        <title>JS Engine Hub — V8 · SpiderMonkey · JSC vulnerability research</title>
+        <meta name="description" content="A surgical dashboard for browser JavaScript-engine vulnerability research across V8, SpiderMonkey, and JavaScriptCore: releases, ASan shell builds, a version/commit resolver, and in-the-wild CVEs, refreshed twice daily." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="index, follow" />
+        <meta name="theme-color" content="#070b12" />
+        <link rel="canonical" href="https://jsehub.dev/" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="JS Engine Hub" />
+        <meta property="og:title" content="JS Engine Hub" />
+        <meta property="og:description" content="Fuzzing and vulnerability research across V8, SpiderMonkey, and JavaScriptCore: releases, ASan builds, resolver, and in-the-wild CVEs." />
+        <meta property="og:url" content="https://jsehub.dev/" />
+        <meta property="og:image" content="https://jsehub.dev/og.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="JS Engine Hub" />
+        <meta name="twitter:description" content="Fuzzing and vulnerability research across V8, SpiderMonkey, and JavaScriptCore." />
+        <meta name="twitter:image" content="https://jsehub.dev/og.png" />
+      </Head>
       <GlobalStyles/>
 
       <header className="hero">
