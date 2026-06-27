@@ -32,3 +32,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./out
+          # custom domain — writes the CNAME file on every deploy so it persists;
+          # served from root, so no Next.js basePath is needed. (.nojekyll is
+          # created automatically so the _next/ dir isn't stripped.)
+          cname: jsehub.dev
