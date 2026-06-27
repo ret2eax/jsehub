@@ -133,6 +133,21 @@ function extractChromiumThings(refs) {
 }
 
 /* ----------------------- Gerrit discovery ------------------------- */
+// A merged CL that is clearly NOT a security fix (test/fuzzer/roll/version bump/squash).
+// Used both to penalize during selection and to blank a low-confidence result at write time.
+function looksLikeNonFix(subject) {
+  const s = (subject || '').toLowerCase().trim();
+  return (
+    /^(revert|reland)\b/.test(s) ||
+    /^roll\b/.test(s) ||                         // dependency roll (Skia/ANGLE/FreeType/Perfetto/...)
+    /^version\s+\d/.test(s) ||                    // version-bump commit
+    /\bfuzz(er|ing)?\b|libfuzzer/.test(s) ||      // fuzzer changes
+    /regression test|add (a |some )?(d?check|test)|^\[?test\b|\btest(s)? for\b/.test(s) ||
+    /--stress-|--no-lazy/.test(s) ||              // test/stress config changes
+    /squashed multiple commits/.test(s)           // vague squash, not a precise fix
+  );
+}
+
 function scoreChange(change, needle) {
   const subj = (change?.subject || '').toLowerCase();
   const msg  = (change?.revisions?.[change.current_revision]?.commit?.message || change?.subject || '').toLowerCase();
@@ -145,8 +160,14 @@ function scoreChange(change, needle) {
   if (subj.includes(n)) score += 20;
   if (msg.includes(n))  score += 35;
 
-  // Penalize revert/roll
-  if (/^(revert|reland|roll)\b/.test(subj)) score -= 60;
+  // STRONG positive: real Chrome security fixes are backported to release/LTS branches
+  // ([M###-LTS], [LTS-M###], [CfM-...]) and/or are cherry-picks ("Merged:", "cherry picked from").
+  if (/\[m\d+(-lts)?\]|\[lts-m\d+\]|\[cfm/i.test(subj)) score += 90;
+  if (/cherry picked from/i.test(msg))                 score += 45;
+  if (/^merged:/i.test(subj))                          score += 25;
+
+  // STRONG negative: non-fix CLs that merely reference the bug (the root cause of mismaps).
+  if (looksLikeNonFix(subj)) score -= 150;
 
   const submitted = new Date(change?.submitted || change?.updated || change?.created || 0).getTime();
   return { score, submitted };
@@ -340,9 +361,14 @@ async function main() {
     try {
       const t = await resolveTracks(project, changeNumber);
 
+      // Confidence guard: a CL that references the bug but is a test/fuzzer/roll/version/squash
+      // is not the fix. Blank the commits (honest "unresolved") rather than show a wrong pair.
+      const subjFirst = (t.message_preview || '').split('\n')[0];
+      const confident = !looksLikeNonFix(subjFirst);
+
       const hasOriginal = Boolean(t.patched_original);
-      const uiPatched   = hasOriginal ? t.patched_original : t.patched_backport;
-      const uiUnpatched = hasOriginal ? t.unpatched_original : t.unpatched_backport;
+      const uiPatched   = confident ? (hasOriginal ? t.patched_original : t.patched_backport) : null;
+      const uiUnpatched = confident ? (hasOriginal ? t.unpatched_original : t.unpatched_backport) : null;
 
       const row = byCve.get(cve);
       if (row) {
@@ -358,6 +384,7 @@ async function main() {
           gerrit_change: t.change,
           url: changeUrl(t.project, t.change),
           status: t.status,
+          confident,
           message_preview: t.message_preview,
           patched_backport: t.patched_backport,
           unpatched_backport: t.unpatched_backport,
@@ -388,11 +415,16 @@ async function main() {
         );
       }
 
+      if (!confident) {
+        console.log(`[v8-patchmap] BLANKED (non-fix CL): ${cve} → ${t.project}/+/${t.change} "${subjFirst.slice(0,60)}"`);
+      }
+
       outMap[cve] = {
         cve,
         project: t.project,
         change: t.change,
         status: t.status,
+        confident,
         message_preview: t.message_preview,
         patched_backport: t.patched_backport,
         unpatched_backport: t.unpatched_backport,
