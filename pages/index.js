@@ -1,7 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 
 /* ------------------ utils ------------------ */
 function formatDate(v) {
@@ -50,6 +51,159 @@ function kevClassFromShort(s) {
     .trim()
     .replace(/\b\w/g, c => c.toUpperCase());
   return pretty || 'Unspecified';
+}
+
+/* ------------------ cross-engine metadata + derivations ------------------ */
+const ENGINES = {
+  chrome: { key:'chrome', label:'Chrome / V8',            short:'V8',           vendor:'Google',  color:'#82aaff', cvesKey:'itw_chrome_related', project:'v8/v8' },
+  jsc:    { key:'jsc',    label:'Safari / JSC',           short:'JSC',          vendor:'Apple',   color:'#ff8a8a', cvesKey:'itw_related',        project:'webkit/webkit' },
+  sm:     { key:'sm',     label:'Firefox / SpiderMonkey', short:'SpiderMonkey', vendor:'Mozilla', color:'#f3d077', cvesKey:'itw_related',        project:'mozilla-firefox/firefox' },
+};
+const ENGINE_ORDER = ['chrome','jsc','sm'];
+
+// Diff link between the vulnerable parent and the patched commit.
+function compareUrl(unpatched, patched, project) {
+  if (!unpatched || !patched) return null;
+  const p = (project || '').toLowerCase();
+  if (p === 'v8/v8')                   return `https://github.com/v8/v8/compare/${unpatched}...${patched}`;
+  if (p === 'webkit/webkit')           return `https://github.com/WebKit/WebKit/compare/${unpatched}...${patched}`;
+  if (p === 'mozilla-firefox/firefox') return `https://github.com/mozilla-firefox/firefox/compare/${unpatched}...${patched}`;
+  if (p === 'chromium/src')            return `https://chromium.googlesource.com/chromium/src/+log/${unpatched}..${patched}`;
+  return null;
+}
+
+function fileUrl(file, sha, project) {
+  if (!file || !sha) return null;
+  const p = (project || '').toLowerCase();
+  if (p === 'webkit/webkit')           return `https://github.com/WebKit/WebKit/blob/${sha}/${file}`;
+  if (p === 'mozilla-firefox/firefox') return `https://github.com/mozilla-firefox/firefox/blob/${sha}/${file}`;
+  if (p === 'v8/v8')                   return `https://github.com/v8/v8/blob/${sha}/${file}`;
+  return null;
+}
+
+// Regression test / PoC files committed alongside a fix (the file a researcher actually wants).
+function regressionFiles(files) {
+  return (files || []).filter(f =>
+    /(^|\/)(JSTests|jit-test)\//i.test(f) ||
+    /\/(stress|regress[^/]*|crashtests?|reftests?)\//i.test(f)
+  );
+}
+
+// Flatten every engine's ITW CVEs into one list tagged with engine, newest first.
+function allItwRows(props) {
+  const rows = [];
+  for (const key of ENGINE_ORDER) {
+    const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
+    for (const x of arr) rows.push({ ...x, engine: key });
+  }
+  return rows.sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
+}
+
+// Per-engine patch-map coverage (how many ITW CVEs resolve to a verified fix).
+function coverage(props) {
+  const out = {};
+  for (const key of ENGINE_ORDER) {
+    const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
+    out[key] = {
+      total: arr.length,
+      high: arr.filter(x => x.patchmap?.confident).length,
+      low: arr.filter(x => x.patchmap && !x.patchmap.confident).length,
+    };
+  }
+  return out;
+}
+
+// Bug-class taxonomy: counts per class per engine across all ITW CVEs.
+function taxonomy(rows) {
+  const byClass = new Map();
+  for (const r of rows) {
+    const cls = kevClassFromShort(r.shortDescription || r.description);
+    if (!byClass.has(cls)) byClass.set(cls, { chrome:0, jsc:0, sm:0, total:0 });
+    const e = byClass.get(cls);
+    e[r.engine] += 1; e.total += 1;
+  }
+  return [...byClass.entries()]
+    .map(([cls, c]) => ({ cls, ...c }))
+    .sort((a, b) => b.total - a.total);
+}
+
+// Median days from fix landing (patchmap date) to KEV catalog date, per engine.
+function latency(props) {
+  const out = {};
+  for (const key of ENGINE_ORDER) {
+    const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
+    const deltas = [];
+    for (const x of arr) {
+      const fix = x.patchmap?.patched_date;
+      const kev = x.dateAdded;
+      if (!fix || !kev) continue;
+      const d = (new Date(kev) - new Date(fix)) / 86400000;
+      if (isFinite(d)) deltas.push(d);
+    }
+    deltas.sort((a, b) => a - b);
+    out[key] = deltas.length ? Math.round(deltas[Math.floor(deltas.length / 2)]) : null;
+  }
+  return out;
+}
+
+function FreshnessBadge({ when }) {
+  if (!when) return null;
+  const d = new Date(when);
+  if (isNaN(d)) return null;
+  const day = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  return <span className="fresh" title={`Data as of ${d.toISOString()}`}>as of {day}</span>;
+}
+
+// Full-detail view for a single CVE (opened from any ITW table; deep-linkable via #cve=).
+function CveDetail({ row, engineKey }) {
+  const eng = ENGINES[engineKey] || {};
+  const pm = row.patchmap || {};
+  const project = pm.project || eng.project;
+  const patched = row.patched_commit || pm.patched_commit || null;
+  const unpatched = row.unpatched_commit || pm.unpatched_commit || null;
+  const diff = compareUrl(unpatched, patched, project);
+  const tests = regressionFiles(pm.files);
+  const sourceUrl = pm.url || pm.bug_url || null;
+  const sourceLabel = engineKey === 'chrome' ? 'Gerrit CL' : 'Fix bug';
+
+  return (
+    <div className="cve-detail">
+      <div className="cd-tags">
+        <span className="pill" style={{ marginLeft:0, color:eng.color, borderColor:'#243149' }}>{eng.short}</span>
+        <span className="pill itw">{kevClassFromShort(row.shortDescription || row.description)}</span>
+        {row.patchmap
+          ? <span className={`pill ${row.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{row.patchmap.confident ? 'high confidence' : 'low confidence'}</span>
+          : <span className="pill muted">unresolved</span>}
+      </div>
+
+      <p className="cd-desc">{row.shortDescription || row.description || 'No description.'}</p>
+
+      <div className="kv slim cd-kv">
+        <label>KEV added</label><div>{formatDate(row.dateAdded)}</div>
+        {pm.patched_date && (<><label>Fix landed</label><div>{formatDate(pm.patched_date)}</div></>)}
+        <label>Patched</label><div>{patched ? <MonoCommitLink commit={patched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
+        <label>Vulnerable</label><div>{unpatched ? <MonoCommitLink commit={unpatched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
+        {pm.subject && (<><label>Fix commit</label><div className="mono cd-subj">{pm.subject}</div></>)}
+      </div>
+
+      {(diff || tests.length) && (
+        <div className="cd-actions">
+          {diff && <a className="btn small" href={diff} target="_blank" rel="noreferrer">View diff (parent...fix)</a>}
+          {tests.map((f, i) => {
+            const u = fileUrl(f, patched, project);
+            const name = f.split('/').pop();
+            return u ? <a key={i} className="btn small trig" href={u} target="_blank" rel="noreferrer" title={f}>regression test: {name}</a> : null;
+          })}
+        </div>
+      )}
+
+      <div className="cd-links">
+        <a href={`https://nvd.nist.gov/vuln/detail/${row.cve}`} target="_blank" rel="noreferrer">NVD</a>
+        {sourceUrl && <a href={sourceUrl} target="_blank" rel="noreferrer">{sourceLabel}</a>}
+        <a href={`https://www.cve.org/CVERecord?id=${row.cve}`} target="_blank" rel="noreferrer">CVE record</a>
+      </div>
+    </div>
+  );
 }
 
 /* ------------------ data load ------------------ */
@@ -190,6 +344,15 @@ function coalesceUnpatched(x) {
 
   const version = x.unpatched_version || null;
   return { commits: commits.length ? commits : null, version };
+}
+
+// Clickable CVE id that opens the cross-engine detail modal (deep-linkable).
+function CveLink({ x, engine, openCve }) {
+  return (
+    <a className="cve-link" role="button" tabIndex={0}
+       onClick={() => openCve(x, engine)}
+       onKeyDown={e => (e.key==='Enter'||e.key===' ') && openCve(x, engine)}>{x.cve}</a>
+  );
 }
 
 function PatchedCell({ patched_commit, patched_version, project }) {
@@ -779,7 +942,8 @@ function SmResolver({ data, openModal }) {
 }
 
 /* ------------------ engine sections ------------------ */
-function ChromeSection({ data, openModal }) {
+function ChromeSection({ data, openModal, openCve }) {
+  const ENGINE_TAB = 'chrome';
   const channels = ['Canary','Dev','Beta','Stable'];
   const latest = Object.fromEntries(channels.map(ch => [ch, latestByChannel(data.releases, ch)]));
   const asan = normalizeAsan(data.builds);
@@ -890,7 +1054,7 @@ function ChromeSection({ data, openModal }) {
                 const u = coalesceUnpatched(x);
                 return (
                   <tr key={x.cve}>
-                    <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
+                    <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
                     <td>{formatDate(x.dateAdded)}</td>
@@ -976,7 +1140,8 @@ function ChromeSection({ data, openModal }) {
   );
 }
 
-function JscSection({ data, openModal }) {
+function JscSection({ data, openModal, openCve }) {
+  const ENGINE_TAB = 'jsc';
   const showMoreJscCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent JavaScriptCore CLs', (
@@ -1076,7 +1241,7 @@ function JscSection({ data, openModal }) {
                 const u = coalesceUnpatched(x);
                 return (
                   <tr key={x.cve}>
-                    <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
+                    <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
                     <td>{formatDate(x.dateAdded)}</td>
@@ -1149,7 +1314,8 @@ function JscSection({ data, openModal }) {
   );
 }
 
-function SmSection({ data, openModal }) {
+function SmSection({ data, openModal, openCve }) {
+  const ENGINE_TAB = 'sm';
   const showMoreSmCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent SpiderMonkey CLs', (
@@ -1300,7 +1466,7 @@ function SmSection({ data, openModal }) {
                 const u = coalesceUnpatched(x);
                 return (
                   <tr key={x.cve}>
-                    <td><a href={`https://nvd.nist.gov/vuln/detail/${x.cve}`} target="_blank" rel="noreferrer">{x.cve}</a></td>
+                    <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
                     <td>{formatDate(x.dateAdded)}</td>
@@ -1405,12 +1571,234 @@ function KeepMeAliveSnippet({ addr = "3BXV3v7KvWXPNYDwJdLQVtH8zxCXdhkwc9" }) {
   );
 }
 
+/* ------------------ overview (cross-engine) ------------------ */
+function channelMap(rel) {
+  const m = {};
+  for (const r of (rel?.releases || [])) {
+    if (r.channel && r.version && !(r.channel in m)) m[r.channel] = r.version;
+  }
+  return m;
+}
+
+function OverviewSection({ chrome, jsc, sm, openCve }) {
+  const props = { chrome, jsc, sm };
+  const rows = useMemo(() => allItwRows(props), [chrome, jsc, sm]);
+  const cov = useMemo(() => coverage(props), [chrome, jsc, sm]);
+  const lat = useMemo(() => latency(props), [chrome, jsc, sm]);
+  const taxo = useMemo(() => taxonomy(rows), [rows]);
+  const [limit, setLimit] = useState(24);
+
+  const totalItw = rows.length;
+  const totalHigh = ENGINE_ORDER.reduce((n, k) => n + cov[k].high, 0);
+  const chans = {
+    chrome: channelMap(chrome.releases),
+    jsc:    channelMap(jsc.releases),
+    sm:     channelMap(sm.releases),
+  };
+  const preview = {
+    chrome: chans.chrome['Canary'] || chans.chrome['Dev'] || '—',
+    jsc:    chans.jsc['STP'] || chans.jsc['Safari Technology Preview'] || chans.jsc['Preview'] || '—',
+    sm:     chans.sm['Nightly'] || '—',
+  };
+  const maxTaxo = Math.max(1, ...taxo.map(t => t.total));
+  const freshest = [chrome.cves, jsc.cves, sm.cves]
+    .flatMap(c => Object.values(c || {}).flat())
+    .map(x => x?.patchmap?.generated).filter(Boolean).sort().pop();
+
+  return (
+    <>
+      <section className="block">
+        <div className="bhead"><h2>// OVERVIEW</h2><span className="tag">all engines</span></div>
+        <p className="resolver-hint">&gt;&gt; cross-engine snapshot: current releases, recent known in-the-wild exposure, and verified patch-map coverage across V8, JavaScriptCore, and SpiderMonkey. Not a complete vulnerability history.</p>
+
+        <div className="statrow">
+          <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
+          <div className="stat"><div className="label">Recent ITW CVEs</div><div className="value">{totalItw}</div><div className="meta">CISA KEV, browser scope</div></div>
+          <div className="stat"><div className="label">Verified patch maps</div><div className="value">{totalHigh}</div><div className="meta">high-confidence CVE → fix</div></div>
+          <div className="stat"><div className="label">Median fix → KEV</div><div className="value">{[lat.chrome,lat.jsc,lat.sm].some(v=>v!=null) ? `${[lat.chrome,lat.jsc,lat.sm].filter(v=>v!=null).reduce((a,b)=>a+b,0) / [lat.chrome,lat.jsc,lat.sm].filter(v=>v!=null).length | 0}d` : '—'}</div><div className="meta">fix landing to catalog</div></div>
+        </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// CURRENT RELEASES</h3></header>
+        <div className="tableWrap">
+          <table className="table vstrip">
+            <thead><tr><th>Engine</th><th>Stable</th><th>Beta</th><th>Preview / Nightly</th><th>ITW Patch-map coverage</th></tr></thead>
+            <tbody>
+              {ENGINE_ORDER.map(k => (
+                <tr key={k}>
+                  <td><span className="edot" style={{ background:ENGINES[k].color }} /> {ENGINES[k].label}</td>
+                  <td className="mono">{chans[k]['Stable'] || '—'}</td>
+                  <td className="mono">{chans[k]['Beta'] || '—'}</td>
+                  <td className="mono">{preview[k]}</td>
+                  <td className="muted">{cov[k].high} high · {cov[k].low} low · {cov[k].total} total</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// RECENT IN-THE-WILD</h3></header>
+        <p className="resolver-hint">&gt;&gt; recent known exploited CVEs across the three engines, newest first; not a complete vulnerability history. Click a row for the full patch-map, differential, and regression tests.</p>
+        <div className="tableWrap">
+          <table className="table xtimeline">
+            <thead><tr><th>Date added</th><th>Engine</th><th>CVE</th><th>Class</th><th>Patch map</th></tr></thead>
+            <tbody>
+              {rows.slice(0, limit).map((x, i) => (
+                <tr key={`${x.engine}-${x.cve}-${i}`} className="rowlink" onClick={() => openCve(x, x.engine)} tabIndex={0}
+                    onKeyDown={e => (e.key==='Enter'||e.key===' ') && openCve(x, x.engine)}>
+                  <td className="mono">{formatDate(x.dateAdded).slice(0,10)}</td>
+                  <td><span className="epill" style={{ color:ENGINES[x.engine].color, borderColor:'#243149' }}>{ENGINES[x.engine].short}</span></td>
+                  <td><span className="mono">{x.cve}</span></td>
+                  <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
+                  <td>{x.patchmap
+                    ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'high' : 'low'}</span>
+                    : <span className="muted">—</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {limit < rows.length && (
+          <div style={{ marginTop:10 }}>
+            <span className="more-link" role="button" tabIndex={0} onClick={() => setLimit(l => l + 30)}
+              onKeyDown={e => (e.key==='Enter'||e.key===' ') && setLimit(l => l + 30)}>≫ show more ({rows.length - limit} more)</span>
+          </div>
+        )}
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// RECENT ITW BUG CLASSES</h3></header>
+        <p className="resolver-hint">&gt;&gt; vulnerability-class distribution across the recent in-the-wild (CISA KEV) set only, by engine; not the full CVE history.</p>
+        <div className="tableWrap">
+          <table className="table taxo">
+            <thead><tr><th>Class</th><th>Distribution</th>
+              <th style={{ color:ENGINES.chrome.color }}>V8</th>
+              <th style={{ color:ENGINES.jsc.color }}>JSC</th>
+              <th style={{ color:ENGINES.sm.color }}>SM</th>
+              <th>Total</th></tr></thead>
+            <tbody>
+              {taxo.slice(0, 14).map(t => (
+                <tr key={t.cls}>
+                  <td>{t.cls}</td>
+                  <td>
+                    <span className="bar">
+                      <span style={{ width:`${(t.chrome/maxTaxo)*100}%`, background:ENGINES.chrome.color }} />
+                      <span style={{ width:`${(t.jsc/maxTaxo)*100}%`, background:ENGINES.jsc.color }} />
+                      <span style={{ width:`${(t.sm/maxTaxo)*100}%`, background:ENGINES.sm.color }} />
+                    </span>
+                  </td>
+                  <td className="mono">{t.chrome || '·'}</td>
+                  <td className="mono">{t.jsc || '·'}</td>
+                  <td className="mono">{t.sm || '·'}</td>
+                  <td className="mono">{t.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="subline" style={{ marginTop:8 }}><FreshnessBadge when={freshest} /></p>
+      </section>
+    </>
+  );
+}
+
+/* ------------------ reference ------------------ */
+const JIT_TIERS = [
+  { engine:'chrome', interp:'Ignition (bytecode)',        baseline:'Sparkplug',       mid:'Maglev',  opt:'TurboFan' },
+  { engine:'jsc',    interp:'LLInt (low-level interp)',   baseline:'Baseline JIT',    mid:'DFG',     opt:'FTL (B3/Air)' },
+  { engine:'sm',     interp:'C++ interp / Baseline interp', baseline:'Baseline JIT',  mid:'—',       opt:'WarpMonkey (Ion)' },
+];
+const MITIGATIONS = {
+  chrome: ['V8 Sandbox (heap isolation, in-progress hardening)', 'Pointer compression', 'External pointer table', 'Code pointer sandboxing / CFI', '--jitless option for attack-surface reduction'],
+  jsc:    ['Gigacage (bmalloc cage for JS/typed-array heaps)', 'StructureID randomization + entropy', 'JIT cage / fast permissions (APRR on Apple Silicon)', 'WebAssembly fast-memory guard pages', 'Poisoning of sensitive pointers'],
+  sm:     ['W^X enforcement on JIT code', 'Project Fission (site isolation)', 'Spectre/JIT hardening + value masking', 'Frozen builtins / sealed intrinsics', 'malloc/jemalloc page protections'],
+};
+function ReferenceSection() {
+  return (
+    <>
+      <section className="block">
+        <div className="bhead"><h2>// REFERENCE</h2><span className="tag">engine internals</span></div>
+        <p className="resolver-hint">&gt;&gt; quick cross-engine reference for JIT pipelines and notable mitigations.</p>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// JIT PIPELINES</h3></header>
+        <div className="tableWrap">
+          <table className="table">
+            <thead><tr><th>Engine</th><th>Interpreter</th><th>Baseline</th><th>Mid-tier</th><th>Optimizing</th></tr></thead>
+            <tbody>
+              {JIT_TIERS.map(t => (
+                <tr key={t.engine}>
+                  <td><span className="edot" style={{ background:ENGINES[t.engine].color }} /> {ENGINES[t.engine].short}</td>
+                  <td className="mono">{t.interp}</td>
+                  <td className="mono">{t.baseline}</td>
+                  <td className="mono">{t.mid}</td>
+                  <td className="mono">{t.opt}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// NOTABLE MITIGATIONS</h3></header>
+        <div className="ref-grid">
+          {ENGINE_ORDER.map(k => (
+            <div className="ref-card" key={k}>
+              <div className="ref-card-h"><span className="edot" style={{ background:ENGINES[k].color }} /> {ENGINES[k].short}</div>
+              <ul className="ref-list">
+                {MITIGATIONS[k].map((m, i) => <li key={i}>{m}</li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// DATA FEEDS</h3></header>
+        <p className="resolver-hint">&gt;&gt; our dashboard data is published as machine-readable feeds, regenerated on every deploy.</p>
+        <div className="refs">
+          <span className="l">ITW CVEs (JSON)</span><a href="/api/itw.json">/api/itw.json</a>
+          <span className="l">Patch Maps (JSON)</span><a href="/api/patchmap.json">/api/patchmap.json</a>
+          <span className="l">Atom Feed</span><a href="/feed.xml">/feed.xml</a>
+          <span className="l">ITW Patch Map Methodology</span><a href="/methodology">/methodology</a>
+        </div>
+      </section>
+    </>
+  );
+}
+
 export default function BrowserResearchHub({ chrome, jsc, sm }) {
-  const [tab, setTab] = useState('chrome');
+  const [tab, setTab] = useState('overview');
   const [modal, setModal] = useState({ open:false, title:'', content:null });
   const openModal = (title, content) => setModal({ open:true, title, content });
-  const closeModal = () => setModal(s => ({ ...s, open:false }));
+  const closeModal = () => { setModal(s => ({ ...s, open:false })); if (typeof history !== 'undefined') history.replaceState(null, '', location.pathname); };
   const chromeData = { ...chrome, openModal };
+
+  // Open a CVE detail modal and reflect it in the URL hash for deep-linking.
+  const openCve = (row, engineKey) => {
+    openModal(row.cve, <CveDetail row={row} engineKey={engineKey} />);
+    if (typeof history !== 'undefined') history.replaceState(null, '', `#cve=${row.cve}`);
+  };
+
+  // On load (and hash change), open the referenced CVE if present.
+  useEffect(() => {
+    const fromHash = () => {
+      const m = (typeof location !== 'undefined' ? location.hash : '').match(/cve=(CVE-\d{4}-\d+)/i);
+      if (!m) return;
+      const all = allItwRows({ chrome, jsc, sm });
+      const hit = all.find(x => x.cve.toLowerCase() === m[1].toLowerCase());
+      if (hit) openModal(hit.cve, <CveDetail row={hit} engineKey={hit.engine} />);
+    };
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+    return () => window.removeEventListener('hashchange', fromHash);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="page">
@@ -1450,9 +1838,11 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
         </p>
         <nav className="tabs" role="tablist" aria-label="Engines">
           <div className="tab-group">
+            <button className={`tab ${tab==='overview'?'on':''}`} onClick={()=>setTab('overview')} role="tab" aria-selected={tab==='overview'}>Overview</button>
             <button className={`tab ${tab==='chrome'?'on':''}`} onClick={()=>setTab('chrome')} role="tab" aria-selected={tab==='chrome'}>Chrome / V8</button>
             <button className={`tab ${tab==='sm'?'on':''}`} onClick={()=>setTab('sm')} role="tab" aria-selected={tab==='sm'}>Firefox / SpiderMonkey</button>
             <button className={`tab ${tab==='jsc'?'on':''}`} onClick={()=>setTab('jsc')} role="tab" aria-selected={tab==='jsc'}>Safari / JSC</button>
+            <button className={`tab ${tab==='reference'?'on':''}`} onClick={()=>setTab('reference')} role="tab" aria-selected={tab==='reference'}>Reference</button>
           </div>
           <a
             className="gh-link"
@@ -1466,9 +1856,11 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
       </header>
 
       <main className="flow">
-        {tab==='chrome' && <ChromeSection data={chromeData} openModal={openModal}/>}
-        {tab==='jsc'    && <JscSection    data={jsc}       openModal={openModal}/>}
-        {tab==='sm'     && <SmSection     data={sm}        openModal={openModal}/>}
+        {tab==='overview' && <OverviewSection chrome={chrome} jsc={jsc} sm={sm} openCve={openCve}/>}
+        {tab==='chrome' && <ChromeSection data={chromeData} openModal={openModal} openCve={openCve}/>}
+        {tab==='jsc'    && <JscSection    data={jsc}       openModal={openModal} openCve={openCve}/>}
+        {tab==='sm'     && <SmSection     data={sm}        openModal={openModal} openCve={openCve}/>}
+        {tab==='reference' && <ReferenceSection/>}
       </main>
 
       <footer className="ft muted">
@@ -1486,7 +1878,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm }) {
 }
 
 /* ------------------ global styles ------------------ */
-function GlobalStyles() {
+export function GlobalStyles() {
   return (
     <style jsx global>{`
       :root{
@@ -1573,8 +1965,9 @@ function GlobalStyles() {
       .table th,.table td{border-bottom:1px solid var(--line);padding:10px 10px;text-align:left;vertical-align:top}
       .table th{color:#cfe0f2;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 
-      /* KEV table: shrink description column ~20% */
-      .table th:nth-child(3), .table td:nth-child(3){
+      /* KEV table: shrink description column ~20% (scoped so it never hits the overview tables) */
+      .table:not(.vstrip):not(.taxo):not(.xtimeline) th:nth-child(3),
+      .table:not(.vstrip):not(.taxo):not(.xtimeline) td:nth-child(3){
         width:40%;
         max-width:40%;
       }
@@ -1635,6 +2028,53 @@ function GlobalStyles() {
       .refs .l{color:var(--muted);white-space:nowrap}
       .refs a{word-break:break-all;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.95em}
       .muted{color:var(--muted)}
+      .pill.muted{color:var(--muted)}
+
+      /* engine markers (overview / reference) */
+      .edot{display:inline-block;width:9px;height:9px;border-radius:999px;vertical-align:middle;margin-right:7px;box-shadow:0 0 10px rgba(255,255,255,.06)}
+      .epill,.cd-tags .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;letter-spacing:.04em;background:#0e1626}
+      .fresh{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;color:var(--muted);background:#0e1626}
+
+      /* clickable rows / cve ids */
+      .rowlink{cursor:pointer}
+      .rowlink:hover td{background:rgba(127,240,190,.04)}
+      .rowlink:focus{outline:none}
+      .rowlink:focus td{background:rgba(127,240,190,.07)}
+      .cve-link{cursor:pointer;color:var(--accent);font-weight:700}
+      .cve-link:hover{text-decoration:underline dotted}
+
+      /* overview tables */
+      .vstrip th:first-child,.vstrip td:first-child{width:30%;white-space:nowrap}
+      .vstrip th:nth-child(2),.vstrip td:nth-child(2),
+      .vstrip th:nth-child(3),.vstrip td:nth-child(3),
+      .vstrip th:nth-child(4),.vstrip td:nth-child(4){width:14%;white-space:nowrap}
+      .vstrip th:last-child,.vstrip td:last-child{width:28%}
+      .xtimeline td{white-space:nowrap}
+      .xtimeline th:nth-child(4),.xtimeline td:nth-child(4){white-space:normal;width:34%}
+      .taxo th:first-child,.taxo td:first-child{width:24%;white-space:nowrap}
+      .taxo th:nth-child(2),.taxo td:nth-child(2){width:46%}
+      .taxo th:nth-child(n+3),.taxo td:nth-child(n+3){width:8%;text-align:right;white-space:nowrap}
+      .taxo .bar{display:flex;gap:2px;align-items:center;height:10px;min-width:120px}
+      .taxo .bar span{display:block;height:10px;border-radius:2px;min-width:0}
+
+      /* reference cards */
+      .ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+      @media(max-width:900px){ .ref-grid{grid-template-columns:1fr} }
+      .ref-card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--surface2),#080d14);padding:14px;box-shadow:var(--shadow)}
+      .ref-card-h{font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+      .ref-list{list-style:none;margin:0;padding:0}
+      .ref-list li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px;color:#cdd9e8}
+      .ref-list li:last-child{border-bottom:0}
+
+      /* cve detail modal */
+      .cve-detail{display:flex;flex-direction:column;gap:14px}
+      .cd-tags{display:flex;gap:8px;flex-wrap:wrap}
+      .cd-desc{margin:0;color:#cdd9e8;line-height:1.5}
+      .cd-kv{grid-template-columns:120px 1fr}
+      .cd-subj{font-size:12px;color:var(--mono);word-break:break-word}
+      .cd-actions{display:flex;gap:8px;flex-wrap:wrap}
+      .btn.trig{color:var(--syntax-string);border-color:#3a3320}
+      .cd-links{display:flex;gap:16px;border-top:1px solid var(--line);padding-top:12px;font-size:13px}
 
       .more-link{cursor:pointer;user-select:none}
       .more-link:hover{text-decoration:underline}

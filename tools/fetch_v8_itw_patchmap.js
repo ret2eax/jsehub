@@ -269,16 +269,70 @@ async function resolveTracks(project, changeNumber) {
     }
   }
 
+  // Gerrit submit timestamp ("YYYY-MM-DD HH:MM:SS.sss" UTC) -> ISO for the cross-engine timeline.
+  let submitted = null;
+  if (detail?.submitted) {
+    const iso = String(detail.submitted).replace(' ', 'T').replace(/\.\d+$/, '') + 'Z';
+    const d = new Date(iso);
+    submitted = isNaN(d) ? null : d.toISOString();
+  }
+
   return {
     project,
     change: changeNumber,
     status: (detail?.status || '').toUpperCase(),
     message_preview: message.slice(0, 300),
+    patched_date: submitted,
     patched_backport: landed,
     unpatched_backport: landedParent,
     patched_original: original,
     unpatched_original: originalParent,
   };
+}
+
+/* -------- GitHub commit-search fallback (recovers old V8 fixes Gerrit text-search misses) -------- */
+const GH_API = 'https://api.github.com';
+const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
+const GH_AUTH = GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {};
+
+async function ghJSON(url) {
+  const txt = await httpText(url, { headers: { Accept: 'application/vnd.github+json', ...GH_AUTH } });
+  return JSON.parse(txt);
+}
+
+// When Gerrit only yields a non-fix (e.g. a dependency roll), search the v8/v8 git mirror
+// (then chromium/src) for the bug id and take the real fixing commit + its exact parent.
+// Reverts and rolls are dropped; relands are kept and the latest substantive landing wins.
+async function githubV8Fix(cve) {
+  const meta = await fetchCveMeta(cve);
+  const { issueIds } = extractChromiumThings(extractRefs(meta));
+  for (const repo of ['v8/v8', 'chromium/src']) {
+    for (const id of issueIds) {
+      let res;
+      try { res = await ghJSON(`${GH_API}/search/commits?q=repo:${repo}+${id}&per_page=30`); }
+      catch { continue; }
+      const items = (res?.items || [])
+        .map(it => ({
+          sha: it.sha,
+          msg: it.commit?.message || '',
+          subject: (it.commit?.message || '').split('\n')[0],
+          date: it.commit?.committer?.date || it.commit?.author?.date || null,
+        }))
+        .filter(c => new RegExp(`\\b${id}\\b`).test(c.msg))                 // really references the bug
+        .filter(c => !/^revert\b/i.test(c.subject) && !/^roll\b/i.test(c.subject));
+      if (!items.length) continue;
+      items.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+      const chosen = items[items.length - 1];                              // latest landed (reland wins)
+      let commit;
+      try { commit = await ghJSON(`${GH_API}/repos/${repo}/commits/${chosen.sha}`); }
+      catch { continue; }
+      const parent = commit?.parents?.[0]?.sha || null;
+      if (!parent) continue;
+      return { project: repo, patched: chosen.sha, unpatched: parent, date: chosen.date, subject: chosen.subject, bug: id };
+    }
+    await sleep(120);
+  }
+  return null;
 }
 
 /* ------------------------------- main ------------------------------------ */
@@ -362,29 +416,49 @@ async function main() {
       const t = await resolveTracks(project, changeNumber);
 
       // Confidence guard: a CL that references the bug but is a test/fuzzer/roll/version/squash
-      // is not the fix. Blank the commits (honest "unresolved") rather than show a wrong pair.
+      // is not the fix. For those, try the GitHub commit-search fallback to recover the real fix.
       const subjFirst = (t.message_preview || '').split('\n')[0];
-      const confident = !looksLikeNonFix(subjFirst);
-
       const hasOriginal = Boolean(t.patched_original);
-      const uiPatched   = confident ? (hasOriginal ? t.patched_original : t.patched_backport) : null;
-      const uiUnpatched = confident ? (hasOriginal ? t.unpatched_original : t.unpatched_backport) : null;
+
+      let confident = !looksLikeNonFix(subjFirst);
+      let source = 'gerrit';
+      let uiProject = t.project;
+      let uiPatched   = confident ? (hasOriginal ? t.patched_original : t.patched_backport) : null;
+      let uiUnpatched = confident ? (hasOriginal ? t.unpatched_original : t.unpatched_backport) : null;
+      let uiDate = t.patched_date || null;
+      let uiUrl = changeUrl(t.project, t.change);
+
+      if (!confident) {
+        const fb = await githubV8Fix(cve);
+        if (fb) {
+          confident = true; source = 'github';
+          uiProject = fb.project; uiPatched = fb.patched; uiUnpatched = fb.unpatched;
+          uiDate = fb.date || null; uiUrl = `https://github.com/${fb.project}/commit/${fb.patched}`;
+          console.log(`[v8-patchmap] RECOVERED via github: ${cve} → ${fb.project} patched=${short(fb.patched)} · unpatched=${short(fb.unpatched)} (bug ${fb.bug}) "${(fb.subject||'').slice(0,44)}"`);
+        }
+      }
+
+      const commitLink = (sha) => source === 'github'
+        ? `https://github.com/${uiProject}/commit/${sha}`
+        : `${GITILES_ROOT}/${uiProject}/+/${sha}`;
 
       const row = byCve.get(cve);
       if (row) {
-        row.patched_repo = t.project;
-        row.patched_url  = changeUrl(t.project, t.change);
+        row.patched_repo = uiProject;
+        row.patched_url  = uiUrl;
         row.patched_commit = uiPatched || null;
         row.unpatched_commit = uiUnpatched || null;
-        row.unpatched_url = uiUnpatched ? `${GITILES_ROOT}/${t.project}/+/${uiUnpatched}` : null;
+        row.unpatched_url = uiUnpatched ? commitLink(uiUnpatched) : null;
 
         row.patchmap = {
           ...(row.patchmap || {}),
-          project: t.project,
+          project: uiProject,
           gerrit_change: t.change,
-          url: changeUrl(t.project, t.change),
+          url: uiUrl,
           status: t.status,
           confident,
+          source,
+          patched_date: uiDate,
           message_preview: t.message_preview,
           patched_backport: t.patched_backport,
           unpatched_backport: t.unpatched_backport,
@@ -402,29 +476,23 @@ async function main() {
         };
       }
 
-      if (hasOriginal) {
+      if (confident) {
         console.log(
-          `[v8-patchmap] OK(mainline): ${cve} → ${t.project}/+/${t.change} ` +
-          `patched=${short(t.patched_original)} · unpatched=${short(t.unpatched_original)} ` +
-          `(backport=${short(t.patched_backport)} parent=${short(t.unpatched_backport)})`
+          `[v8-patchmap] OK(${source}${source==='gerrit' ? (hasOriginal ? '/mainline' : '/backport') : ''}): ${cve} → ` +
+          `patched=${short(uiPatched)} · unpatched=${short(uiUnpatched)} [${uiProject}]`
         );
       } else {
-        console.log(
-          `[v8-patchmap] OK(backport): ${cve} → ${t.project}/+/${t.change} ` +
-          `patched=${short(t.patched_backport)} · unpatched=${short(t.unpatched_backport)}`
-        );
-      }
-
-      if (!confident) {
-        console.log(`[v8-patchmap] BLANKED (non-fix CL): ${cve} → ${t.project}/+/${t.change} "${subjFirst.slice(0,60)}"`);
+        console.log(`[v8-patchmap] BLANKED (non-fix CL, no github fix): ${cve} → ${t.project}/+/${t.change} "${subjFirst.slice(0,60)}"`);
       }
 
       outMap[cve] = {
         cve,
-        project: t.project,
+        project: uiProject,
         change: t.change,
         status: t.status,
         confident,
+        source,
+        patched_date: uiDate,
         message_preview: t.message_preview,
         patched_backport: t.patched_backport,
         unpatched_backport: t.unpatched_backport,
@@ -432,7 +500,7 @@ async function main() {
         unpatched_original: t.unpatched_original || null,
         patched_commit: uiPatched || null,
         unpatched_commit: uiUnpatched || null,
-        url: changeUrl(t.project, t.change),
+        url: uiUrl,
         generated: new Date().toISOString(),
       };
     } catch (e) {

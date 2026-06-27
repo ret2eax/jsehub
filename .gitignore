@@ -8,3 +8,7 @@ data/
 .DS_Store
 *.swp
 *.backup
+
+# generated feeds (regenerated each deploy)
+public/api/
+public/feed.xml
