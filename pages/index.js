@@ -872,14 +872,15 @@ function ChromeSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
-        &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve confidently are intentionally left blank (<code className="code">—</code>), verify before use to avoid misleading deltas.
+        &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve confidently are intentionally left blank, verify before use to avoid misleading deltas.
       </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Component</th>
-                <th>Patched</th><th>Vulnerable</th><th>Confidence</th>
+                <th>Patched</th><th>Vulnerable</th>
+                <th className="help" title={"Patch-map resolution confidence:\nhigh  = verified fix (the patched commit fixes this CVE; vulnerable is its exact parent)\nlow   = a CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the commits are withheld\n—     = no Gerrit CL was found for this CVE"}>Confidence</th>
               </tr>
             </thead>
             <tbody>
@@ -908,8 +909,13 @@ function ChromeSection({ data, openModal }) {
                       />
                     </td>
                     <td>{x.patchmap
-                      ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'high' : 'low'}</span>
-                      : <span className="muted">—</span>}</td>
+                      ? <span
+                          className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
+                          title={x.patchmap.confident
+                            ? 'Verified fix: the patched commit fixes this CVE and the vulnerable commit is its exact parent.'
+                            : 'A Gerrit CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the patched/vulnerable commits are withheld.'}
+                        >{x.patchmap.confident ? 'high' : 'low'}</span>
+                      : <span className="muted help" title="No Gerrit CL was found for this CVE, so no patched/vulnerable commit could be resolved.">—</span>}</td>
                   </tr>
                 );
               })}
@@ -1589,6 +1595,8 @@ function GlobalStyles() {
       /* patchmap confidence */
       .pill.conf-hi{margin-left:0;color:var(--good);background:rgba(100,230,189,.10);border-color:#1f5a47}
       .pill.conf-lo{margin-left:0;color:var(--warn);background:rgba(243,208,119,.08);border-color:#5a4a22}
+      .help{cursor:help}
+      th.help{text-decoration:underline dotted;text-underline-offset:3px}
       .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;color:var(--mono)}
       /* Obsidian-style inline code chip */
       .code{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.9em;background:var(--accent-ghost);color:var(--accent);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
