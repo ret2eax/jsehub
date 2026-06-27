@@ -872,14 +872,14 @@ function ChromeSection({ data, openModal }) {
       <section className="block">
         <header className="bsub"><h3>// RECENT IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
-        &gt;&gt; vulnerable commit is the parent of each verified fix commit; CVEs we cannot resolve confidently are left blank. Verify at the source before use.
+        &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve confidently are intentionally left blank (<code className="code">—</code>), verify before use to avoid misleading deltas.
       </p>
         <div className="tableWrap">
           <table className="table itw">
             <thead>
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Date added</th><th>Component</th>
-                <th>Patched</th><th>Vulnerable</th>
+                <th>Patched</th><th>Vulnerable</th><th>Confidence</th>
               </tr>
             </thead>
             <tbody>
@@ -907,10 +907,13 @@ function ChromeSection({ data, openModal }) {
                         project={x.patchmap?.project}
                       />
                     </td>
+                    <td>{x.patchmap
+                      ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'high' : 'low'}</span>
+                      : <span className="muted">—</span>}</td>
                   </tr>
                 );
               })}
-              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
+              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={8} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -1550,7 +1553,8 @@ function GlobalStyles() {
       .table.itw th:nth-child(1), .table.itw td:nth-child(1),
       .table.itw th:nth-child(4), .table.itw td:nth-child(4),
       .table.itw th:nth-child(6), .table.itw td:nth-child(6),
-      .table.itw th:nth-child(7), .table.itw td:nth-child(7){
+      .table.itw th:nth-child(7), .table.itw td:nth-child(7),
+      .table.itw th:nth-child(8), .table.itw td:nth-child(8){
         white-space:nowrap;
       }
       .table.itw th:nth-child(3), .table.itw td:nth-child(3){
@@ -1582,6 +1586,9 @@ function GlobalStyles() {
       .pre{background:#0a0e16;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-word}
       .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}
       .pill.itw{color:#ffb27e;background:#2a160b;border-color:#3a2216}
+      /* patchmap confidence */
+      .pill.conf-hi{margin-left:0;color:var(--good);background:rgba(100,230,189,.10);border-color:#1f5a47}
+      .pill.conf-lo{margin-left:0;color:var(--warn);background:rgba(243,208,119,.08);border-color:#5a4a22}
       .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;color:var(--mono)}
       /* Obsidian-style inline code chip */
       .code{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.9em;background:var(--accent-ghost);color:var(--accent);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
