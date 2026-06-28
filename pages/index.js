@@ -1075,7 +1075,7 @@ function ChromeSection({ data, openModal, openCve }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// RECENT IN-THE-WILD [Chrome/V8]</h3></header>
+        <header className="bsub"><h3>// IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
         &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
       </p>
@@ -1269,7 +1269,7 @@ function JscSection({ data, openModal, openCve }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// RECENT IN-THE-WILD [Safari/JSC]</h3></header>
+        <header className="bsub"><h3>// IN-THE-WILD [Safari/JSC]</h3></header>
         <p className="resolver-hint">
           &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
         </p>
@@ -1503,7 +1503,7 @@ function SmSection({ data, openModal, openCve }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// RECENT IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
+        <header className="bsub"><h3>// IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
         <p className="resolver-hint">
           &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
         </p>
@@ -1670,11 +1670,11 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
     <>
       <section className="block">
         <div className="bhead"><h2>// OVERVIEW</h2><span className="tag">all engines</span></div>
-        <p className="resolver-hint">&gt;&gt; cross-engine snapshot: current releases, recent known in-the-wild exposure, and verified patch-map coverage across V8, JavaScriptCore, and SpiderMonkey. Not a complete vulnerability history.</p>
+        <p className="resolver-hint">&gt;&gt; cross-engine snapshot: current releases, in-the-wild exposure (CISA KEV), and verified patch-map coverage across V8, JavaScriptCore, and SpiderMonkey. Not a complete vulnerability history.</p>
 
         <div className="statrow">
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
-          <div className="stat"><div className="label">Recent ITW CVEs</div><div className="value">{totalItw}</div><div className="meta">CISA KEV, browser scope</div></div>
+          <div className="stat"><div className="label">In-the-wild CVEs</div><div className="value">{totalItw}</div><div className="meta">CISA KEV, browser scope</div></div>
           <div className="stat"><div className="label">Verified patch maps</div><div className="value">{totalHigh}</div><div className="meta">high-confidence CVE → fix</div></div>
           <div className="stat"><div className="label">Mapped coverage</div><div className="value">{totalItw ? Math.round((totalHigh/totalItw)*100) : 0}%</div><div className="meta">ITW CVEs with a verified patch map</div></div>
         </div>
@@ -1701,8 +1701,8 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// RECENT IN-THE-WILD</h3></header>
-        <p className="resolver-hint">&gt;&gt; recently known exploited CVEs across all three engines, ordered newest first. This is not a complete vulnerability history. Click any row to view the corresponding patch-map, differential and regresttion tests. Vulnerable commits are derived from the patched canonical parent where possible. Commits that cannot be confidently resolved or mapped are intentionally left blank, verify before use to avoid misleading deltas.</p>
+        <header className="bsub"><h3>// IN-THE-WILD</h3></header>
+        <p className="resolver-hint">&gt;&gt; known-exploited CVEs across all three engines (CISA KEV), ordered newest first. This is not a complete vulnerability history. Click any row to view the corresponding patch-map, differential and regression tests. Vulnerable commits are derived from the patched canonical parent where possible. Commits that cannot be confidently resolved or mapped are intentionally left blank, verify before use to avoid misleading deltas.</p>
         <div className="tableWrap">
           <table className="table xtimeline">
             <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Mapping confidence</th></tr></thead>
@@ -1730,8 +1730,8 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// RECENT ITW BUG CLASSES</h3></header>
-        <p className="resolver-hint">&gt;&gt; vulnerability-class distribution across the recent in-the-wild (CISA KEV) set only, by engine; not the full CVE history.</p>
+        <header className="bsub"><h3>// ITW BUG CLASSES</h3></header>
+        <p className="resolver-hint">&gt;&gt; vulnerability-class distribution across the in-the-wild (CISA KEV) set only, by engine; not the full CVE history.</p>
         <div className="tableWrap">
           <table className="table taxo">
             <thead><tr><th>Class</th><th>Distribution</th>
