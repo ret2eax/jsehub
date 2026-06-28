@@ -133,17 +133,25 @@ function allDisclosureRows(props) {
   return rows.sort((a, b) => (new Date(b.disclosed || 0) - new Date(a.disclosed || 0)) || cmpCveDesc(a, b));
 }
 
-// Per-engine patch-map coverage (how many ITW CVEs resolve to a verified fix).
+// Patch-map confidence breakdown for a set of rows: HIGH (verified), LOW (resolved but
+// commits withheld), UNRESOLVED (no patch map).
+function confidenceBreakdown(arr) {
+  const high = arr.filter(x => x.patchmap?.confident).length;
+  const low = arr.filter(x => x.patchmap && !x.patchmap.confident).length;
+  return { total: arr.length, high, low, unresolved: arr.length - high - low };
+}
+
+// Per-engine in-the-wild patch-map coverage.
 function coverage(props) {
   const out = {};
-  for (const key of ENGINE_ORDER) {
-    const arr = engineItwRows(props, key);
-    out[key] = {
-      total: arr.length,
-      high: arr.filter(x => x.patchmap?.confident).length,
-      low: arr.filter(x => x.patchmap && !x.patchmap.confident).length,
-    };
-  }
+  for (const key of ENGINE_ORDER) out[key] = confidenceBreakdown(engineItwRows(props, key));
+  return out;
+}
+
+// Per-engine recent-disclosure patch-map coverage.
+function disclosureCoverage(props) {
+  const out = {};
+  for (const key of ENGINE_ORDER) out[key] = confidenceBreakdown(props[key]?.disclosures?.items || []);
   return out;
 }
 
@@ -266,6 +274,8 @@ function CveDetail({ row, engineKey }) {
   const dc = disclosureDescClass(row, engineKey);
   const descText = isDisc ? (dc.desc === '—' ? 'No description.' : dc.desc) : (row.shortDescription || row.description || 'No description.');
   const classText = isDisc ? dc.cls : kevClassFromShort(row.shortDescription || row.description);
+  // Explain a low/unresolved Chrome row that sits in an external dependency (fixed upstream via a roll).
+  const depNote = (engineKey === 'chrome' && !pm.confident) ? chromiumExternalDep(row.shortDescription || row.description) : null;
 
   // The fix bug lives in the facts block below; only the Gerrit CL stays a bottom reference.
   const bugLabel = engineKey === 'chrome' ? 'Chromium bug' : engineKey === 'jsc' ? 'WebKit bug' : 'Bugzilla bug';
@@ -293,6 +303,10 @@ function CveDetail({ row, engineKey }) {
         <label>Vulnerable</label><div>{unpatched ? <MonoCommitLink commit={unpatched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
         {pm.bug && pm.bug_url && (<><label>{bugLabel}</label><div><a href={pm.bug_url} target="_blank" rel="noreferrer">{pm.bug}</a></div></>)}
       </div>
+
+      {depNote && (
+        <p className="cd-note muted">Fixed upstream in {depNote}, a Chromium dependency. Chromium integrates the fix via a version roll, so no single Chromium commit maps to this CVE; the upstream fix lives in the {depNote} repository.</p>
+      )}
 
       {commitMessage && (
         <div className="cd-msg">
@@ -1075,6 +1089,17 @@ function MappingPill({ patchmap }) {
       : 'A fix was located but the single vulnerable parent is ambiguous, so the commits are withheld.'}>{patchmap.confident ? 'HIGH' : 'LOW'}</span>;
 }
 
+// Chromium's external dependencies live in their own repos; a CVE in one is fixed upstream and
+// reaches Chromium through a version roll (which spans many commits), so no single Chromium commit
+// maps to it. Detect such a component from Google's own "<class> in <Component>" wording so the
+// low/unresolved state can be explained rather than read as a resolver failure. Chromium-internal
+// subsystems (GPU, WebML, FileSystem, Mojo, V8, Blink) are deliberately excluded.
+const CHROMIUM_EXTERNAL_DEPS = ['ANGLE', 'Dawn', 'Skia', 'WebRTC', 'SwiftShader', 'FFmpeg', 'libvpx', 'PDFium', 'libxml', 'libxslt', 'SQLite', 'Perfetto', 'libwebp', 'BoringSSL', 'libavif'];
+function chromiumExternalDep(text) {
+  const s = (text || '').toLowerCase();
+  return CHROMIUM_EXTERNAL_DEPS.find(d => new RegExp(`\\b${d.toLowerCase()}\\b`).test(s)) || null;
+}
+
 // Sub-area within WebKit/JSC, pulled from the fix-commit subject (a `Class::method` symbol, or a
 // known engine module). Best-effort; null when nothing clean is detectable.
 function webkitSubArea(subject) {
@@ -1114,7 +1139,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
   return (
     <section className="block">
       <header className="bsub"><h3>// RECENT DISCLOSURES [{ENGINES[engineKey].label}]</h3></header>
-      <p className="resolver-hint">&gt;&gt; researcher-reported critical/high vulnerabilities fixed in the last 90 days (disclosed, not in-the-wild exploited). Click any row for the patch map, diff, and commit message.</p>
+      <p className="resolver-hint">&gt;&gt; recent disclosures over the last 90 days, click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.</p>
       <div className="tableWrap">
         <table className="table itw">
           <thead>
@@ -1252,7 +1277,7 @@ function ChromeSection({ data, openModal, openCve }) {
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
-        &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
+        &gt;&gt; known ITW exploited vulnerabilities (non-exhaustive), click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.
       </p>
         <div className="tableWrap">
           <table className="table itw">
@@ -1422,7 +1447,7 @@ function JscSection({ data, openModal, openCve }) {
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD [Safari/JSC]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
+          &gt;&gt; known ITW exploited vulnerabilities (non-exhaustive), click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.
         </p>
         <div className="tableWrap">
           <table className="table itw">
@@ -1633,7 +1658,7 @@ function SmSection({ data, openModal, openCve }) {
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
         <p className="resolver-hint">
-          &gt;&gt; vulnerable commits derived from patched canonical parent, vulnerable and patched commits we cannot resolve/map confidently are intentionally left blank, verify before use to avoid misleading deltas.
+          &gt;&gt; known ITW exploited vulnerabilities (non-exhaustive), click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.
         </p>
         <div className="tableWrap">
           <table className="table itw">
@@ -1748,6 +1773,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
   const props = { chrome, jsc, sm };
   const rows = useMemo(() => allItwRows(props), [chrome, jsc, sm]);
   const cov = useMemo(() => coverage(props), [chrome, jsc, sm]);
+  const discCov = useMemo(() => disclosureCoverage(props), [chrome, jsc, sm]);
   const taxo = useMemo(() => taxonomy(rows), [rows]);
   const [limit, setLimit] = useState(10);
   const discRows = useMemo(() => allDisclosureRows(props), [chrome, jsc, sm]);
@@ -1776,11 +1802,11 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
     <>
       <section className="block">
         <div className="bhead"><h2>// OVERVIEW</h2><span className="tag">all engines</span></div>
-        <p className="resolver-hint">&gt;&gt; cross-engine snapshot: current releases, in-the-wild exposure (CISA KEV), and verified patch-map coverage across V8, JavaScriptCore, and SpiderMonkey. Not a complete vulnerability history.</p>
+        <p className="resolver-hint"></p>
 
         <div className="statrow">
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
-          <div className="stat"><div className="label">In-the-wild Exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [browser scope]</div></div>
+          <div className="stat"><div className="label">Known In-the-wild exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [browser scope]</div></div>
           <div className="stat"><div className="label">Recent disclosures</div><div className="value">{discRows.length}</div><div className="meta">researcher disclosed bugs, last {discWindow}d</div></div>
           <div className="stat"><div className="label">Mapped coverage</div><div className="value">{(totalItw + discRows.length) ? Math.round(((totalHigh + discHigh) / (totalItw + discRows.length)) * 100) : 0}%</div><div className="meta">verified patch maps across all engines</div></div>
         </div>
@@ -1790,7 +1816,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
         <header className="bsub"><h3>// CURRENT RELEASES</h3></header>
         <div className="tableWrap">
           <table className="table vstrip">
-            <thead><tr><th>Engine</th><th>Stable</th><th>Beta</th><th>Preview / Nightly</th><th>ITW Patch-map coverage</th></tr></thead>
+            <thead><tr><th>Engine</th><th>Stable</th><th>Beta</th><th>Preview / Nightly</th><th>Patch-Map Confidence Coverage</th></tr></thead>
             <tbody>
               {ENGINE_ORDER.map(k => (
                 <tr key={k}>
@@ -1798,7 +1824,10 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
                   <td className="mono">{chans[k]['Stable'] || '—'}</td>
                   <td className="mono">{chans[k]['Beta'] || '—'}</td>
                   <td className="mono">{preview[k]}</td>
-                  <td className="muted">{cov[k].high} high · {cov[k].low} low · {cov[k].total} total</td>
+                  <td className="muted cov-cell">
+                    <div>{cov[k].high} high · {cov[k].low} low · {cov[k].unresolved} unresolved [ITW]</div>
+                    <div>{discCov[k].high} high · {discCov[k].low} low · {discCov[k].unresolved} unresolved [Disclosures]</div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1808,7 +1837,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 
       <section className="block">
         <header className="bsub"><h3>// RECENT DISCLOSURES</h3></header>
-        <p className="resolver-hint">&gt;&gt; researcher-reported critical/high memory-corruption bugs fixed in the last {discWindow} days across all three engines (disclosed, not in-the-wild exploited); {discRows.length} CVEs, {discHigh} with verified patch maps. Ordered newest first. Click any row for the patch map, diff, and commit message.</p>
+        <p className="resolver-hint">&gt;&gt; recent disclosures over the last 90 days, click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.</p>
         <div className="tableWrap">
           <table className="table xtimeline">
             <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Disclosed</th><th>Mapping confidence</th></tr></thead>
@@ -1839,7 +1868,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD</h3></header>
-        <p className="resolver-hint">&gt;&gt; known-exploited CVEs across all three engines (CISA KEV), ordered newest first. This is not a complete vulnerability history. Click any row to view the corresponding patch-map, differential and regression tests. Vulnerable commits are derived from the patched canonical parent where possible. Commits that cannot be confidently resolved or mapped are intentionally left blank, verify before use to avoid misleading deltas.</p>
+        <p className="resolver-hint">&gt;&gt; known ITW exploited vulnerabilities (non-exhaustive), click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.</p>
         <div className="tableWrap">
           <table className="table xtimeline">
             <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Mapping confidence</th></tr></thead>
@@ -1868,7 +1897,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD BUG CLASSES</h3></header>
-        <p className="resolver-hint">&gt;&gt; vulnerability-class distribution across the in-the-wild (CISA KEV) set only, by engine; not the full CVE history.</p>
+        <p className="resolver-hint">&gt;&gt; vulnerability class distribution across the ITW (CISA KEV) set only.</p>
         <div className="tableWrap">
           <table className="table taxo">
             <thead><tr><th>Class</th><th>Distribution</th>
@@ -2161,6 +2190,7 @@ export function GlobalStyles() {
       .statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:10px}
       @media(max-width:920px){ .statrow{grid-template-columns:1fr 1fr} }
       @media(max-width:540px){ .statrow{grid-template-columns:1fr} }
+      .cov-cell div{line-height:1.7;white-space:nowrap}
       .stat{padding:14px 12px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--surface2),#080d14);box-shadow:var(--shadow)}
       .stat .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
       .stat .value{font-weight:900;margin-top:4px;color:var(--syntax-number)}
@@ -2290,6 +2320,7 @@ export function GlobalStyles() {
       .cve-detail{display:flex;flex-direction:column;gap:14px}
       .cd-tags{display:flex;gap:8px;flex-wrap:wrap}
       .cd-desc{margin:0;color:#cdd9e8;line-height:1.5}
+      .cd-note{margin:0;font-size:12px;line-height:1.5;padding:8px 10px;border:1px solid var(--line);border-left:2px solid #5a4a22;border-radius:8px;background:#0f1422}
       .cd-kv{grid-template-columns:120px 1fr}
       .cd-subj{font-size:12px;color:var(--mono);word-break:break-word}
       .cd-msg-h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px}

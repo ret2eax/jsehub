@@ -23,6 +23,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { p0BugForCve } from './p0_rca.js';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -175,9 +176,13 @@ async function commitsForBug(bug) {
     console.log(`[jsc-patchmap] commit search failed for bug ${bug}: ${e?.message || e}`);
     return [];
   }
+  // Exact bug reference only, in either canonical form: the legacy "show_bug.cgi?id=N" URL or the
+  // modern short "webkit.org/b/N" URL. Deliberately NOT a bare "N", which would also match WebKit's
+  // commit-identifier format "N@main" (a revision number, not a bug id).
+  const ref = new RegExp(`(?:show_bug\\.cgi\\?id=|webkit\\.org/b/)${bug}\\b`);
   return (res?.items || [])
     .map(it => ({ sha: it.sha, message: it.commit?.message || '' }))
-    .filter(c => new RegExp(`show_bug\\.cgi\\?id=${bug}\\b`).test(c.message))   // exact bug reference only
+    .filter(c => ref.test(c.message))
     .map(c => ({ sha: c.sha, subject: c.message.split('\n')[0], message: c.message }));
 }
 
@@ -245,23 +250,37 @@ async function main() {
     const cve = r?.cve;
     if (!cve) continue;
 
-    const { bug, agree, pages, webkit } = await resolveBug(cve);
+    let { bug, agree, pages, webkit } = await resolveBug(cve);
     const row = byCve.get(cve);
     if (row) row.webkit = Boolean(webkit);   // tag engine vs non-engine for the table filter
 
-    if (!bug) {
+    let fix = bug ? await resolveFix(bug) : null;
+    let source = 'apple';
+
+    // Last resort: Apple's pre-2023 advisories omit the WebKit Bugzilla id, and no other source
+    // (NVD/OSV/Bugzilla/commit text) carries the CVE -> bug link. Project Zero's per-CVE RCA does.
+    // The id it supplies is still validated by resolveFix, so a mis-read fails safe (stays blank).
+    if (!fix) {
+      const p0bug = await p0BugForCve(cve, 'jsc');
+      if (p0bug) {
+        const p0fix = await resolveFix(p0bug);
+        if (p0fix) { bug = p0bug; fix = p0fix; source = 'project-zero'; if (row) row.webkit = true; }
+      }
+    }
+
+    if (!bug && !fix) {
       console.log(`[jsc-patchmap] ${cve}: ${webkit ? 'WebKit but ' : 'non-WebKit; '}no bugzilla (scanned ${pages} advisor${pages === 1 ? 'y' : 'ies'})`);
       continue;
     }
-
-    const fix = await resolveFix(bug);
     if (!fix) {
       console.log(`[jsc-patchmap] ${cve}: bug ${bug} (agree ${agree}) → no exact-ref commit`);
       continue;
     }
 
-    // `high` requires cross-page corroboration, an unambiguous single fix, and a real parent.
-    const confident = agree >= CORROBORATE && !fix.ambiguous && Boolean(fix.unpatched_commit);
+    // `high` requires an unambiguous single fix with a real parent, plus corroboration: either two
+    // independent Apple advisories agree on the bug, or Project Zero's authoritative RCA supplied it.
+    const corroborated = source === 'project-zero' || agree >= CORROBORATE;
+    const confident = corroborated && !fix.ambiguous && Boolean(fix.unpatched_commit);
     const uiPatched   = confident ? fix.patched_commit : null;
     const uiUnpatched = confident ? fix.unpatched_commit : null;
 
@@ -277,6 +296,7 @@ async function main() {
         bug: Number(bug),
         bug_url: `https://bugs.webkit.org/show_bug.cgi?id=${bug}`,
         advisories_agree: agree,
+        source,
         confident,
         subject: fix.subject,
         candidate_count: fix.candidate_count,

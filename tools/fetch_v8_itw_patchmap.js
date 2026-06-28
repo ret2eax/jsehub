@@ -4,6 +4,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { p0BugForCve } from './p0_rca.js';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -335,6 +336,37 @@ export async function githubV8Fix(cve) {
   return null;
 }
 
+// Embargoed Chromium security CLs are often missing from Gerrit's public text index but present in
+// the chromium/chromium GitHub mirror. Resolve by an EXACT "Bug:"/"Fixed:" footer line for the bug
+// (not an incidental number match), which excludes dependency rolls: a roll only carries the bug id
+// in its changelog body, never as its own footer. Reverts/rolls/test-only landings are dropped; the
+// latest substantive landing (reland) wins, matching the v8/v8 fallback.
+export async function githubChromiumFix(bug) {
+  if (!bug) return null;
+  let res;
+  try { res = await ghJSON(`${GH_API}/search/commits?q=repo:chromium/chromium+${bug}&per_page=30`); }
+  catch { return null; }
+  const footer = new RegExp(`^(?:Bug|Fixed):.*\\b${bug}\\b`, 'mi');   // a real commit footer line
+  const items = (res?.items || [])
+    .map(it => ({
+      sha: it.sha,
+      msg: it.commit?.message || '',
+      subject: (it.commit?.message || '').split('\n')[0],
+      date: it.commit?.committer?.date || it.commit?.author?.date || null,
+    }))
+    .filter(c => footer.test(c.msg))
+    .filter(c => !looksLikeNonFix(c.subject));
+  if (!items.length) return null;
+  items.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  const chosen = items[items.length - 1];
+  let commit;
+  try { commit = await ghJSON(`${GH_API}/repos/chromium/chromium/commits/${chosen.sha}`); }
+  catch { return null; }
+  const parent = commit?.parents?.[0]?.sha || null;
+  if (!parent) return null;
+  return { project: 'chromium/src', patched: chosen.sha, unpatched: parent, date: chosen.date, subject: chosen.subject, bug: String(bug) };
+}
+
 /* ------------------------------- main ------------------------------------ */
 async function main() {
   console.log('[v8-patchmap] start main()');
@@ -405,6 +437,21 @@ async function main() {
             console.log(`[v8-patchmap] discover (CVE text): ${cve} → ${project}/+/${changeNumber} (status=${hit.status})`);
           }
         }
+
+        // Last resort: Project Zero's RCA supplies the Chromium bug id when the CVE refs do not.
+        // Feed it through the same Gerrit discovery so all downstream validation/fallbacks apply.
+        if (!hit) {
+          const p0bug = await p0BugForCve(cve, 'chrome');
+          if (p0bug) {
+            hit = await findMergedChangeForIssueOrCVE({ issueId: p0bug, cveId: null });
+            if (hit) {
+              project = hit.project;
+              changeNumber = hit.change;
+              chromiumBug = chromiumBug || p0bug;
+              console.log(`[v8-patchmap] discover (Project Zero RCA): ${cve} → bug ${p0bug} → ${project}/+/${changeNumber}`);
+            }
+          }
+        }
       }
     }
 
@@ -438,6 +485,17 @@ async function main() {
           uiProject = fb.project; uiPatched = fb.patched; uiUnpatched = fb.unpatched;
           uiDate = fb.date || null; uiUrl = `https://github.com/${fb.project}/commit/${fb.patched}`;
           console.log(`[v8-patchmap] RECOVERED via github: ${cve} → ${fb.project} patched=${short(fb.patched)} · unpatched=${short(fb.unpatched)} (bug ${fb.bug}) "${(fb.subject||'').slice(0,44)}"`);
+        }
+      }
+      // Embargoed Chromium CL absent from Gerrit's public index but public in the chromium/chromium
+      // mirror with an exact Bug:/Fixed: footer (dependency rolls lack the footer, so they stay low).
+      if (!confident && chromiumBug) {
+        const fb = await githubChromiumFix(chromiumBug);
+        if (fb) {
+          confident = true; source = 'github-chromium';
+          uiProject = fb.project; uiPatched = fb.patched; uiUnpatched = fb.unpatched;
+          uiDate = fb.date || null; uiUrl = null;
+          console.log(`[v8-patchmap] RECOVERED via chromium mirror: ${cve} → patched=${short(fb.patched)} · unpatched=${short(fb.unpatched)} (bug ${chromiumBug})`);
         }
       }
 

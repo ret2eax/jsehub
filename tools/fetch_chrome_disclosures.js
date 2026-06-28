@@ -12,7 +12,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { isExploitClass } from './exploit_class.js';
-import { gerritQuery, scoreChange, resolveTracks, githubV8Fix, looksLikeNonFix, changeUrl } from './fetch_v8_itw_patchmap.js';
+import { gerritQuery, scoreChange, resolveTracks, githubV8Fix, githubChromiumFix, looksLikeNonFix, changeUrl } from './fetch_v8_itw_patchmap.js';
 
 const OUT = path.join(process.cwd(), 'data', 'chrome_disclosures.json');
 const WINDOW_DAYS = Number(process.env.DISCLOSURE_DAYS || 90);
@@ -98,6 +98,18 @@ async function resolveChrome(cve, bug) {
         confident = true; source = 'github';
         project = fb.project; patched = fb.patched; unpatched = fb.unpatched;
         date = fb.date || null; url = `https://github.com/${fb.project}/commit/${fb.patched}`;
+      }
+    } catch (e) { /* none */ }
+  }
+  // Last resort: a Chromium CL still embargoed on Gerrit may already be public in the
+  // chromium/chromium mirror with an exact Bug:/Fixed: footer (dependency rolls are excluded).
+  if (!confident) {
+    try {
+      const fb = await githubChromiumFix(bug);
+      if (fb) {
+        confident = true; source = 'github-chromium';
+        project = fb.project; patched = fb.patched; unpatched = fb.unpatched;
+        date = fb.date || null; url = null;
       }
     } catch (e) { /* none */ }
   }
