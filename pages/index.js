@@ -190,7 +190,7 @@ function UpdateStamp({ builtAt }) {
     const ago = built != null && !isNaN(built) ? `${fmtDur(now - built)} AGO` : '—';
     live = ` · LAST REFRESH ${ago} · NEXT IN ${fmtDur(next - now)}`;
   }
-  return <span className="cmt">// UPDATES 0700 &amp; 2100 ZULU [UTC]{live}</span>;
+  return <span className="cmt">// AUTO REFRESH 0700 & 2100 ZULU [UTC] {live}</span>;
 }
 
 // Full-detail view for a single CVE (opened from any ITW table; deep-linkable via #cve=).
@@ -1675,7 +1675,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
         <div className="statrow">
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
           <div className="stat"><div className="label">In-the-wild CVEs</div><div className="value">{totalItw}</div><div className="meta">CISA KEV, browser scope</div></div>
-          <div className="stat"><div className="label">Verified patch maps</div><div className="value">{totalHigh}</div><div className="meta">high-confidence CVE → fix</div></div>
+          <div className="stat"><div className="label">Verified ITW patch maps</div><div className="value">{totalHigh}</div><div className="meta">CVE → patched + vulnerable commit</div></div>
           <div className="stat"><div className="label">Mapped coverage</div><div className="value">{totalItw ? Math.round((totalHigh/totalItw)*100) : 0}%</div><div className="meta">ITW CVEs with a verified patch map</div></div>
         </div>
       </section>
@@ -1780,8 +1780,8 @@ function ReferenceSection() {
   return (
     <>
       <section className="block">
-        <div className="bhead"><h2>// REFERENCE</h2><span className="tag">engine internals</span></div>
-        <p className="resolver-hint">&gt;&gt; quick cross-engine reference for JIT pipelines and notable mitigations.</p>
+        <div className="bhead"><h2>// REFERENCE</h2><span className="tag">internals</span></div>
+        <p className="resolver-hint">&gt;&gt; quick cross-engine reference: JIT pipelines, notable mitigations, machine-readable data feeds, and patch-map methodology.</p>
       </section>
 
       <section className="block">
@@ -1825,7 +1825,14 @@ function ReferenceSection() {
           <span className="l">ITW CVEs (JSON)</span><a href="/api/itw.json">/api/itw.json</a>
           <span className="l">Patch Maps (JSON)</span><a href="/api/patchmap.json">/api/patchmap.json</a>
           <span className="l">Atom Feed</span><a href="/feed.xml">/feed.xml</a>
-          <span className="l">ITW Patch Map Methodology</span><a href="/methodology">/methodology</a>
+        </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// METHODOLOGY</h3></header>
+        <p className="resolver-hint">&gt;&gt; how each engine resolves a CVE to its patched commit and vulnerable parent, plus the confidence model.</p>
+        <div className="refs">
+          <span className="l">ITW patch-map methodology</span><a href="/methodology">/methodology</a>
         </div>
       </section>
     </>
