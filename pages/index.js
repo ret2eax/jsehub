@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 /* ------------------ utils ------------------ */
 function formatDate(v) {
-  if (!v) return '—';
+  if (!v) return '-';
   const d = new Date(v);
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -179,9 +179,11 @@ function FreshnessBadge({ when }) {
 
 // Next scheduled data refresh (CI runs ~07:00 and 21:00 UTC).
 function nextRefreshUTC(now) {
+  // Target :30, not the cron's :07, so the countdown lands when fresh data is actually live:
+  // the build runs at 07:07 / 21:07 UTC and takes ~15-20 min, matching the 0730 / 2130 label.
   const out = [];
   for (const off of [0, 1]) for (const h of [7, 21]) {
-    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + off, h, 0, 0));
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + off, h, 30, 0));
     if (d.getTime() > now.getTime()) out.push(d.getTime());
   }
   return Math.min(...out);
@@ -206,10 +208,10 @@ function UpdateStamp({ builtAt }) {
   if (now != null) {
     const built = builtAt ? new Date(builtAt).getTime() : null;
     const next = nextRefreshUTC(new Date(now));
-    const ago = built != null && !isNaN(built) ? `${fmtDur(now - built)} AGO` : '—';
+    const ago = built != null && !isNaN(built) ? `${fmtDur(now - built)} AGO` : '-';
     live = ` · LAST REFRESH ${ago} · NEXT IN ${fmtDur(next - now)}`;
   }
-  return <span className="cmt">// AUTO REFRESH 0700 & 2100 ZULU [UTC] {live}</span>;
+  return <span className="cmt">// AUTO REFRESH 0730 & 2130 ZULU [UTC] {live}</span>;
 }
 
 // Inline diff for a verified row: loads the pre-fetched same-origin diff on demand
@@ -272,7 +274,7 @@ function CveDetail({ row, engineKey }) {
   // specific description; ITW rows keep their advisory/KEV text.
   const isDisc = Boolean(row.disclosed);
   const dc = disclosureDescClass(row, engineKey);
-  const descText = isDisc ? (dc.desc === '—' ? 'No description.' : dc.desc) : (row.shortDescription || row.description || 'No description.');
+  const descText = isDisc ? (dc.desc === '-' ? 'No description.' : dc.desc) : (row.shortDescription || row.description || 'No description.');
   const classText = isDisc ? dc.cls : kevClassFromShort(row.shortDescription || row.description);
   // Explain a low/unresolved Chrome row that sits in an external dependency (fixed upstream via a roll).
   const depNote = (engineKey === 'chrome' && !pm.confident) ? chromiumExternalDep(row.shortDescription || row.description) : null;
@@ -423,7 +425,7 @@ function commitUrl(commit, project) {
 }
 
 function MonoCommitLink({ commit, project }) {
-  if (!commit) return <span className="muted">—</span>;
+  if (!commit) return <span className="muted">-</span>;
   const short = String(commit).slice(0, 12);
   const url = commitUrl(commit, project);
   return url
@@ -459,7 +461,7 @@ function Modal({ open, onClose, title, children }) {
 /* ------------------ shared cells ------------------ */
 /* Commit-only display: no links, just 12-char hashes */
 function MonoCommit({ commit }) {
-  if (!commit) return <span className="muted">—</span>;
+  if (!commit) return <span className="muted">-</span>;
   return <span className="mono">{String(commit).slice(0, 12)}</span>;
 }
 
@@ -490,7 +492,7 @@ function coalesceUnpatched(x) {
 function PatchedCell({ patched_commit, patched_version, project }) {
   if (patched_commit) return <MonoCommitLink commit={patched_commit} project={project} />;
   if (patched_version) return <span className="mono">{patched_version}</span>;
-  return <span className="muted">—</span>;
+  return <span className="muted">-</span>;
 }
 
 function UnpatchedCell({ unpatched_commits, unpatched_version, project }) {
@@ -516,7 +518,7 @@ function UnpatchedCell({ unpatched_commits, unpatched_version, project }) {
   }
   if (unpatched_commits) return <MonoCommitLink commit={unpatched_commits} project={project} />;
   if (unpatched_version) return <span className="mono">{unpatched_version}</span>;
-  return <span className="muted">—</span>;
+  return <span className="muted">-</span>;
 }
 
 /* ------------------ resolvers ------------------ */
@@ -1077,16 +1079,16 @@ function SmResolver({ data, openModal }) {
 function severityPill(sev) {
   const s = (sev || '').toLowerCase();
   const cls = s === 'critical' ? 'sev-crit' : s === 'high' ? 'sev-high' : 'sev-mid';
-  return <span className={`pill ${cls}`}>{s ? s[0].toUpperCase() + s.slice(1) : '—'}</span>;
+  return <span className={`pill ${cls}`}>{s ? s[0].toUpperCase() + s.slice(1) : '-'}</span>;
 }
 
 // Mapping-confidence pill, shared by the ITW and disclosure tables.
 function MappingPill({ patchmap }) {
-  if (!patchmap) return <span className="pill muted help" title="No fixing commit could be mapped to this CVE.">UNRESOLVED</span>;
+  if (!patchmap) return <span className="pill muted help" title="No patch map could be mapped to this bug, manual effort needed">UNRESOLVED</span>;
   return <span className={`pill help ${patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
     title={patchmap.confident
-      ? 'Verified mapping: the patched commit fixes this CVE and the vulnerable commit is its exact parent.'
-      : 'A fix was located but the single vulnerable parent is ambiguous, so the commits are withheld.'}>{patchmap.confident ? 'HIGH' : 'LOW'}</span>;
+      ? 'The patched commit fixes this bug and the vulnerable commit is its exact parent.'
+      : 'A fix was located but the single vulnerable parent is ambiguous, so the commits are withheld, manual effort needed.'}>{patchmap.confident ? 'HIGH' : 'LOW'}</span>;
 }
 
 // Chromium's external dependencies live in their own repos; a CVE in one is fixed upstream and
@@ -1125,9 +1127,9 @@ function disclosureDescClass(row, engineKey) {
       const sub = webkitSubArea(subject);
       return { desc: `${cls} in ${area}${sub ? ` (${sub})` : ''}`, cls };
     }
-    return { desc: impact || '—', cls };
+    return { desc: impact || '-', cls };
   }
-  return { desc: impact || '—', cls: kevClassFromShort(impact) };
+  return { desc: impact || '-', cls: kevClassFromShort(impact) };
 }
 
 // Recent researcher disclosures (critical/high, not in-the-wild) for one engine.
@@ -1146,7 +1148,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
             <tr>
               <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
               <th>Patched</th><th>Vulnerable</th>
-              <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits map to this CVE.\nHIGH = verified fix + exact parent\nLOW  = fix spans multiple landings, commits withheld\n—     = no fixing commit resolved"}>Mapping confidence</th>
+              <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits map to this CVE.\nHIGH = verified fix + exact parent\nLOW  = fix spans multiple landings, commits withheld\n-     = no patch map resolved"}>Mapping confidence</th>
             </tr>
           </thead>
           <tbody>
@@ -1159,7 +1161,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
                   <td><span className="cve-link">{x.cve}</span></td>
                   <td>{cls}</td>
                   <td>{desc}</td>
-                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
+                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                   <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                   <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                   <td><MappingPill patchmap={x.patchmap} /></td>
@@ -1216,8 +1218,8 @@ function ChromeSection({ data, openModal, openCve }) {
             return (
               <div className="stat" key={ch}>
                 <div className="label">{ch}</div>
-                <div className="value">{r.version || '—'}</div>
-                <div className="meta">M{r.milestone ?? '—'} · <span className="mono">{r.v8_commit ? r.v8_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
+                <div className="value">{r.version || '-'}</div>
+                <div className="meta">M{r.milestone ?? '-'} · <span className="mono">{r.v8_commit ? r.v8_commit.slice(0,12) : '-'}</span> · {r.updated ? formatDate(r.updated) : '-'}</div>
               </div>
             );
           })}
@@ -1250,12 +1252,12 @@ function ChromeSection({ data, openModal, openCve }) {
                   <tr key={`${plat}-${arch}`}>
                     <td>{platLabel[plat] || plat}</td>
                     <td>{archLabel[arch] || arch}</td>
-                    <td className="mono">{row.filename || '—'}</td>
-                    <td className="mono">{row.id || '—'}</td>
-                    <td className="mono">{row.commit ? row.commit.slice(0,12) : '—'}</td>
+                    <td className="mono">{row.filename || '-'}</td>
+                    <td className="mono">{row.id || '-'}</td>
+                    <td className="mono">{row.commit ? row.commit.slice(0,12) : '-'}</td>
                     <td>{formatDate(row.updated)}</td>
-                    <td className="mono">{row.md5_hex || '—'}</td>
-                    <td>{row.download ? <a className="btn small" href={row.download} target="_blank" rel="noreferrer">Download</a> : <span className="muted">—</span>}</td>
+                    <td className="mono">{row.md5_hex || '-'}</td>
+                    <td>{row.download ? <a className="btn small" href={row.download} target="_blank" rel="noreferrer">Download</a> : <span className="muted">-</span>}</td>
                   </tr>
                 ));
               })}
@@ -1285,7 +1287,7 @@ function ChromeSection({ data, openModal, openCve }) {
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
                 <th>Patched</th><th>Vulnerable</th>
-                <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (the patched commit fixes this CVE; vulnerable is its exact parent)\nLOW  = a CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the commits are withheld\n—    = no fixing CL could be resolved for this CVE"}>Mapping confidence</th>
+                <th className="help" title={"HIGH = the patched commit fixes this bug, vulnerable commit is its exact parent)\nLOW  = a CL referencing the bug was found but is not confidently the fix (i.e. a dependency roll), so the commits are withheld\n-    = no patch CL could be resolved for this bug"}>Mapping confidence</th>
               </tr>
             </thead>
             <tbody>
@@ -1297,8 +1299,8 @@ function ChromeSection({ data, openModal, openCve }) {
                       onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openCve(x, ENGINE_TAB)}>
                     <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
-                    <td>{x.shortDescription || x.description || '—'}</td>
-                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
+                    <td>{x.shortDescription || x.description || '-'}</td>
+                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                     <td>
                       <PatchedCell
                         patched_commit={p.commit}
@@ -1317,10 +1319,10 @@ function ChromeSection({ data, openModal, openCve }) {
                       ? <span
                           className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
                           title={x.patchmap.confident
-                            ? 'Verified mapping: the patched commit fixes this CVE and the vulnerable commit is its exact parent.'
-                            : 'A CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the patched/vulnerable commits are withheld.'}
+                            ? 'The patched commit fixes this bug and the vulnerable commit is its exact parent.'
+                            : 'A CL referencing the bug was found but is not confidently the fix (i.e. a dependency roll), so the patched/vulnerable commits are withheld, manual effort needed.'}
                         >{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
-                      : <span className="pill muted help" title="No fixing commit could be mapped to this CVE, so no patched/vulnerable commit is shown.">UNRESOLVED</span>}</td>
+                      : <span className="pill muted help" title="No patch map could be mapped to this bug, manual effort needed">UNRESOLVED</span>}</td>
                   </tr>
                 );
               })}
@@ -1396,8 +1398,8 @@ function JscSection({ data, openModal, openCve }) {
               return (
                 <div className="stat" key={ch}>
                   <div className="label">{ch}</div>
-                  <div className="value">{r.version || '—'}</div>
-                  <div className="meta"><span className="mono">{r.webkit_commit ? r.webkit_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
+                  <div className="value">{r.version || '-'}</div>
+                  <div className="meta"><span className="mono">{r.webkit_commit ? r.webkit_commit.slice(0,12) : '-'}</span> · {r.updated ? formatDate(r.updated) : '-'}</div>
                 </div>
               );
             })}
@@ -1455,7 +1457,7 @@ function JscSection({ data, openModal, openCve }) {
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
                 <th>Patched</th><th>Vulnerable</th>
-                <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (>=2 Apple advisories agree on the WebKit bug and a single commit references it; vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—    = no WebKit bug was published for this CVE (older or non-WebKit)"}>Mapping confidence</th>
+                <th className="help" title={"HIGH = verified fix (>=2 Apple advisories agree on the WebKit bug and a single commit references it, vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n-    = no WebKit bug was published for this bug (older or non-WebKit)"}>Mapping confidence</th>
               </tr>
             </thead>
             <tbody>
@@ -1469,18 +1471,18 @@ function JscSection({ data, openModal, openCve }) {
                       onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openCve(x, ENGINE_TAB)}>
                     <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
-                    <td>{x.shortDescription || x.description || '—'}</td>
-                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
+                    <td>{x.shortDescription || x.description || '-'}</td>
+                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                     <td>{x.patchmap
                       ? <span
                           className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
                           title={x.patchmap.confident
-                            ? 'Verified mapping: multiple Apple advisories agree on the WebKit bug, a single commit references it, and the vulnerable commit is its exact parent on trunk.'
-                            : 'The fix for this CVE spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
+                            ? 'Multiple Apple advisories agree on the WebKit bug, a single commit references it, and the vulnerable commit is its exact parent on trunk.'
+                            : 'The fix for this bug spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
                         >{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
-                      : <span className="pill muted help" title="No WebKit bug was published for this CVE (older or non-WebKit), so no patched/vulnerable commit is shown.">UNRESOLVED</span>}</td>
+                      : <span className="pill muted help" title="No WebKit bug was published for this bug (older or non-WebKit), so no patched/vulnerable commit is shown, manual effort needed.">UNRESOLVED</span>}</td>
                   </tr>
                 );
               })}
@@ -1551,8 +1553,8 @@ function SmSection({ data, openModal, openCve }) {
               return (
                 <div className="stat" key={ch}>
                   <div className="label">{ch}</div>
-                  <div className="value">{r.version || '—'}</div>
-                  <div className="meta">M{r.milestone ?? '—'} · <span className="mono">{r.sm_commit ? r.sm_commit.slice(0,12) : '—'}</span> · {r.updated ? formatDate(r.updated) : '—'}</div>
+                  <div className="value">{r.version || '-'}</div>
+                  <div className="meta">M{r.milestone ?? '-'} · <span className="mono">{r.sm_commit ? r.sm_commit.slice(0,12) : '-'}</span> · {r.updated ? formatDate(r.updated) : '-'}</div>
                 </div>
               );
             })}
@@ -1589,10 +1591,10 @@ function SmSection({ data, openModal, openCve }) {
                   <td>linux64</td>
                   <td>x64</td>
                   <td className="mono">{data.builds.latest.linux.filename}</td>
-                  <td className="mono">{data.builds.latest.linux.taskId || '—'}</td>
-                  <td className="mono">{data.builds.latest.linux.commit ? data.builds.latest.linux.commit.slice(0,12) : '—'}</td>
+                  <td className="mono">{data.builds.latest.linux.taskId || '-'}</td>
+                  <td className="mono">{data.builds.latest.linux.commit ? data.builds.latest.linux.commit.slice(0,12) : '-'}</td>
                   <td>{formatDate(data.builds.latest.linux.created)}</td>
-                  <td className="mono">{data.builds.latest.linux.md5 || '—'}</td>
+                  <td className="mono">{data.builds.latest.linux.md5 || '-'}</td>
                   <td><a className="btn small" href={data.builds.latest.linux.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -1603,10 +1605,10 @@ function SmSection({ data, openModal, openCve }) {
                   <td>win64</td>
                   <td>x64</td>
                   <td className="mono">{data.builds.latest.win64.filename}</td>
-                  <td className="mono">{data.builds.latest.win64.taskId || '—'}</td>
-                  <td className="mono">{data.builds.latest.win64.commit ? data.builds.latest.win64.commit.slice(0,12) : '—'}</td>
+                  <td className="mono">{data.builds.latest.win64.taskId || '-'}</td>
+                  <td className="mono">{data.builds.latest.win64.commit ? data.builds.latest.win64.commit.slice(0,12) : '-'}</td>
                   <td>{formatDate(data.builds.latest.win64.created)}</td>
-                  <td className="mono">{data.builds.latest.win64.md5 || '—'}</td>
+                  <td className="mono">{data.builds.latest.win64.md5 || '-'}</td>
                   <td><a className="btn small" href={data.builds.latest.win64.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -1617,10 +1619,10 @@ function SmSection({ data, openModal, openCve }) {
                   <td>macOS</td>
                   <td>x64</td>
                   <td className="mono">{data.builds.latest.mac.x64.filename}</td>
-                  <td className="mono">{data.builds.latest.mac.x64.taskId || '—'}</td>
-                  <td className="mono">{data.builds.latest.mac.x64.commit ? data.builds.latest.mac.x64.commit.slice(0,12) : '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.x64.taskId || '-'}</td>
+                  <td className="mono">{data.builds.latest.mac.x64.commit ? data.builds.latest.mac.x64.commit.slice(0,12) : '-'}</td>
                   <td>{formatDate(data.builds.latest.mac.x64.created)}</td>
-                  <td className="mono">{data.builds.latest.mac.x64.md5 || '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.x64.md5 || '-'}</td>
                   <td><a className="btn small" href={data.builds.latest.mac.x64.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -1629,10 +1631,10 @@ function SmSection({ data, openModal, openCve }) {
                   <td>macOS</td>
                   <td>arm64</td>
                   <td className="mono">{data.builds.latest.mac.arm64.filename}</td>
-                  <td className="mono">{data.builds.latest.mac.arm64.taskId || '—'}</td>
-                  <td className="mono">{data.builds.latest.mac.arm64.commit ? data.builds.latest.mac.arm64.commit.slice(0,12) : '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.arm64.taskId || '-'}</td>
+                  <td className="mono">{data.builds.latest.mac.arm64.commit ? data.builds.latest.mac.arm64.commit.slice(0,12) : '-'}</td>
                   <td>{formatDate(data.builds.latest.mac.arm64.created)}</td>
-                  <td className="mono">{data.builds.latest.mac.arm64.md5 || '—'}</td>
+                  <td className="mono">{data.builds.latest.mac.arm64.md5 || '-'}</td>
                   <td><a className="btn small" href={data.builds.latest.mac.arm64.download} target="_blank" rel="noreferrer">Download</a></td>
                 </tr>
               )}
@@ -1666,7 +1668,7 @@ function SmSection({ data, openModal, openCve }) {
               <tr>
                 <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
                 <th>Patched</th><th>Vulnerable</th>
-                <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (a single landing fixes this CVE; vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—    = no fixing commit could be resolved for this CVE"}>Mapping confidence</th>
+                <th className="help" title={"HIGH = verified fix (a single landing fixes this bug, vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n-    = no patch map could be resolved for this bug, manual effort needed"}>Mapping confidence</th>
               </tr>
             </thead>
             <tbody>
@@ -1678,18 +1680,18 @@ function SmSection({ data, openModal, openCve }) {
                       onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openCve(x, ENGINE_TAB)}>
                     <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
-                    <td>{x.shortDescription || x.description || '—'}</td>
-                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
+                    <td>{x.shortDescription || x.description || '-'}</td>
+                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                     <td>{x.patchmap
                       ? <span
                           className={`pill help ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
                           title={x.patchmap.confident
-                            ? 'Verified mapping: a single landing fixes this CVE and the vulnerable commit is its exact parent on mozilla-central.'
-                            : 'The fix for this CVE spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld.'}
+                            ? 'A single landing fixes this bug and the vulnerable commit is its exact parent on mozilla-central.'
+                            : 'The fix for this bug spans multiple landings, so a single vulnerable parent is ambiguous and the patched/vulnerable commits are withheld, manual effort needed.'}
                         >{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
-                      : <span className="pill muted help" title="No fixing commit could be resolved for this CVE, so no patched/vulnerable commit is shown.">UNRESOLVED</span>}</td>
+                      : <span className="pill muted help" title="No patch map could be resolved for this bug, manual effort needed.">UNRESOLVED</span>}</td>
                   </tr>
                 );
               })}
@@ -1789,9 +1791,9 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
     sm:     channelMap(sm.releases),
   };
   const preview = {
-    chrome: chans.chrome['Canary'] || chans.chrome['Dev'] || '—',
-    jsc:    chans.jsc['STP'] || chans.jsc['Safari Technology Preview'] || chans.jsc['Preview'] || '—',
-    sm:     chans.sm['Nightly'] || '—',
+    chrome: chans.chrome['Canary'] || chans.chrome['Dev'] || '-',
+    jsc:    chans.jsc['STP'] || chans.jsc['Safari Technology Preview'] || chans.jsc['Preview'] || '-',
+    sm:     chans.sm['Nightly'] || '-',
   };
   const maxTaxo = Math.max(1, ...taxo.map(t => t.total));
   const freshest = [chrome.cves, jsc.cves, sm.cves]
@@ -1821,8 +1823,8 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
               {ENGINE_ORDER.map(k => (
                 <tr key={k}>
                   <td><span className="edot" style={{ background:ENGINES[k].color }} /> {ENGINES[k].label}</td>
-                  <td className="mono">{chans[k]['Stable'] || '—'}</td>
-                  <td className="mono">{chans[k]['Beta'] || '—'}</td>
+                  <td className="mono">{chans[k]['Stable'] || '-'}</td>
+                  <td className="mono">{chans[k]['Beta'] || '-'}</td>
                   <td className="mono">{preview[k]}</td>
                   <td className="muted cov-cell">
                     <div>{cov[k].high} high · {cov[k].low} low · {cov[k].unresolved} unresolved [ITW]</div>
@@ -1848,7 +1850,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
                   <td><span className="epill" style={{ color:ENGINES[x.engine].color, borderColor:'#243149' }}>{ENGINES[x.engine].short}</span></td>
                   <td><span className="mono">{x.cve}</span></td>
                   <td>{disclosureDescClass(x, x.engine).cls}</td>
-                  <td className="muted">{x.disclosed ? formatDate(x.disclosed) : '—'}</td>
+                  <td className="muted">{x.disclosed ? formatDate(x.disclosed) : '-'}</td>
                   <td>{x.patchmap
                     ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
                     : <span className="pill muted">UNRESOLVED</span>}</td>
@@ -1935,7 +1937,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 const JIT_TIERS = [
   { engine:'chrome', interp:'Ignition (bytecode)',        baseline:'Sparkplug',       mid:'Maglev',  opt:'TurboFan' },
   { engine:'jsc',    interp:'LLInt (low-level interp)',   baseline:'Baseline JIT',    mid:'DFG',     opt:'FTL (B3/Air)' },
-  { engine:'sm',     interp:'C++ interp / Baseline interp', baseline:'Baseline JIT',  mid:'—',       opt:'WarpMonkey (Ion)' },
+  { engine:'sm',     interp:'C++ interp / Baseline interp', baseline:'Baseline JIT',  mid:'-',       opt:'WarpMonkey (Ion)' },
 ];
 const MITIGATIONS = {
   chrome: ['V8 Sandbox (heap isolation, in-progress hardening)', 'Pointer compression', 'External pointer table', 'Code pointer sandboxing / CFI', '--jitless option for attack-surface reduction'],
@@ -2051,7 +2053,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm, builtAt }) {
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="JS Engine Hub" />
         <meta property="og:title" content="JS Engine Hub" />
-        <meta property="og:description" content="Fuzzing and vulnerability research across V8, SpiderMonkey, and JavaScriptCore: releases, ASan builds, resolver, and in-the-wild CVEs." />
+        <meta property="og:description" content="A curated surgical dashboard for fuzzing and vulnerability research across modern JavaScript engines" />
         <meta property="og:url" content="https://jsehub.dev/" />
         <meta property="og:image" content="https://jsehub.dev/og.png" />
         <meta property="og:image:width" content="1200" />
