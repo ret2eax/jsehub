@@ -1,7 +1,7 @@
 {
-  "generated": "2026-06-28T10:20:29.511Z",
+  "generated": "2026-06-28T22:09:47.400Z",
   "site": "https://jsehub.dev",
-  "count": 103,
+  "count": 104,
   "items": [
     {
       "cve": "CVE-2026-11645",
@@ -1213,10 +1213,10 @@
       "class": "Use-after-free",
       "description": "Apple iOS, iPadOS, and macOS WebKit contain a use-after-free vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.",
       "project": "webkit/webkit",
-      "confidence": null,
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "confidence": "high",
+      "patched_commit": "486816dc355c19f1de1b8056f85d0bbf7084dd6e",
+      "unpatched_commit": "7b23cae2a1b1ffd026288f15261f8ba272c3b24b",
+      "patched_date": "2022-01-25T05:48:06Z",
       "url": "https://jsehub.dev/#cve=CVE-2022-22620"
     },
     {
@@ -1602,6 +1602,22 @@
       "unpatched_commit": "5165e3f4a5620d1ae1a556b2d7d30f0384f51ebb",
       "patched_date": "2021-08-05T11:49:01.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-30563"
+    },
+    {
+      "cve": "CVE-2021-1879",
+      "engine": "jsc",
+      "engine_label": "Safari / JSC",
+      "vendor": "Apple",
+      "product": "iOS, iPadOS, and watchOS",
+      "date_added": "2021-11-03",
+      "class": "Unspecified",
+      "description": "Apple iOS, iPadOS, and watchOS WebKit contain an unspecified vulnerability that allows for universal cross-site scripting (XSS) when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.",
+      "project": "webkit/webkit",
+      "confidence": "high",
+      "patched_commit": "629d61f760e57cf322288f528a7fcd318dd14327",
+      "unpatched_commit": "c224e1ede209f3b7f241f7da0e2fcea2b33eb8c6",
+      "patched_date": "2021-03-23T05:53:22Z",
+      "url": "https://jsehub.dev/#cve=CVE-2021-1879"
     },
     {
       "cve": "CVE-2020-6819",

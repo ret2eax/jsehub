@@ -1,7 +1,7 @@
 {
-  "generated": "2026-06-28T10:20:29.511Z",
+  "generated": "2026-06-28T22:09:47.400Z",
   "site": "https://jsehub.dev",
-  "count": 92,
+  "count": 94,
   "items": [
     {
       "cve": "CVE-2026-11645",
@@ -598,6 +598,15 @@
       "patched_date": "2013-04-29T22:39:16Z"
     },
     {
+      "cve": "CVE-2022-22620",
+      "engine": "jsc",
+      "project": "webkit/webkit",
+      "confidence": "high",
+      "patched_commit": "486816dc355c19f1de1b8056f85d0bbf7084dd6e",
+      "unpatched_commit": "7b23cae2a1b1ffd026288f15261f8ba272c3b24b",
+      "patched_date": "2022-01-25T05:48:06Z"
+    },
+    {
       "cve": "CVE-2020-6572",
       "engine": "chrome",
       "project": "chromium/src",
@@ -803,6 +812,15 @@
       "patched_commit": "374354bfe4a30740b96936b33e522d6fcd1cda67",
       "unpatched_commit": "5165e3f4a5620d1ae1a556b2d7d30f0384f51ebb",
       "patched_date": "2021-08-05T11:49:01.000Z"
+    },
+    {
+      "cve": "CVE-2021-1879",
+      "engine": "jsc",
+      "project": "webkit/webkit",
+      "confidence": "high",
+      "patched_commit": "629d61f760e57cf322288f528a7fcd318dd14327",
+      "unpatched_commit": "c224e1ede209f3b7f241f7da0e2fcea2b33eb8c6",
+      "patched_date": "2021-03-23T05:53:22Z"
     },
     {
       "cve": "CVE-2020-6819",

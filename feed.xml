@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-06-28T10:20:29.511Z</updated>
+  <updated>2026-06-28T22:09:47.400Z</updated>
   <entry>
     <title>CVE-2026-11645 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-11645</id>
