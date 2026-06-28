@@ -47,6 +47,21 @@ async function main() {
     console.log(`  ${ok ? 'OK ' : 'FAIL'}  ${label}: ${actual} (min ${min})`);
   }
 
+  // Disclosures are a supplementary feed (researcher-reported, last 90d). A source format change
+  // should not abort the whole deploy, so these are WARN-only: surfaced in the log, never fatal.
+  const chromeDisc = await read('chrome_disclosures.json', { items: [] });
+  const jscDisc    = await read('jsc_disclosures.json', { items: [] });
+  const smDisc     = await read('sm_disclosures.json', { items: [] });
+  const softChecks = [
+    ['Chrome disclosures',     num(chromeDisc.items), 1],
+    ['Safari/JSC disclosures', num(jscDisc.items),    1],
+    ['Firefox/SM disclosures', num(smDisc.items),     1],
+  ];
+  console.log('[check] disclosures (warn-only):');
+  for (const [label, actual, min] of softChecks) {
+    console.log(`  ${actual >= min ? 'OK  ' : 'WARN'}  ${label}: ${actual} (expect >= ${min})`);
+  }
+
   if (failed) {
     console.error(`\n[check] ${failed} check(s) failed - aborting before deploy so empty/broken data does not ship.`);
     process.exit(1);

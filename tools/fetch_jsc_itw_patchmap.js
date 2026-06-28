@@ -193,7 +193,7 @@ async function commitMeta(sha) {
 
 // Resolve the single mainline fix commit (+ exact parent) for a bug.
 // mainline = a normal landing; cherry-picks collapse to the original they name.
-async function resolveFix(bug) {
+export async function resolveFix(bug) {
   const commits = await commitsForBug(bug);
   if (!commits.length) return null;
 
@@ -322,7 +322,10 @@ async function main() {
   console.log(`\n[jsc-patchmap] done. high=${high} low=${low} of ${rows.length} CVE(s).`);
 }
 
-main().catch(err => {
-  console.error('[jsc-patchmap] fatal:', err?.stack || err?.message || String(err));
-  process.exit(1);
-});
+const __isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+if (__isMain) {
+  main().catch(err => {
+    console.error('[jsc-patchmap] fatal:', err?.stack || err?.message || String(err));
+    process.exit(1);
+  });
+}

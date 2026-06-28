@@ -11,7 +11,7 @@ const CVES_JSON = path.join(DATA_DIR, 'cves.json');
 const OUT_JSON  = path.join(DATA_DIR, 'v8_itw_patchmap.json');
 
 const GERRIT = 'https://chromium-review.googlesource.com';
-const GITILES_ROOT = 'https://chromium.googlesource.com';
+export const GITILES_ROOT = 'https://chromium.googlesource.com';
 const V8_PROJECT = 'v8/v8';
 const CHROMIUM_PROJECT = 'chromium/src';
 
@@ -57,7 +57,7 @@ async function writeJSON(file, obj) {
   await fs.writeFile(file, JSON.stringify(obj, null, 2) + '\n', 'utf8');
 }
 
-function changeUrl(project, change) {
+export function changeUrl(project, change) {
   return `${GERRIT}/c/${project}/+/${change}`;
 }
 
@@ -135,7 +135,7 @@ function extractChromiumThings(refs) {
 /* ----------------------- Gerrit discovery ------------------------- */
 // A merged CL that is clearly NOT a security fix (test/fuzzer/roll/version bump/squash).
 // Used both to penalize during selection and to blank a low-confidence result at write time.
-function looksLikeNonFix(subject) {
+export function looksLikeNonFix(subject) {
   const s = (subject || '').toLowerCase().trim();
   return (
     /^(revert|reland)\b/.test(s) ||
@@ -148,7 +148,7 @@ function looksLikeNonFix(subject) {
   );
 }
 
-function scoreChange(change, needle) {
+export function scoreChange(change, needle) {
   const subj = (change?.subject || '').toLowerCase();
   const msg  = (change?.revisions?.[change.current_revision]?.commit?.message || change?.subject || '').toLowerCase();
 
@@ -173,7 +173,7 @@ function scoreChange(change, needle) {
   return { score, submitted };
 }
 
-async function gerritQuery(q, n = 200, start = 0) {
+export async function gerritQuery(q, n = 200, start = 0) {
   const url = `${GERRIT}/changes/?q=${encodeURIComponent(q)}&n=${n}&S=${start}&o=CURRENT_REVISION`;
   try {
     const txt = await httpText(url, { headers: { Accept: 'application/json' } });
@@ -185,7 +185,7 @@ async function gerritQuery(q, n = 200, start = 0) {
   }
 }
 
-async function findMergedChangeForIssueOrCVE({ issueId, cveId }) {
+export async function findMergedChangeForIssueOrCVE({ issueId, cveId }) {
   // Build robust query set (both projects, both styles)
   const needles = [];
   if (issueId) {
@@ -241,7 +241,7 @@ async function findMergedChangeForIssueOrCVE({ issueId, cveId }) {
 }
 
 /* ------------------- Resolve tracks for a change ------------------- */
-async function resolveTracks(project, changeNumber) {
+export async function resolveTracks(project, changeNumber) {
   const detail = await gerritJSON(
     `${GERRIT}/changes/${encodeURIComponent(changeNumber)}/detail?o=CURRENT_REVISION`
   );
@@ -303,7 +303,7 @@ async function ghJSON(url) {
 // When Gerrit only yields a non-fix (e.g. a dependency roll), search the v8/v8 git mirror
 // (then chromium/src) for the bug id and take the real fixing commit + its exact parent.
 // Reverts and rolls are dropped; relands are kept and the latest substantive landing wins.
-async function githubV8Fix(cve) {
+export async function githubV8Fix(cve) {
   const meta = await fetchCveMeta(cve);
   const { issueIds } = extractChromiumThings(extractRefs(meta));
   for (const repo of ['v8/v8', 'chromium/src']) {
@@ -529,7 +529,8 @@ async function main() {
   }
 }
 
-main().catch(err => {
+const __isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+if (__isMain) main().catch(err => {
   console.error('[v8-patchmap] fatal:', err?.stack || err?.message || String(err));
   process.exit(1);
 });

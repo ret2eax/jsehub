@@ -89,6 +89,44 @@ async function main() {
   await fs.writeFile(path.join(OUT_API, 'patchmap.json'),
     JSON.stringify({ generated, site: SITE, count: maps.length, items: maps }, null, 2));
 
+  // 2b) recent disclosures feed (researcher-reported, not in-the-wild; same resolution + tiers as ITW)
+  const DISC = [
+    { key:'chrome', label:'Chrome / V8',            project:'v8/v8',                   file:'chrome_disclosures.json' },
+    { key:'jsc',    label:'Safari / JSC',           project:'webkit/webkit',           file:'jsc_disclosures.json' },
+    { key:'sm',     label:'Firefox / SpiderMonkey', project:'mozilla-firefox/firefox', file:'sm_disclosures.json' },
+  ];
+  const disc = [];
+  let discWindow = 90;
+  for (const e of DISC) {
+    const data = await readJSON(e.file, { items: [] });
+    if (data.window_days) discWindow = data.window_days;
+    for (const x of (data.items || [])) {
+      const pm = x.patchmap || {};
+      disc.push({
+        cve: x.cve,
+        engine: e.key,
+        engine_label: e.label,
+        vendor: x.vendor || null,
+        severity: x.severity || null,
+        reporter: x.reporter || null,
+        disclosed: x.disclosed || null,
+        class: classify(x.shortDescription || x.description),
+        description: x.shortDescription || x.description || null,
+        fix_subject: pm.subject || null,
+        project: pm.project || e.project,
+        confidence: pm.confident ? 'high' : (x.patchmap ? 'low' : null),
+        patched_commit: x.patched_commit || pm.patched_commit || null,
+        unpatched_commit: x.unpatched_commit || pm.unpatched_commit || null,
+        patched_date: pm.patched_date || null,
+        bug: pm.bug || null,
+        url: `${SITE}/#cve=${x.cve}`,
+      });
+    }
+  }
+  disc.sort((a, b) => new Date(b.disclosed || 0) - new Date(a.disclosed || 0));
+  await fs.writeFile(path.join(OUT_API, 'disclosures.json'),
+    JSON.stringify({ generated, site: SITE, window_days: discWindow, count: disc.length, items: disc }, null, 2));
+
   // 3) Atom feed (recent)
   const recent = all.slice(0, 40);
   const entries = recent.map(x => `  <entry>
@@ -110,7 +148,7 @@ ${entries}
 `;
   await fs.writeFile(path.join(ROOT, 'public', 'feed.xml'), atom);
 
-  console.log(`[feeds] wrote public/api/itw.json (${all.length}), public/api/patchmap.json (${maps.length}), public/feed.xml (${recent.length} entries)`);
+  console.log(`[feeds] wrote public/api/itw.json (${all.length}), public/api/patchmap.json (${maps.length}), public/api/disclosures.json (${disc.length}), public/feed.xml (${recent.length} entries)`);
 }
 
 main().catch(e => { console.error('[feeds] error:', e?.message || e); process.exit(1); });
