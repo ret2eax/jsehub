@@ -5,6 +5,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { p0BugForCve } from './p0_rca.js';
+import { ghSearchCommits } from './gh_search.js';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -310,7 +311,7 @@ export async function githubV8Fix(cve) {
   for (const repo of ['v8/v8', 'chromium/src']) {
     for (const id of issueIds) {
       let res;
-      try { res = await ghJSON(`${GH_API}/search/commits?q=repo:${repo}+${id}&per_page=30`); }
+      try { res = await ghSearchCommits(`repo:${repo}+${id}`, 30); }
       catch { continue; }
       const items = (res?.items || [])
         .map(it => ({
@@ -344,7 +345,7 @@ export async function githubV8Fix(cve) {
 export async function githubChromiumFix(bug) {
   if (!bug) return null;
   let res;
-  try { res = await ghJSON(`${GH_API}/search/commits?q=repo:chromium/chromium+${bug}&per_page=30`); }
+  try { res = await ghSearchCommits(`repo:chromium/chromium+${bug}`, 30); }
   catch { return null; }
   const footer = new RegExp(`^(?:Bug|Fixed):.*\\b${bug}\\b`, 'mi');   // a real commit footer line
   const items = (res?.items || [])
