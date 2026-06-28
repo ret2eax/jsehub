@@ -358,6 +358,10 @@ async function main() {
     let project = r?.patchmap?.project || r?.patched_repo || null;
     let changeNumber = r?.patchmap?.gerrit_change ? +r.patchmap.gerrit_change : null;
 
+    // Chromium issue-tracker id (for the modal "Chromium bug" link); also feeds discovery below.
+    const { issueIds: issueIds0, changeLinks: changeLinks0 } = extractChromiumThings(extractRefs(await fetchCveMeta(cve)));
+    let chromiumBug = issueIds0[0] || null;
+
     // 0) If patched_url exists, trust it first
     if (!changeNumber && r?.patched_url) {
       const parsed = parseProjectAndChangeFromUrl(r.patched_url);
@@ -370,9 +374,7 @@ async function main() {
 
     // 1) If still unknown, auto-discover via CVE refs → (issue id | CVE string) → Gerrit
     if (!changeNumber) {
-      const meta = await fetchCveMeta(cve);
-      const refs = extractRefs(meta);
-      const { issueIds, changeLinks } = extractChromiumThings(refs);
+      const issueIds = issueIds0, changeLinks = changeLinks0;
 
       // Direct CL link beats everything
       if (changeLinks.length) {
@@ -432,6 +434,7 @@ async function main() {
         const fb = await githubV8Fix(cve);
         if (fb) {
           confident = true; source = 'github';
+          chromiumBug = chromiumBug || fb.bug;
           uiProject = fb.project; uiPatched = fb.patched; uiUnpatched = fb.unpatched;
           uiDate = fb.date || null; uiUrl = `https://github.com/${fb.project}/commit/${fb.patched}`;
           console.log(`[v8-patchmap] RECOVERED via github: ${cve} → ${fb.project} patched=${short(fb.patched)} · unpatched=${short(fb.unpatched)} (bug ${fb.bug}) "${(fb.subject||'').slice(0,44)}"`);
@@ -455,6 +458,8 @@ async function main() {
           project: uiProject,
           gerrit_change: t.change,
           url: uiUrl,
+          bug: chromiumBug ? Number(chromiumBug) : null,
+          bug_url: chromiumBug ? `https://issues.chromium.org/issues/${chromiumBug}` : null,
           status: t.status,
           confident,
           source,
@@ -489,6 +494,8 @@ async function main() {
         cve,
         project: uiProject,
         change: t.change,
+        bug: chromiumBug ? Number(chromiumBug) : null,
+        bug_url: chromiumBug ? `https://issues.chromium.org/issues/${chromiumBug}` : null,
         status: t.status,
         confident,
         source,
