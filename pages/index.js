@@ -50,10 +50,12 @@ function kevClassFromShort(s) {
     { re: /\bimproper\s+input\s+validation\b/,                         cls: 'Input validation' },
     { re: /\binappropriate\s+implementation\b/,                        cls: 'Implementation issue' },
     { re: /\blogic\s+error\b/,                                         cls: 'Logic error' },
-    { re: /\bheap\s+buffer\s+overflow\b/,                              cls: 'Heap overflow' },
-    { re: /\bstack\s+buffer\s+overflow\b/,                             cls: 'Stack overflow' },
+    { re: /\bheap(?:\s+buffer)?\s+overflow\b/,                         cls: 'Heap overflow' },
+    { re: /\bstack(?:\s+buffer)?\s+overflow\b/,                        cls: 'Stack overflow' },
     { re: /\bbuffer\s+overflow\b/,                                     cls: 'Buffer overflow' },
     { re: /\bmemory\s+corruption\b/,                                   cls: 'Memory corruption' },
+    // Apple's WebKit euphemism for a WebContent memory-safety bug.
+    { re: /\bunexpected\s+(?:process|app|safari|system|device)\s+(?:crash|termination|reboot)\b|\bcorrupt\w*\s+(?:process\s+)?memory\b/, cls: 'Memory corruption' },
     { re: /\b(remote|arbitrary)\s+code\s+execution\b|\brce\b/,         cls: 'Code execution' },
     { re: /\bdenial[-\s]?of[-\s]?service\b|\bdos\b/,                   cls: 'Denial of service' },
   ];
@@ -120,6 +122,15 @@ function allItwRows(props) {
     for (const x of engineItwRows(props, key)) rows.push({ ...x, engine: key });
   }
   return rows.sort(cmpCveDesc);
+}
+
+// Flatten every engine's recent disclosures into one list tagged with engine, newest disclosed first.
+function allDisclosureRows(props) {
+  const rows = [];
+  for (const key of ENGINE_ORDER) {
+    for (const x of (props[key]?.disclosures?.items || [])) rows.push({ ...x, engine: key });
+  }
+  return rows.sort((a, b) => (new Date(b.disclosed || 0) - new Date(a.disclosed || 0)) || cmpCveDesc(a, b));
 }
 
 // Per-engine patch-map coverage (how many ITW CVEs resolve to a verified fix).
@@ -249,6 +260,13 @@ function CveDetail({ row, engineKey }) {
   // Full commit message, only when we have a confident commit pair to attribute it to.
   const commitMessage = (patched && unpatched) ? (diffData?.message || pm.subject || pm.message_preview || null) : null;
 
+  // For disclosure rows whose official text is generic (WebKit), the fix-commit subject is the
+  // specific description; ITW rows keep their advisory/KEV text.
+  const isDisc = Boolean(row.disclosed);
+  const dc = disclosureDescClass(row, engineKey);
+  const descText = isDisc ? (dc.desc === '—' ? 'No description.' : dc.desc) : (row.shortDescription || row.description || 'No description.');
+  const classText = isDisc ? dc.cls : kevClassFromShort(row.shortDescription || row.description);
+
   // The fix bug lives in the facts block below; only the Gerrit CL stays a bottom reference.
   const bugLabel = engineKey === 'chrome' ? 'Chromium bug' : engineKey === 'jsc' ? 'WebKit bug' : 'Bugzilla bug';
   const sources = [];
@@ -258,15 +276,18 @@ function CveDetail({ row, engineKey }) {
     <div className="cve-detail">
       <div className="cd-tags">
         <span className="pill" style={{ marginLeft:0, color:eng.color, borderColor:'#243149' }}>{eng.short}</span>
-        <span className="pill itw">{kevClassFromShort(row.shortDescription || row.description)}</span>
+        <span className="pill itw">{classText}</span>
         {row.patchmap
           ? <span className={`pill ${row.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{row.patchmap.confident ? 'Mapping Confidence: High' : 'Mapping Confidence: Low'}</span>
           : <span className="pill muted">Mapping Confidence: unresolved</span>}
       </div>
 
-      <p className="cd-desc">{row.shortDescription || row.description || 'No description.'}</p>
+      <p className="cd-desc">{descText}</p>
 
       <div className="kv slim cd-kv">
+        {row.disclosed && (<><label>Disclosed</label><div>{formatDate(row.disclosed)}</div></>)}
+        {row.severity && (<><label>Severity</label><div>{severityPill(row.severity)}</div></>)}
+        {row.reporter && (<><label>Reporter</label><div>{row.reporter}</div></>)}
         {pm.patched_date && (<><label>Fix landed</label><div>{formatDate(pm.patched_date)}</div></>)}
         <label>Patched</label><div>{patched ? <MonoCommitLink commit={patched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
         <label>Vulnerable</label><div>{unpatched ? <MonoCommitLink commit={unpatched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
@@ -333,12 +354,17 @@ export async function getStaticProps() {
   const sm_gcls     = readJSON('data/sm_security_cls.json', { items: [] });
   const sm_resolve  = readJSON('data/sm_resolver.json', { versions: {}, commitIndex: {} });
 
+  // Recent researcher disclosures (90d, critical/high, attributed) per engine.
+  const chrome_disc = readJSON('data/chrome_disclosures.json', { items: [] });
+  const jsc_disc    = readJSON('data/jsc_disclosures.json', { items: [] });
+  const sm_disc     = readJSON('data/sm_disclosures.json', { items: [] });
+
   return {
     props: {
       builtAt: new Date().toISOString(),   // build time ~= when data was fetched in CI
-      chrome: { releases, v8, builds, cves, blog, gcls },
-      jsc:    { releases: jsc_releases, commits: jsc_commits, cves: jsc_cves, blog: jsc_blog, gcls: jsc_gcls, resolve: jsc_resolve },
-      sm:     { releases: sm_releases,  commits: sm_commits,  builds: sm_builds,  cves: sm_cves,  blog: sm_blog,  gcls: sm_gcls,  resolve: sm_resolve }
+      chrome: { releases, v8, builds, cves, blog, gcls, disclosures: chrome_disc },
+      jsc:    { releases: jsc_releases, commits: jsc_commits, cves: jsc_cves, blog: jsc_blog, gcls: jsc_gcls, resolve: jsc_resolve, disclosures: jsc_disc },
+      sm:     { releases: sm_releases,  commits: sm_commits,  builds: sm_builds,  cves: sm_cves,  blog: sm_blog,  gcls: sm_gcls,  resolve: sm_resolve, disclosures: sm_disc }
     }
   };
 }
@@ -1034,9 +1060,103 @@ function SmResolver({ data, openModal }) {
 }
 
 /* ------------------ engine sections ------------------ */
+function severityPill(sev) {
+  const s = (sev || '').toLowerCase();
+  const cls = s === 'critical' ? 'sev-crit' : s === 'high' ? 'sev-high' : 'sev-mid';
+  return <span className={`pill ${cls}`}>{s ? s[0].toUpperCase() + s.slice(1) : '—'}</span>;
+}
+
+// Mapping-confidence pill, shared by the ITW and disclosure tables.
+function MappingPill({ patchmap }) {
+  if (!patchmap) return <span className="pill muted help" title="No fixing commit could be mapped to this CVE.">UNRESOLVED</span>;
+  return <span className={`pill help ${patchmap.confident ? 'conf-hi' : 'conf-lo'}`}
+    title={patchmap.confident
+      ? 'Verified mapping: the patched commit fixes this CVE and the vulnerable commit is its exact parent.'
+      : 'A fix was located but the single vulnerable parent is ambiguous, so the commits are withheld.'}>{patchmap.confident ? 'HIGH' : 'LOW'}</span>;
+}
+
+// Sub-area within WebKit/JSC, pulled from the fix-commit subject (a `Class::method` symbol, or a
+// known engine module). Best-effort; null when nothing clean is detectable.
+function webkitSubArea(subject) {
+  const m = subject.match(/\b([A-Z][A-Za-z0-9]+)::/);
+  if (m) return m[1] === 'Wasm' ? 'WebAssembly' : m[1];
+  if (/\bwasm\b|webassembly/i.test(subject)) return 'WebAssembly';
+  if (/\byarr\b|regular ?expression|regexp/i.test(subject)) return 'RegExp';
+  return null;
+}
+
+// Best description + class for a disclosure row. Chrome and Firefox publish a per-CVE "<class> in
+// <component>" description directly; Apple does not (its WebKit advisory impact is a generic line,
+// identical across rows, and the bug is access-restricted). So for WebKit/JSC we synthesise the same
+// shape from the resolved fix commit: class from the subject+impact, component (JavaScriptCore vs
+// WebKit) and sub-area from the subject. Unresolved rows fall back to the generic Apple impact.
+function disclosureDescClass(row, engineKey) {
+  const impact = row.shortDescription || row.description || '';
+  if (engineKey === 'jsc') {
+    const subject = row.patchmap?.subject || '';
+    const cls = kevClassFromShort(`${subject} ${impact}`.trim());
+    if (subject) {
+      const area = /\[jsc\]|\bwasm\b|webassembly|\byarr\b|\bdfg\b|\bftl\b|\bb3\b|ipint|llint|\bjsc\b|\bosr\b|regexp|regular expression/i.test(subject) ? 'JavaScriptCore' : 'WebKit';
+      const sub = webkitSubArea(subject);
+      return { desc: `${cls} in ${area}${sub ? ` (${sub})` : ''}`, cls };
+    }
+    return { desc: impact || '—', cls };
+  }
+  return { desc: impact || '—', cls: kevClassFromShort(impact) };
+}
+
+// Recent researcher disclosures (critical/high, not in-the-wild) for one engine.
+function DisclosuresSection({ data, engineKey, openCve }) {
+  const items = data.disclosures?.items || [];
+  const ordered = useMemo(() => [...items].sort(cmpCveDesc), [items]);
+  const [limit, setLimit] = useState(10);
+  if (!items.length) return null;
+  return (
+    <section className="block">
+      <header className="bsub"><h3>// RECENT DISCLOSURES [{ENGINES[engineKey].label}]</h3></header>
+      <p className="resolver-hint">&gt;&gt; researcher-reported critical/high vulnerabilities fixed in the last 90 days (disclosed, not in-the-wild exploited). Click any row for the patch map, diff, and commit message.</p>
+      <div className="tableWrap">
+        <table className="table itw">
+          <thead>
+            <tr>
+              <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
+              <th>Patched</th><th>Vulnerable</th>
+              <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits map to this CVE.\nHIGH = verified fix + exact parent\nLOW  = fix spans multiple landings, commits withheld\n—     = no fixing commit resolved"}>Mapping confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordered.slice(0, limit).map(x => {
+              const p = coalescePatched(x); const u = coalesceUnpatched(x);
+              const { desc, cls } = disclosureDescClass(x, engineKey);
+              return (
+                <tr key={x.cve} className="rowlink" onClick={() => openCve(x, engineKey)} tabIndex={0}
+                    onKeyDown={e => (e.key==='Enter'||e.key===' ') && openCve(x, engineKey)}>
+                  <td><span className="cve-link">{x.cve}</span></td>
+                  <td>{cls}</td>
+                  <td>{desc}</td>
+                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
+                  <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
+                  <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
+                  <td><MappingPill patchmap={x.patchmap} /></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {ordered.length > limit && (
+        <div style={{ marginTop:10 }}>
+          <span className="more-link" role="button" tabIndex={0} onClick={() => setLimit(ordered.length)}
+            onKeyDown={e => (e.key==='Enter'||e.key===' ') && setLimit(ordered.length)}>≫ show more ({ordered.length - limit} more)</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ChromeSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'chrome';
-  const [itwLimit, setItwLimit] = useState(12);
+  const [itwLimit, setItwLimit] = useState(10);
   const channels = ['Canary','Dev','Beta','Stable'];
   const latest = Object.fromEntries(channels.map(ch => [ch, latestByChannel(data.releases, ch)]));
   const asan = normalizeAsan(data.builds);
@@ -1127,6 +1247,8 @@ function ChromeSection({ data, openModal, openCve }) {
         <ChromeResolver releases={data.releases} openModal={openModal}/>
       </section>
 
+      <DisclosuresSection data={data} engineKey="chrome" openCve={openCve} />
+
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD [Chrome/V8]</h3></header>
         <p className="resolver-hint">
@@ -1136,7 +1258,7 @@ function ChromeSection({ data, openModal, openCve }) {
           <table className="table itw">
             <thead>
               <tr>
-                <th>CVE</th><th>Class</th><th>Description</th><th>Component</th>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
                 <th>Patched</th><th>Vulnerable</th>
                 <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (the patched commit fixes this CVE; vulnerable is its exact parent)\nLOW  = a CL referencing the bug was found but is not confidently the fix (e.g. a dependency roll), so the commits are withheld\n—    = no fixing CL could be resolved for this CVE"}>Mapping confidence</th>
               </tr>
@@ -1151,7 +1273,7 @@ function ChromeSection({ data, openModal, openCve }) {
                     <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
-                    <td>{x.product}</td>
+                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
                     <td>
                       <PatchedCell
                         patched_commit={p.commit}
@@ -1209,33 +1331,6 @@ function ChromeSection({ data, openModal, openCve }) {
         </ul>
       </section>
 
-      <section className="block">
-        <header className="bsub"><h3>// V8 Commits <span className="muted mono" style={{fontWeight:400}}>[{data.v8.ref}]</span></h3></header>
-        <ul className="timeline">
-          {(data.v8.commits||[]).slice(0,14).map(c=>(
-            <li key={c.commit}>
-              <div className="mono hash">{c.commit.slice(0,12)}</div>
-              <div className="tline-main">{truncate(c.subject, 140)}</div>
-              <div className="subline">{c.author} · {formatDate(c.time)}</div>
-            </li>
-          ))}
-          {(!data.v8.commits || data.v8.commits.length===0) && <li className="muted">No commits.</li>}
-        </ul>
-      </section>
-
-      <section className="block">
-        <header className="bsub"><h3>// Chrome Releases</h3></header>
-        <ul className="list">
-          {data.blog.entries.slice(0,10).map((e,i)=>(
-            <li key={i}>
-              <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a>
-              {e.itw ? <span className="pill itw">ITW</span> : null}
-              <div className="subline">{formatDate(e.updated)}</div>
-            </li>
-          ))}
-          {data.blog.entries.length===0 && <li className="muted">No posts.</li>}
-        </ul>
-      </section>
     </>
   );
 }
@@ -1247,7 +1342,7 @@ function JscSection({ data, openModal, openCve }) {
   const itwOrdered = [...(data.cves.itw_related||[])]
     .filter(jscShown)
     .sort(cmpCveDesc);
-  const [itwLimit, setItwLimit] = useState(12);
+  const [itwLimit, setItwLimit] = useState(10);
   const showMoreJscCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent JavaScriptCore CLs', (
@@ -1322,6 +1417,8 @@ function JscSection({ data, openModal, openCve }) {
         <JscResolver data={data} openModal={openModal}/>
       </section>
 
+      <DisclosuresSection data={data} engineKey="jsc" openCve={openCve} />
+
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD [Safari/JSC]</h3></header>
         <p className="resolver-hint">
@@ -1331,7 +1428,7 @@ function JscSection({ data, openModal, openCve }) {
           <table className="table itw">
             <thead>
               <tr>
-                <th>CVE</th><th>Class</th><th>Description</th><th>Product</th>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
                 <th>Patched</th><th>Vulnerable</th>
                 <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (>=2 Apple advisories agree on the WebKit bug and a single commit references it; vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—    = no WebKit bug was published for this CVE (older or non-WebKit)"}>Mapping confidence</th>
               </tr>
@@ -1348,7 +1445,7 @@ function JscSection({ data, openModal, openCve }) {
                     <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
-                    <td>{x.product}</td>
+                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                     <td>{x.patchmap
@@ -1394,39 +1491,13 @@ function JscSection({ data, openModal, openCve }) {
         </ul>
       </section>
 
-      <section className="block">
-        <header className="bsub"><h3>// JSC Commits <span className="muted mono" style={{fontWeight:400}}>({data.commits.ref})</span></h3></header>
-        <ul className="timeline">
-          {(data.commits.commits||[]).slice(0,14).map(c=>(
-            <li key={c.commit}>
-              <div className="mono hash">{c.commit.slice(0,12)}</div>
-              <div className="tline-main">{truncate(c.subject, 140)}</div>
-              <div className="subline">{c.author} · {formatDate(c.time)}</div>
-            </li>
-          ))}
-          {(!data.commits.commits || data.commits.commits.length===0) && <li className="muted">No commits.</li>}
-        </ul>
-      </section>
-
-      <section className="block">
-        <header className="bsub"><h3>// Safari Releases</h3></header>
-        <ul className="list">
-          {data.blog.entries.slice(0,10).map((e,i)=>(
-            <li key={i}>
-              <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a>
-              <div className="subline">{formatDate(e.updated)}</div>
-            </li>
-          ))}
-          {data.blog.entries.length===0 && <li className="muted">No posts.</li>}
-        </ul>
-      </section>
     </>
   );
 }
 
 function SmSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'sm';
-  const [itwLimit, setItwLimit] = useState(12);
+  const [itwLimit, setItwLimit] = useState(10);
   const showMoreSmCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent SpiderMonkey CLs', (
@@ -1557,6 +1628,8 @@ function SmSection({ data, openModal, openCve }) {
         <SmResolver data={data} openModal={openModal}/>
       </section>
 
+      <DisclosuresSection data={data} engineKey="sm" openCve={openCve} />
+
       <section className="block">
         <header className="bsub"><h3>// IN-THE-WILD [Firefox/SpiderMonkey]</h3></header>
         <p className="resolver-hint">
@@ -1566,7 +1639,7 @@ function SmSection({ data, openModal, openCve }) {
           <table className="table itw">
             <thead>
               <tr>
-                <th>CVE</th><th>Class</th><th>Description</th><th>Product</th>
+                <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
                 <th>Patched</th><th>Vulnerable</th>
                 <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits are mapped to this CVE.\nHIGH = verified fix (a single landing fixes this CVE; vulnerable is its exact parent)\nLOW  = the fix spans multiple landings, so the single vulnerable parent is ambiguous and the commits are withheld\n—    = no fixing commit could be resolved for this CVE"}>Mapping confidence</th>
               </tr>
@@ -1581,7 +1654,7 @@ function SmSection({ data, openModal, openCve }) {
                     <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
-                    <td>{x.product}</td>
+                    <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '—'}</td>
                     <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                     <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                     <td>{x.patchmap
@@ -1627,33 +1700,6 @@ function SmSection({ data, openModal, openCve }) {
         </ul>
       </section>
 
-      <section className="block">
-        <header className="bsub"><h3>// SpiderMonkey Commits <span className="muted mono" style={{fontWeight:400}}>({data.commits.ref})</span></h3></header>
-        <ul className="timeline">
-          {(data.commits.commits||[]).slice(0,14).map(c=>(
-            <li key={c.commit}>
-              <div className="mono hash">{c.commit.slice(0,12)}</div>
-              <div className="tline-main">{truncate(c.subject, 140)}</div>
-              <div className="subline">{c.author} · {formatDate(c.time)}</div>
-            </li>
-          ))}
-          {(!data.commits.commits || data.commits.commits.length===0) && <li className="muted">No commits.</li>}
-        </ul>
-      </section>
-
-      <section className="block">
-        <header className="bsub"><h3>// Firefox Releases</h3></header>
-        <ul className="list">
-          {data.blog.entries.slice(0,10).map((e,i)=>(
-            <li key={i}>
-              <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a>
-              {/in.the.wild/i.test(e.title) ? <span className="pill itw">ITW</span> : null}
-              <div className="subline">{formatDate(e.updated)}</div>
-            </li>
-          ))}
-          {data.blog.entries.length===0 && <li className="muted">No posts.</li>}
-        </ul>
-      </section>
     </>
   );
 }
@@ -1703,7 +1749,11 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
   const rows = useMemo(() => allItwRows(props), [chrome, jsc, sm]);
   const cov = useMemo(() => coverage(props), [chrome, jsc, sm]);
   const taxo = useMemo(() => taxonomy(rows), [rows]);
-  const [limit, setLimit] = useState(24);
+  const [limit, setLimit] = useState(10);
+  const discRows = useMemo(() => allDisclosureRows(props), [chrome, jsc, sm]);
+  const [discLimit, setDiscLimit] = useState(10);
+  const discHigh = discRows.filter(x => x.patchmap?.confident).length;
+  const discWindow = chrome.disclosures?.window_days || jsc.disclosures?.window_days || sm.disclosures?.window_days || 90;
 
   const totalItw = rows.length;
   const totalHigh = ENGINE_ORDER.reduce((n, k) => n + cov[k].high, 0);
@@ -1730,9 +1780,9 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 
         <div className="statrow">
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
-          <div className="stat"><div className="label">In-the-wild CVEs</div><div className="value">{totalItw}</div><div className="meta">CISA KEV, browser scope</div></div>
-          <div className="stat"><div className="label">Verified ITW patch maps</div><div className="value">{totalHigh}</div><div className="meta">CVE → patched + vulnerable commit</div></div>
-          <div className="stat"><div className="label">Mapped coverage</div><div className="value">{totalItw ? Math.round((totalHigh/totalItw)*100) : 0}%</div><div className="meta">ITW CVEs with a verified patch map</div></div>
+          <div className="stat"><div className="label">In-the-wild Exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [browser scope]</div></div>
+          <div className="stat"><div className="label">Recent disclosures</div><div className="value">{discRows.length}</div><div className="meta">researcher disclosed bugs, last {discWindow}d</div></div>
+          <div className="stat"><div className="label">Mapped coverage</div><div className="value">{(totalItw + discRows.length) ? Math.round(((totalHigh + discHigh) / (totalItw + discRows.length)) * 100) : 0}%</div><div className="meta">verified patch maps across all engines</div></div>
         </div>
       </section>
 
@@ -1754,6 +1804,37 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="block">
+        <header className="bsub"><h3>// RECENT DISCLOSURES</h3></header>
+        <p className="resolver-hint">&gt;&gt; researcher-reported critical/high memory-corruption bugs fixed in the last {discWindow} days across all three engines (disclosed, not in-the-wild exploited); {discRows.length} CVEs, {discHigh} with verified patch maps. Ordered newest first. Click any row for the patch map, diff, and commit message.</p>
+        <div className="tableWrap">
+          <table className="table xtimeline">
+            <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Disclosed</th><th>Mapping confidence</th></tr></thead>
+            <tbody>
+              {discRows.slice(0, discLimit).map((x, i) => (
+                <tr key={`${x.engine}-${x.cve}-${i}`} className="rowlink" onClick={() => openCve(x, x.engine)} tabIndex={0}
+                    onKeyDown={e => (e.key==='Enter'||e.key===' ') && openCve(x, x.engine)}>
+                  <td><span className="epill" style={{ color:ENGINES[x.engine].color, borderColor:'#243149' }}>{ENGINES[x.engine].short}</span></td>
+                  <td><span className="mono">{x.cve}</span></td>
+                  <td>{disclosureDescClass(x, x.engine).cls}</td>
+                  <td className="muted">{x.disclosed ? formatDate(x.disclosed) : '—'}</td>
+                  <td>{x.patchmap
+                    ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
+                    : <span className="pill muted">UNRESOLVED</span>}</td>
+                </tr>
+              ))}
+              {discRows.length === 0 && <tr><td colSpan={5} className="muted">No disclosures in the current window.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        {discLimit < discRows.length && (
+          <div style={{ marginTop:10 }}>
+            <span className="more-link" role="button" tabIndex={0} onClick={() => setDiscLimit(l => l + 30)}
+              onKeyDown={e => (e.key==='Enter'||e.key===' ') && setDiscLimit(l => l + 30)}>≫ show more ({discRows.length - discLimit} more)</span>
+          </div>
+        )}
       </section>
 
       <section className="block">
@@ -1786,7 +1867,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// ITW BUG CLASSES</h3></header>
+        <header className="bsub"><h3>// IN-THE-WILD BUG CLASSES</h3></header>
         <p className="resolver-hint">&gt;&gt; vulnerability-class distribution across the in-the-wild (CISA KEV) set only, by engine; not the full CVE history.</p>
         <div className="tableWrap">
           <table className="table taxo">
@@ -1837,7 +1918,7 @@ function ReferenceSection() {
     <>
       <section className="block">
         <div className="bhead"><h2>// REFERENCE</h2><span className="tag">internals</span></div>
-        <p className="resolver-hint">&gt;&gt; quick cross-engine reference: JIT pipelines, notable mitigations, machine-readable data feeds, and patch-map methodology.</p>
+        <p className="resolver-hint">&gt;&gt; quick cross-engine reference: JIT pipelines, notable mitigations, machine-readable data feeds, methodology and caveats.</p>
       </section>
 
       <section className="block">
@@ -1876,19 +1957,22 @@ function ReferenceSection() {
 
       <section className="block">
         <header className="bsub"><h3>// DATA FEEDS</h3></header>
-        <p className="resolver-hint">&gt;&gt; our dashboard data is published as machine-readable feeds, regenerated on every deploy.</p>
+        <p className="resolver-hint">&gt;&gt; our data is published as machine readable feeds, regenerated on every deploy.</p>
         <div className="refs">
           <span className="l">ITW CVEs (JSON)</span><a href="/api/itw.json">/api/itw.json</a>
+          <span className="l">Recent Disclosures (JSON)</span><a href="/api/disclosures.json">/api/disclosures.json</a>
           <span className="l">Patch Maps (JSON)</span><a href="/api/patchmap.json">/api/patchmap.json</a>
           <span className="l">Atom Feed</span><a href="/feed.xml">/feed.xml</a>
         </div>
       </section>
 
       <section className="block">
-        <header className="bsub"><h3>// METHODOLOGY</h3></header>
-        <p className="resolver-hint">&gt;&gt; how each engine resolves a CVE to its patched commit and vulnerable parent, plus the confidence model.</p>
+        <header className="bsub"><h3>// METHODOLOGY & CAVEATS</h3></header>
+        <p className="resolver-hint">&gt;&gt; how each engine resolves a CVE to its patched commit and vulnerable parent, the confidence model, and how the in-the-wild and recent-disclosures sets are selected.</p>
         <div className="refs">
-          <span className="l">ITW patch-map methodology</span><a href="/methodology">/methodology</a>
+          <span className="l">Mapping</span><a href="/methodology#mapping">/methodology#mapping</a>
+          <span className="l">Recent disclosures</span><a href="/methodology#disclosures">/methodology#disclosures</a>
+          <span className="l">Caveats</span><a href="/methodology#caveats">/methodology#caveats</a>
         </div>
       </section>
     </>
@@ -1913,7 +1997,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm, builtAt }) {
     const fromHash = () => {
       const m = (typeof location !== 'undefined' ? location.hash : '').match(/cve=(CVE-\d{4}-\d+)/i);
       if (!m) return;
-      const all = allItwRows({ chrome, jsc, sm });
+      const all = [...allItwRows({ chrome, jsc, sm }), ...allDisclosureRows({ chrome, jsc, sm })];
       const hit = all.find(x => x.cve.toLowerCase() === m[1].toLowerCase());
       if (hit) openModal(hit.cve, <CveDetail row={hit} engineKey={hit.engine} />);
     };
@@ -2098,9 +2182,10 @@ export function GlobalStyles() {
       .reftable th, .reftable td{width:20%}
       .reftable th:first-child, .reftable td:first-child{width:16%;white-space:nowrap}
 
-      /* ITW tables (CVE / Class / Description / Component / Patched / Vulnerable / Mapping):
-         CVE, Patched, Vulnerable, Mapping stay on one line; Description wraps */
+      /* ITW tables (CVE / Class / Description / Fix landed / Patched / Vulnerable / Mapping):
+         CVE, Fix landed, Patched, Vulnerable, Mapping stay on one line; Description wraps */
       .table.itw th:nth-child(1), .table.itw td:nth-child(1),
+      .table.itw th:nth-child(4), .table.itw td:nth-child(4),
       .table.itw th:nth-child(5), .table.itw td:nth-child(5),
       .table.itw th:nth-child(6), .table.itw td:nth-child(6),
       .table.itw th:nth-child(7), .table.itw td:nth-child(7){
@@ -2158,6 +2243,12 @@ export function GlobalStyles() {
       /* centre the mapping-confidence pills */
       .table.itw th:nth-child(7), .table.itw td:nth-child(7){text-align:center}
       .xtimeline th:nth-child(4), .xtimeline td:nth-child(4){text-align:center}
+
+      /* severity pills */
+      .pill.sev-crit{color:#ff8a8a;background:rgba(255,138,138,.10);border-color:#5a2330;margin-left:0}
+      .pill.sev-high{color:#f3b06b;background:rgba(243,176,107,.10);border-color:#5a4326;margin-left:0}
+      .pill.sev-mid{color:var(--muted);background:rgba(159,176,197,.07);border-color:#2a3650;margin-left:0}
+
 
       /* engine markers (overview / reference) */
       .edot{display:inline-block;width:9px;height:9px;border-radius:999px;vertical-align:middle;margin-right:7px;box-shadow:0 0 10px rgba(255,255,255,.06)}

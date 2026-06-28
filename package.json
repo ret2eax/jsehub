@@ -10,6 +10,10 @@
     "fetch:v8patchmap": "node tools/fetch_v8_itw_patchmap.js",
     "fetch:smpatchmap": "node tools/fetch_sm_itw_patchmap.js",
     "fetch:jscpatchmap": "node tools/fetch_jsc_itw_patchmap.js",
+    "fetch:chromedisc": "node tools/fetch_chrome_disclosures.js",
+    "fetch:jscdisc": "node tools/fetch_jsc_disclosures.js",
+    "fetch:smdisc": "node tools/fetch_sm_disclosures.js",
+    "fetch:disclosures": "pnpm run fetch:chromedisc && pnpm run fetch:jscdisc && pnpm run fetch:smdisc",
     "gen:feeds": "node tools/gen_feeds.js",
     "fetch:diffs": "node tools/fetch_diffs.js",
     "validate:data": "node tools/check_data.js",
@@ -17,7 +21,7 @@
     "fetch:data:chrome": "node tools/fetch_releases.js && node tools/fetch_v8_commits.js && python3 tools/fetch_builds.py && python3 tools/fetch_cves.py && node tools/fetch_v8_itw_patchmap.js && node tools/fetch_chrome_releases.js && node tools/fetch_gerrit_v8_cls.js",
     "fetch:jsc": "node tools/fetch_jsc_releases.js && node tools/fetch_jsc_commits.js && python3 tools/fetch_cisa_browsers.py && node tools/fetch_safari_releases.js && node tools/fetch_jsc_security_cls.js && node tools/fetch_jsc_resolver.js",
     "fetch:sm": "node tools/fetch_sm_releases.js && node tools/fetch_sm_commits.js && node tools/fetch_sm_builds.js && python3 tools/fetch_cisa_browsers.py && node tools/fetch_firefox_releases.js && node tools/fetch_sm_security_cls.js && node tools/fetch_sm_resolver.js",
-    "fetch:data": "pnpm run fetch:data:chrome && pnpm run fetch:jsc && pnpm run fetch:sm && pnpm run fetch:jscpatchmap && pnpm run fetch:smpatchmap && pnpm run fetch:diffs && pnpm run gen:feeds",
+    "fetch:data": "pnpm run fetch:data:chrome && pnpm run fetch:jsc && pnpm run fetch:sm && pnpm run fetch:jscpatchmap && pnpm run fetch:smpatchmap && pnpm run fetch:disclosures && pnpm run fetch:diffs && pnpm run gen:feeds",
     "fetch:all-browsers": "pnpm run fetch:data"
   },
   "dependencies": {

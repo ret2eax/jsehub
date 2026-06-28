@@ -222,7 +222,7 @@ const normSubject = (s) => (s || '').toLowerCase()
 // (vs test-only). A single source-touching commit -> high. Several commits that are the same
 // logical fix split across parts -> high as a range (parent of the earliest .. the latest).
 // Genuinely distinct source commits -> low (ambiguous parent withheld).
-async function resolveFix(bug) {
+export async function resolveFix(bug) {
   const candidates = await searchFixCommits(bug);
   if (!candidates.length) return null;
 
@@ -393,7 +393,9 @@ async function main() {
   console.log(`\n[sm-patchmap] enriched ${enriched}/${rows.length} CVE(s).`);
 }
 
-main().catch(err => {
+// Only run when invoked directly (so other tools can import resolveFix without triggering a run).
+const __isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+if (__isMain) main().catch(err => {
   console.error('[sm-patchmap] fatal:', err?.stack || err?.message || String(err));
   process.exit(1);
 });
