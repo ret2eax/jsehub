@@ -75,6 +75,9 @@ async function main() {
   for (const r of rows.values()) {
     try {
       const cmp = await ghJSON(`${GH_API}/repos/${r.repo}/compare/${r.unpatched}...${r.patched}`);
+      // Full commit message of the patched commit (head of the range) for the modal.
+      const headCommit = (cmp.commits || []).find(c => c.sha === r.patched) || (cmp.commits || []).slice(-1)[0];
+      const message = headCommit?.commit?.message || null;
       const files = (cmp.files || []).map(f => ({
         file: f.filename, status: f.status, additions: f.additions || 0, deletions: f.deletions || 0, patch: f.patch || null,
       }));
@@ -90,6 +93,7 @@ async function main() {
         additions: files.reduce((n, f) => n + f.additions, 0),
         deletions: files.reduce((n, f) => n + f.deletions, 0),
         files: files.map(({ file, status, additions, deletions }) => ({ file, status, additions, deletions })),
+        message,
         diff,
         truncated,
       };

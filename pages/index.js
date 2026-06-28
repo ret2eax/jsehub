@@ -195,17 +195,7 @@ function UpdateStamp({ builtAt }) {
 
 // Inline diff for a verified row: loads the pre-fetched same-origin diff on demand
 // (public/api/diff/<cve>.json) and renders the changed files + a colour-coded patch.
-function DiffView({ cve, patched, project, externalUrl }) {
-  const [data, setData] = useState(undefined); // undefined = loading, null = none, object = loaded
-  useEffect(() => {
-    let alive = true;
-    fetch(`/api/diff/${encodeURIComponent(cve)}.json`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (alive) setData(d); })
-      .catch(() => { if (alive) setData(null); });
-    return () => { alive = false; };
-  }, [cve]);
-
+function DiffView({ data, patched, project, externalUrl }) {
   if (data === undefined) return <div className="diff-loading muted">loading diff…</div>;
   if (!data || !data.diff) return null; // chromium/src or unavailable -> the external link still shows
 
@@ -244,6 +234,21 @@ function CveDetail({ row, engineKey }) {
   const unpatched = row.unpatched_commit || pm.unpatched_commit || null;
   const diff = compareUrl(unpatched, patched, project);
   const tests = regressionFiles(pm.files);
+
+  // Load the pre-fetched diff (changed files + colour-coded patch + full commit message) on open.
+  const [diffData, setDiffData] = useState(undefined); // undefined = loading, null = none
+  useEffect(() => {
+    if (!patched || !unpatched) { setDiffData(null); return; }
+    let alive = true;
+    fetch(`/api/diff/${encodeURIComponent(row.cve)}.json`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (alive) setDiffData(d); })
+      .catch(() => { if (alive) setDiffData(null); });
+    return () => { alive = false; };
+  }, [row.cve, patched, unpatched]);
+  // Full commit message when available (github-hosted), else the stored subject / preview.
+  const commitMessage = diffData?.message || pm.subject || pm.message_preview || null;
+
   const sources = [];
   if (engineKey === 'chrome') {
     if (pm.url) sources.push(['Gerrit CL', pm.url]);
@@ -270,8 +275,14 @@ function CveDetail({ row, engineKey }) {
         {pm.patched_date && (<><label>Fix landed</label><div>{formatDate(pm.patched_date)}</div></>)}
         <label>Patched</label><div>{patched ? <MonoCommitLink commit={patched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
         <label>Vulnerable</label><div>{unpatched ? <MonoCommitLink commit={unpatched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
-        {pm.subject && (<><label>Fix commit</label><div className="mono cd-subj">{pm.subject}</div></>)}
       </div>
+
+      {commitMessage && (
+        <div className="cd-msg">
+          <div className="cd-msg-h">Fix commit message</div>
+          <pre className="cd-msg-pre">{commitMessage}</pre>
+        </div>
+      )}
 
       {(diff || tests.length) && (
         <div className="cd-actions">
@@ -284,7 +295,7 @@ function CveDetail({ row, engineKey }) {
         </div>
       )}
 
-      {patched && unpatched && <DiffView cve={row.cve} patched={patched} project={project} externalUrl={diff} />}
+      {patched && unpatched && <DiffView data={diffData} patched={patched} project={project} externalUrl={diff} />}
 
       <div className="cd-links">
         <a href={`https://nvd.nist.gov/vuln/detail/${row.cve}`} target="_blank" rel="noreferrer">NVD</a>
@@ -2190,6 +2201,8 @@ export function GlobalStyles() {
       .cd-desc{margin:0;color:#cdd9e8;line-height:1.5}
       .cd-kv{grid-template-columns:120px 1fr}
       .cd-subj{font-size:12px;color:var(--mono);word-break:break-word}
+      .cd-msg-h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px}
+      .cd-msg-pre{margin:0;max-height:240px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0a0e16;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:#cdd9e8}
       .cd-actions{display:flex;gap:8px;flex-wrap:wrap}
       .btn.trig{color:var(--syntax-string);border-color:#3a3320}
       .cd-links{display:flex;gap:16px;border-top:1px solid var(--line);padding-top:12px;font-size:13px}
