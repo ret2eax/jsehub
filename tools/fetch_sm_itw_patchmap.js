@@ -14,6 +14,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { p0BugForCve } from './p0_rca.js';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -315,6 +316,12 @@ async function main() {
       bugIds = refBugs;
       console.log(`[sm-patchmap] ${cve} → bug(s) ${bugIds.join(', ')} (from CVE refs)`);
     }
+    // Project Zero's per-CVE RCA can supply the bug when MFSA/MITRE give none.
+    let source = 'mozilla';
+    if (!bugIds.length) {
+      const p0bug = await p0BugForCve(cve, 'sm');
+      if (p0bug) { bugIds = [p0bug]; source = 'project-zero'; console.log(`[sm-patchmap] ${cve} → bug ${p0bug} (Project Zero RCA)`); }
+    }
     if (!bugIds.length) {
       console.log(`[sm-patchmap] ${cve}: no Bugzilla bug resolved (skipping)`);
       continue;
@@ -328,6 +335,16 @@ async function main() {
       if (!fix) continue;
       if (!best) best = fix;
       if (fix.confident) { best = fix; break; }
+    }
+
+    // Same RCA fallback for the bug -> commit step (bug found but no fix commit). resolveFix still
+    // validates the result, so a mis-attributed bug fails safe rather than producing a wrong map.
+    if (!best) {
+      const p0bug = await p0BugForCve(cve, 'sm');
+      if (p0bug && !bugIds.includes(p0bug)) {
+        const fix = await resolveFix(p0bug);
+        if (fix) { best = fix; source = 'project-zero'; console.log(`[sm-patchmap] ${cve} → bug ${p0bug} (Project Zero RCA)`); }
+      }
     }
 
     if (!best) {
@@ -351,6 +368,7 @@ async function main() {
         project: PROJECT,
         bug: Number(best.bug),
         bug_url: `https://bugzilla.mozilla.org/show_bug.cgi?id=${best.bug}`,
+        source,
         confident,
         subject: best.subject,
         candidate_count: best.candidate_count,

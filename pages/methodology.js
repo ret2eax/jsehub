@@ -62,6 +62,7 @@ export default function Methodology() {
           <div className="bhead"><h2>// APPROACH</h2></div>
           <p className="resolver-hint">&gt;&gt; for each engine the dashboard resolves a CVE to the exact commit that fixed it and the commit immediately before it (the vulnerable parent), so the fix can be diffed and the pre-patch state checked out. Every mapping is derived from public sources and labelled with a confidence tier; nothing is shown unless it can be resolved.</p>
           <p className="resolver-hint" style={{ marginTop:8 }}>The same resolution powers two CVE sets: <strong>in-the-wild</strong> (known-exploited, from CISA KEV) and <strong>recent disclosures</strong> (researcher-reported, patched but not known to be exploited). They share the per-engine chain and confidence model below and differ only in how CVEs are selected, see <a href="#disclosures">recent disclosures</a>.</p>
+          <p className="resolver-hint" style={{ marginTop:8 }}>For a small number of in-the-wild CVEs the vendor advisory omits the bug id and no other machine-readable source carries the CVE&nbsp;&rarr;&nbsp;bug link. Where Google Project Zero has published a root-cause analysis for the 0-day, its authoritative bug attribution is used as a last-resort fallback; the bug is then run through the same verifiable bug&nbsp;&rarr;&nbsp;commit&nbsp;&rarr;&nbsp;parent resolution, so a mis-read fails safe (the CVE stays unresolved rather than mapping to a wrong commit).</p>
         </section>
 
         <section className="block">
