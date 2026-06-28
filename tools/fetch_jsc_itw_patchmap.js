@@ -24,6 +24,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { p0BugForCve } from './p0_rca.js';
+import { ghSearchCommits } from './gh_search.js';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -167,11 +168,9 @@ function parseCherryPickOriginal(message) {
 }
 
 async function commitsForBug(bug) {
-  const q = `repo:${WK_REPO}+${bug}`;
   let res;
   try {
-    res = await httpJSON(`${GH_API}/search/commits?q=${q}&per_page=30`,
-      { headers: { Accept: 'application/vnd.github+json', ...GH_AUTH } });
+    res = await ghSearchCommits(`repo:${WK_REPO}+${bug}`, 30);
   } catch (e) {
     console.log(`[jsc-patchmap] commit search failed for bug ${bug}: ${e?.message || e}`);
     return [];

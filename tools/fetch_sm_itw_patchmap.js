@@ -15,6 +15,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { p0BugForCve } from './p0_rca.js';
+import { ghSearchCommits } from './gh_search.js';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, 'data');
@@ -180,11 +181,9 @@ function scoreCommitSubject(subject, bug) {
 
 async function searchFixCommits(bug) {
   // GitHub commit search; the bug number appears as "Bug <id>" in the landing subject.
-  const q = `repo:${GIT_REPO}+Bug+${bug}`;
-  const url = `${GH_API}/search/commits?q=${q}&per_page=30`;
   let res;
   try {
-    res = await httpJSON(url, { headers: { Accept: 'application/vnd.github.text-match+json', ...GH_AUTH } });
+    res = await ghSearchCommits(`repo:${GIT_REPO}+Bug+${bug}`, 30);
   } catch (e) {
     console.log(`[sm-patchmap] commit search failed for bug ${bug}: ${e?.message || e}`);
     return [];
