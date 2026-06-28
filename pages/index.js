@@ -193,6 +193,48 @@ function UpdateStamp({ builtAt }) {
   return <span className="cmt">// AUTO REFRESH 0700 & 2100 ZULU [UTC] {live}</span>;
 }
 
+// Inline diff for a verified row: loads the pre-fetched same-origin diff on demand
+// (public/api/diff/<cve>.json) and renders the changed files + a colour-coded patch.
+function DiffView({ cve, patched, project, externalUrl }) {
+  const [data, setData] = useState(undefined); // undefined = loading, null = none, object = loaded
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/diff/${encodeURIComponent(cve)}.json`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (alive) setData(d); })
+      .catch(() => { if (alive) setData(null); });
+    return () => { alive = false; };
+  }, [cve]);
+
+  if (data === undefined) return <div className="diff-loading muted">loading diff…</div>;
+  if (!data || !data.diff) return null; // chromium/src or unavailable -> the external link still shows
+
+  return (
+    <div className="diffbox">
+      <div className="diff-files">
+        {data.files.map((f, i) => {
+          const u = fileUrl(f.file, patched, project);
+          return (
+            <div className="diff-file" key={i}>
+              {u ? <a className="mono" href={u} target="_blank" rel="noreferrer">{f.file}</a> : <span className="mono">{f.file}</span>}
+              <span className="diff-stat"><span className="add">+{f.additions}</span> <span className="del">-{f.deletions}</span></span>
+            </div>
+          );
+        })}
+      </div>
+      <pre className="diff-pre">{data.diff.split('\n').map((ln, i) => {
+        let cls = 'dl-ctx';
+        if (/^diff --git|^new file|^deleted file/.test(ln)) cls = 'dl-file';
+        else if (/^@@/.test(ln)) cls = 'dl-hunk';
+        else if (ln[0] === '+') cls = 'dl-add';
+        else if (ln[0] === '-') cls = 'dl-del';
+        return <span key={i} className={`dl ${cls}`}>{ln || ' '}{'\n'}</span>;
+      })}</pre>
+      {data.truncated && <div className="muted diff-trunc">diff truncated · <a href={externalUrl} target="_blank" rel="noreferrer">view full diff →</a></div>}
+    </div>
+  );
+}
+
 // Full-detail view for a single CVE (opened from any ITW table; deep-linkable via #cve=).
 function CveDetail({ row, engineKey }) {
   const eng = ENGINES[engineKey] || {};
@@ -211,8 +253,8 @@ function CveDetail({ row, engineKey }) {
         <span className="pill" style={{ marginLeft:0, color:eng.color, borderColor:'#243149' }}>{eng.short}</span>
         <span className="pill itw">{kevClassFromShort(row.shortDescription || row.description)}</span>
         {row.patchmap
-          ? <span className={`pill ${row.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{row.patchmap.confident ? 'Mapping: High' : 'Mapping: Low'}</span>
-          : <span className="pill muted">Mapping: unresolved</span>}
+          ? <span className={`pill ${row.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{row.patchmap.confident ? 'Mapping Confidence: High' : 'Mapping Confidence: Low'}</span>
+          : <span className="pill muted">Mapping Confidence: unresolved</span>}
       </div>
 
       <p className="cd-desc">{row.shortDescription || row.description || 'No description.'}</p>
@@ -226,7 +268,7 @@ function CveDetail({ row, engineKey }) {
 
       {(diff || tests.length) && (
         <div className="cd-actions">
-          {diff && <a className="btn small" href={diff} target="_blank" rel="noreferrer">View diff (parent...fix)</a>}
+          {diff && <a className="btn small" href={diff} target="_blank" rel="noreferrer">View diff ↗</a>}
           {tests.map((f, i) => {
             const u = fileUrl(f, patched, project);
             const name = f.split('/').pop();
@@ -234,6 +276,8 @@ function CveDetail({ row, engineKey }) {
           })}
         </div>
       )}
+
+      {patched && unpatched && <DiffView cve={row.cve} patched={patched} project={project} externalUrl={diff} />}
 
       <div className="cd-links">
         <a href={`https://nvd.nist.gov/vuln/detail/${row.cve}`} target="_blank" rel="noreferrer">NVD</a>
@@ -325,7 +369,7 @@ function MonoCommitLink({ commit, project }) {
   const short = String(commit).slice(0, 12);
   const url = commitUrl(commit, project);
   return url
-    ? <a className="mono" href={url} target="_blank" rel="noreferrer">{short}</a>
+    ? <a className="mono" href={url} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()}>{short}</a>
     : <span className="mono">{short}</span>;
 }
 
@@ -385,15 +429,6 @@ function coalesceUnpatched(x) {
   return { commits: commits.length ? commits : null, version };
 }
 
-// Clickable CVE id that opens the cross-engine detail modal (deep-linkable).
-function CveLink({ x, engine, openCve }) {
-  return (
-    <a className="cve-link" role="button" tabIndex={0}
-       onClick={() => openCve(x, engine)}
-       onKeyDown={e => (e.key==='Enter'||e.key===' ') && openCve(x, engine)}>{x.cve}</a>
-  );
-}
-
 function PatchedCell({ patched_commit, patched_version, project }) {
   if (patched_commit) return <MonoCommitLink commit={patched_commit} project={project} />;
   if (patched_version) return <span className="mono">{patched_version}</span>;
@@ -411,7 +446,7 @@ function UnpatchedCell({ unpatched_commits, unpatched_version, project }) {
           return (
             <span key={i}>
               {url
-                ? <a className="mono" href={url} target="_blank" rel="noreferrer">{short}</a>
+                ? <a className="mono" href={url} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()}>{short}</a>
                 : short}
               {i < firstThree.length - 1 ? ', ' : ''}
             </span>
@@ -1093,8 +1128,9 @@ function ChromeSection({ data, openModal, openCve }) {
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
-                  <tr key={x.cve}>
-                    <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
+                  <tr key={x.cve} className="rowlink" onClick={()=>openCve(x, ENGINE_TAB)} tabIndex={0}
+                      onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openCve(x, ENGINE_TAB)}>
+                    <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
                     <td>{x.product}</td>
@@ -1289,8 +1325,9 @@ function JscSection({ data, openModal, openCve }) {
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
-                  <tr key={x.cve}>
-                    <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
+                  <tr key={x.cve} className="rowlink" onClick={()=>openCve(x, ENGINE_TAB)} tabIndex={0}
+                      onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openCve(x, ENGINE_TAB)}>
+                    <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
                     <td>{x.product}</td>
@@ -1521,8 +1558,9 @@ function SmSection({ data, openModal, openCve }) {
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
-                  <tr key={x.cve}>
-                    <td><CveLink x={x} engine={ENGINE_TAB} openCve={openCve} /></td>
+                  <tr key={x.cve} className="rowlink" onClick={()=>openCve(x, ENGINE_TAB)} tabIndex={0}
+                      onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openCve(x, ENGINE_TAB)}>
+                    <td><span className="cve-link">{x.cve}</span></td>
                     <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
                     <td>{x.shortDescription || x.description || '—'}</td>
                     <td>{x.product}</td>
@@ -2148,6 +2186,24 @@ export function GlobalStyles() {
       .cd-actions{display:flex;gap:8px;flex-wrap:wrap}
       .btn.trig{color:var(--syntax-string);border-color:#3a3320}
       .cd-links{display:flex;gap:16px;border-top:1px solid var(--line);padding-top:12px;font-size:13px}
+
+      /* inline diff in the CVE modal */
+      .diff-loading{font-size:12px;padding:6px 0}
+      .diffbox{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0a0e16}
+      .diff-files{padding:8px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+      .diff-file{display:flex;justify-content:space-between;gap:12px;font-size:12px;align-items:baseline}
+      .diff-file .mono{word-break:break-all}
+      .diff-stat{white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+      .diff-stat .add{color:var(--good)}
+      .diff-stat .del{color:#ff8a8a}
+      .diff-pre{margin:0;max-height:340px;overflow:auto;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.45;white-space:pre}
+      .dl{display:inline}
+      .dl-file{color:var(--syntax-func);font-weight:700}
+      .dl-hunk{color:var(--syntax-keyword)}
+      .dl-add{color:var(--good);background:rgba(100,230,189,.06)}
+      .dl-del{color:#ff8a8a;background:rgba(255,138,138,.06)}
+      .dl-ctx{color:var(--muted)}
+      .diff-trunc{font-size:12px;padding:8px 10px;border-top:1px solid var(--line)}
 
       .more-link{cursor:pointer;user-select:none}
       .more-link:hover{text-decoration:underline}

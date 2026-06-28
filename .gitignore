@@ -12,3 +12,4 @@ data/
 # generated feeds (regenerated each deploy)
 public/api/
 public/feed.xml
+public/api/diff/
