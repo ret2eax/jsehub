@@ -244,8 +244,15 @@ function CveDetail({ row, engineKey }) {
   const unpatched = row.unpatched_commit || pm.unpatched_commit || null;
   const diff = compareUrl(unpatched, patched, project);
   const tests = regressionFiles(pm.files);
-  const sourceUrl = pm.url || pm.bug_url || null;
-  const sourceLabel = engineKey === 'chrome' ? 'Gerrit CL' : 'Fix bug';
+  const sources = [];
+  if (engineKey === 'chrome') {
+    if (pm.url) sources.push(['Gerrit CL', pm.url]);
+    if (pm.bug_url) sources.push(['Chromium bug', pm.bug_url]);
+  } else if (engineKey === 'jsc' && pm.bug_url) {
+    sources.push(['WebKit bug', pm.bug_url]);
+  } else if (engineKey === 'sm' && pm.bug_url) {
+    sources.push(['Bugzilla', pm.bug_url]);
+  }
 
   return (
     <div className="cve-detail">
@@ -281,7 +288,7 @@ function CveDetail({ row, engineKey }) {
 
       <div className="cd-links">
         <a href={`https://nvd.nist.gov/vuln/detail/${row.cve}`} target="_blank" rel="noreferrer">NVD</a>
-        {sourceUrl && <a href={sourceUrl} target="_blank" rel="noreferrer">{sourceLabel}</a>}
+        {sources.map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}</a>)}
         <a href={`https://www.cve.org/CVERecord?id=${row.cve}`} target="_blank" rel="noreferrer">CVE record</a>
       </div>
     </div>
