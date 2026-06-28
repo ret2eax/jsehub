@@ -246,18 +246,13 @@ function CveDetail({ row, engineKey }) {
       .catch(() => { if (alive) setDiffData(null); });
     return () => { alive = false; };
   }, [row.cve, patched, unpatched]);
-  // Full commit message when available (github-hosted), else the stored subject / preview.
-  const commitMessage = diffData?.message || pm.subject || pm.message_preview || null;
+  // Full commit message, only when we have a confident commit pair to attribute it to.
+  const commitMessage = (patched && unpatched) ? (diffData?.message || pm.subject || pm.message_preview || null) : null;
 
+  // The fix bug lives in the facts block below; only the Gerrit CL stays a bottom reference.
+  const bugLabel = engineKey === 'chrome' ? 'Chromium bug' : engineKey === 'jsc' ? 'WebKit bug' : 'Bugzilla bug';
   const sources = [];
-  if (engineKey === 'chrome') {
-    if (pm.url) sources.push(['Gerrit CL', pm.url]);
-    if (pm.bug_url) sources.push(['Chromium bug', pm.bug_url]);
-  } else if (engineKey === 'jsc' && pm.bug_url) {
-    sources.push(['WebKit bug', pm.bug_url]);
-  } else if (engineKey === 'sm' && pm.bug_url) {
-    sources.push(['Bugzilla', pm.bug_url]);
-  }
+  if (engineKey === 'chrome' && pm.url) sources.push(['Gerrit CL', pm.url]);
 
   return (
     <div className="cve-detail">
@@ -275,6 +270,7 @@ function CveDetail({ row, engineKey }) {
         {pm.patched_date && (<><label>Fix landed</label><div>{formatDate(pm.patched_date)}</div></>)}
         <label>Patched</label><div>{patched ? <MonoCommitLink commit={patched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
         <label>Vulnerable</label><div>{unpatched ? <MonoCommitLink commit={unpatched} project={project} /> : <span className="muted">withheld / unresolved</span>}</div>
+        {pm.bug && pm.bug_url && (<><label>{bugLabel}</label><div><a href={pm.bug_url} target="_blank" rel="noreferrer">{pm.bug}</a></div></>)}
       </div>
 
       {commitMessage && (
@@ -284,18 +280,22 @@ function CveDetail({ row, engineKey }) {
         </div>
       )}
 
-      {(diff || tests.length) && (
-        <div className="cd-actions">
-          {diff && <a className="btn small" href={diff} target="_blank" rel="noreferrer">View diff ↗</a>}
-          {tests.map((f, i) => {
-            const u = fileUrl(f, patched, project);
-            const name = f.split('/').pop();
-            return u ? <a key={i} className="btn small trig" href={u} target="_blank" rel="noreferrer" title={f}>regression test: {name}</a> : null;
-          })}
+      {patched && unpatched && (
+        <div className="cd-fix">
+          <div className="cd-fix-h">
+            <span className="cd-msg-h" style={{ margin:0 }}>Diff</span>
+            <div className="cd-fix-act">
+              {tests.map((f, i) => {
+                const u = fileUrl(f, patched, project);
+                const name = f.split('/').pop();
+                return u ? <a key={i} className="btn small trig" href={u} target="_blank" rel="noreferrer" title={f}>regression test: {name}</a> : null;
+              })}
+            </div>
+          </div>
+          <DiffView data={diffData} patched={patched} project={project} externalUrl={diff} />
+          {diff && <div className="cd-fix-foot"><a className="btn small" href={diff} target="_blank" rel="noreferrer">view on source ↗</a></div>}
         </div>
       )}
-
-      {patched && unpatched && <DiffView data={diffData} patched={patched} project={project} externalUrl={diff} />}
 
       <div className="cd-links">
         <a href={`https://nvd.nist.gov/vuln/detail/${row.cve}`} target="_blank" rel="noreferrer">NVD</a>
@@ -405,10 +405,10 @@ function Modal({ open, onClose, title, children }) {
       </div>
       <style jsx>{`
         .modal-root{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-        .modal{width:min(860px,96vw);border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--surface),var(--surface2));box-shadow:0 28px 80px rgba(0,0,0,.55);overflow:hidden}
+        .modal{width:min(1040px,96vw);border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--surface),var(--surface2));box-shadow:0 28px 80px rgba(0,0,0,.55);overflow:hidden}
         .modal-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
         .modal-t{font-weight:900;letter-spacing:.3px}
-        .modal-b{padding:18px;max-height:70vh;overflow:auto}
+        .modal-b{padding:18px;max-height:84vh;overflow:auto}
         .x{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);padding:7px 11px;cursor:pointer}
         .x:hover{background:#131a29}
       `}</style>
@@ -2202,6 +2202,9 @@ export function GlobalStyles() {
       .cd-kv{grid-template-columns:120px 1fr}
       .cd-subj{font-size:12px;color:var(--mono);word-break:break-word}
       .cd-msg-h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px}
+      .cd-fix-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+      .cd-fix-act{display:flex;gap:8px;flex-wrap:wrap}
+      .cd-fix-foot{margin-top:8px}
       .cd-msg-pre{margin:0;max-height:240px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0a0e16;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:#cdd9e8}
       .cd-actions{display:flex;gap:8px;flex-wrap:wrap}
       .btn.trig{color:var(--syntax-string);border-color:#3a3320}
