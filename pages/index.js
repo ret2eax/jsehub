@@ -297,7 +297,6 @@ function CveDetail({ row, engineKey }) {
       <p className="cd-desc">{descText}</p>
 
       <div className="kv slim cd-kv">
-        {row.disclosed && (<><label>Disclosed</label><div>{formatDate(row.disclosed)}</div></>)}
         {row.severity && (<><label>Severity</label><div>{severityPill(row.severity)}</div></>)}
         {row.reporter && (<><label>Reporter</label><div>{row.reporter}</div></>)}
         {pm.patched_date && (<><label>Fix landed</label><div>{formatDate(pm.patched_date)}</div></>)}
@@ -1146,7 +1145,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
         <table className="table itw">
           <thead>
             <tr>
-              <th>CVE</th><th>Class</th><th>Description</th><th>Disclosed</th>
+              <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
               <th>Patched</th><th>Vulnerable</th>
               <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits map to this CVE.\nHIGH = verified fix + exact parent\nLOW  = fix spans multiple landings, commits withheld\n-     = no patch map resolved"}>Mapping confidence</th>
             </tr>
@@ -1161,7 +1160,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
                   <td><span className="cve-link">{x.cve}</span></td>
                   <td>{cls}</td>
                   <td>{desc}</td>
-                  <td className="muted">{x.disclosed ? formatDate(x.disclosed) : '-'}</td>
+                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                   <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                   <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                   <td><MappingPill patchmap={x.patchmap} /></td>
@@ -1842,7 +1841,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
         <p className="resolver-hint">&gt;&gt; recent disclosures over the last 90 days, click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.</p>
         <div className="tableWrap">
           <table className="table xtimeline">
-            <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Disclosed</th><th>Mapping confidence</th></tr></thead>
+            <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Fix landed</th><th>Mapping confidence</th></tr></thead>
             <tbody>
               {discRows.slice(0, discLimit).map((x, i) => (
                 <tr key={`${x.engine}-${x.cve}-${i}`} className="rowlink" onClick={() => openCve(x, x.engine)} tabIndex={0}
@@ -1850,7 +1849,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
                   <td><span className="epill" style={{ color:ENGINES[x.engine].color, borderColor:'#243149' }}>{ENGINES[x.engine].short}</span></td>
                   <td><span className="mono">{x.cve}</span></td>
                   <td>{disclosureDescClass(x, x.engine).cls}</td>
-                  <td className="muted">{x.disclosed ? formatDate(x.disclosed) : '-'}</td>
+                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                   <td>{x.patchmap
                     ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
                     : <span className="pill muted">UNRESOLVED</span>}</td>
@@ -2043,7 +2042,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm, builtAt }) {
     <div className="page">
       <Head>
         <title>JS Engine Hub</title>
-        <meta name="description" content="A curated surgical dashboard for fuzzing and vulnerability research across modern JavaScript engines, updates daily." />
+        <meta name="description" content="A curated surgical dashboard for vulnerability research across modern JavaScript engines, updates daily." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="index, follow" />
         <meta name="theme-color" content="#070b12" />
@@ -2054,14 +2053,14 @@ export default function BrowserResearchHub({ chrome, jsc, sm, builtAt }) {
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="JS Engine Hub" />
         <meta property="og:title" content="JS Engine Hub" />
-        <meta property="og:description" content="A curated surgical dashboard for fuzzing and vulnerability research across modern JavaScript engines" />
+        <meta property="og:description" content="A curated surgical dashboard for vulnerability research across modern JavaScript engines" />
         <meta property="og:url" content="https://jsehub.dev/" />
         <meta property="og:image" content="https://jsehub.dev/og.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="JS Engine Hub" />
-        <meta name="twitter:description" content="Fuzzing and vulnerability research across V8, SpiderMonkey, and JavaScriptCore." />
+        <meta name="twitter:description" content="vulnerability research across V8, SpiderMonkey, and JavaScriptCore." />
         <meta name="twitter:image" content="https://jsehub.dev/og.png" />
       </Head>
       <GlobalStyles/>
@@ -2071,7 +2070,7 @@ export default function BrowserResearchHub({ chrome, jsc, sm, builtAt }) {
           <em />
           <span>JS Engine Hub</span>
         </div>
-        <p className="lede">A curated surgical dashboard for fuzzing and vulnerability research across modern JS engines.</p>
+        <p className="lede">A curated surgical dashboard for vulnerability research across modern JS engines.</p>
         <p className="update-note">
           <UpdateStamp builtAt={builtAt} />
         </p>
