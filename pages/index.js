@@ -1146,7 +1146,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
         <table className="table itw">
           <thead>
             <tr>
-              <th>CVE</th><th>Class</th><th>Description</th><th>Fix landed</th>
+              <th>CVE</th><th>Class</th><th>Description</th><th>Disclosed</th>
               <th>Patched</th><th>Vulnerable</th>
               <th className="help" title={"Mapping confidence: how reliably the patched/vulnerable commits map to this CVE.\nHIGH = verified fix + exact parent\nLOW  = fix spans multiple landings, commits withheld\n-     = no patch map resolved"}>Mapping confidence</th>
             </tr>
@@ -1161,7 +1161,7 @@ function DisclosuresSection({ data, engineKey, openCve }) {
                   <td><span className="cve-link">{x.cve}</span></td>
                   <td>{cls}</td>
                   <td>{desc}</td>
-                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
+                  <td className="muted">{x.disclosed ? formatDate(x.disclosed) : '-'}</td>
                   <td><PatchedCell patched_commit={p.commit} patched_version={p.version} project={x.patchmap?.project} /></td>
                   <td><UnpatchedCell unpatched_commits={u.commits} unpatched_version={u.version} project={x.patchmap?.project} /></td>
                   <td><MappingPill patchmap={x.patchmap} /></td>
@@ -1808,8 +1808,8 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
 
         <div className="statrow">
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
-          <div className="stat"><div className="label">Known In-the-wild exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [browser scope]</div></div>
           <div className="stat"><div className="label">Recent disclosures</div><div className="value">{discRows.length}</div><div className="meta">researcher disclosed bugs, last {discWindow}d</div></div>
+          <div className="stat"><div className="label">Known In-the-wild exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [browser scope]</div></div>
           <div className="stat"><div className="label">Mapped coverage</div><div className="value">{(totalItw + discRows.length) ? Math.round(((totalHigh + discHigh) / (totalItw + discRows.length)) * 100) : 0}%</div><div className="meta">verified patch maps across all engines</div></div>
         </div>
       </section>
@@ -1873,7 +1873,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
         <p className="resolver-hint">&gt;&gt; known ITW exploited vulnerabilities (non-exhaustive), click any entry to view the corresponding patch map, diff, regression test (if available), bug tracker and more, verify before use to avoid misleading deltas.</p>
         <div className="tableWrap">
           <table className="table xtimeline">
-            <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Mapping confidence</th></tr></thead>
+            <thead><tr><th>Engine</th><th>CVE</th><th>Class</th><th>Fix landed</th><th>Mapping confidence</th></tr></thead>
             <tbody>
               {rows.slice(0, limit).map((x, i) => (
                 <tr key={`${x.engine}-${x.cve}-${i}`} className="rowlink" onClick={() => openCve(x, x.engine)} tabIndex={0}
@@ -1881,6 +1881,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
                   <td><span className="epill" style={{ color:ENGINES[x.engine].color, borderColor:'#243149' }}>{ENGINES[x.engine].short}</span></td>
                   <td><span className="mono">{x.cve}</span></td>
                   <td>{kevClassFromShort(x.shortDescription || x.description)}</td>
+                  <td className="muted">{x.patchmap?.patched_date ? formatDate(x.patchmap.patched_date) : '-'}</td>
                   <td>{x.patchmap
                     ? <span className={`pill ${x.patchmap.confident ? 'conf-hi' : 'conf-lo'}`}>{x.patchmap.confident ? 'HIGH' : 'LOW'}</span>
                     : <span className="pill muted">UNRESOLVED</span>}</td>
@@ -2274,7 +2275,7 @@ export function GlobalStyles() {
       .pill.muted{color:var(--muted);margin-left:0;background:rgba(159,176,197,.07);border-color:#2a3650}
       /* centre the mapping-confidence pills */
       .table.itw th:nth-child(7), .table.itw td:nth-child(7){text-align:center}
-      .xtimeline th:nth-child(4), .xtimeline td:nth-child(4){text-align:center}
+      .xtimeline th:nth-child(5), .xtimeline td:nth-child(5){text-align:center}
 
       /* severity pills */
       .pill.sev-crit{color:#ff8a8a;background:rgba(255,138,138,.10);border-color:#5a2330;margin-left:0}
