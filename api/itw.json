@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-01T11:13:07.751Z",
+  "generated": "2026-07-01T23:18:17.072Z",
   "site": "https://jsehub.dev",
   "count": 104,
   "items": [
@@ -1103,7 +1103,7 @@
       "project": "v8/v8",
       "confidence": "high",
       "patched_commit": "8081a5ffa7ebdb0e5b35cf63aa0490ad3578b940",
-      "unpatched_commit": "7a5f4f55aa58ab5ddf4349b415906d45b34777f3",
+      "unpatched_commit": null,
       "patched_date": "2022-04-18T13:56:17.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2022-1364"
     },
