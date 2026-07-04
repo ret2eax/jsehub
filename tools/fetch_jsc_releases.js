@@ -43,6 +43,30 @@ function parseRss(xml) {
   });
 }
 
+const APPLE_SECURITY_INDEX = 'https://support.apple.com/en-us/100100';
+const APPLE_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 js-engine-hub';
+
+// Latest shipping Safari version from Apple's security-releases index (newest first). Reliable and
+// always current, unlike the WebKit blog's "WebKit Features in Safari X.Y" post, which is infrequent
+// and scrolls off the feed - which previously left Stable (and, gated on it, Beta) blank.
+async function fetchLatestSafariStable() {
+  try {
+    const html = await fetchText(APPLE_SECURITY_INDEX, { headers: { 'User-Agent': APPLE_UA } });
+    for (const rm of html.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
+      const row = rm[1];
+      const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(c => c[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+      if (cells.length < 3) continue;
+      const sm = cells[0].match(/^Safari\s+([\d.]+)$/i);
+      if (sm) {
+        const d = new Date(cells[cells.length - 1]);
+        const a = row.match(/<a href="(https:\/\/support\.apple\.com\/[^"]+)"/);
+        return { version: sm[1], link: a?.[1] || null, updated: isNaN(d) ? null : d.toISOString() };
+      }
+    }
+  } catch (e) { console.warn(`[jsc releases] apple index fetch failed: ${e.message}`); }
+  return null;
+}
+
 // Convert Apple build number to GitHub WebKit tag prefix.
 // e.g. "20624.1.16" → "7624.1.16"
 // The major component starts with "20" (206xx) — strip "20" prefix, prepend "7".
@@ -161,9 +185,10 @@ function detectBetaVersion(items, stableVersion) {
 
 async function main() {
   try {
-    const [xml, jscCommits] = await Promise.all([
+    const [xml, jscCommits, appleStable] = await Promise.all([
       fetchText(WEBKIT_FEED),
       readJSON('data/jsc_commits.json', { commits: [] }),
+      fetchLatestSafariStable(),
     ]);
 
     const items = parseRss(xml);
@@ -176,17 +201,28 @@ async function main() {
     const latestStp = items.find(i => stpRe.test(i.title));
     const stpNumber = latestStp ? parseInt(stpRe.exec(latestStp.title)[1], 10) : null;
 
-    // Stable: "WebKit Features for Safari X.Y" or "WebKit features for Safari X.Y"
+    // Stable: prefer Apple's security-releases index (always current); fall back to the WebKit blog's
+    // "WebKit Features for Safari X.Y" post when the index is unreachable.
     const stableRe = /WebKit [Ff]eatures? (?:in )?(?:for )?Safari\s+([\d.]+)(?:\s|$)/i;
-    const latestStable = items.find(i => stableRe.test(i.title));
-    const stableVersion = latestStable ? stableRe.exec(latestStable.title)[1] : null;
+    const feedStable = items.find(i => stableRe.test(i.title));
+    const stableVersion = appleStable?.version || (feedStable ? stableRe.exec(feedStable.title)[1] : null);
+    const stableLink = appleStable?.link || feedStable?.link || null;
+    const stableUpdated = appleStable?.updated || feedStable?.updated || null;
 
-    // Resolve webkit_commit for Stable and Beta concurrently
-    const betaInfo = stableVersion ? detectBetaVersion(items, stableVersion) : null;
+    // Beta is detected independently of Stable so a missing stable never blanks it too.
+    const betaInfo = detectBetaVersion(items, stableVersion);
     const betaVersion = betaInfo?.version || null;
 
+    // Point releases (e.g. 26.5.2) often have no dedicated release-notes doc, so fall back to the
+    // major.minor (26.5) to still resolve a webkit_commit.
+    const resolveStableCommit = async (v) => {
+      if (!v) return null;
+      const c = await resolveWebkitCommit(v);
+      if (c || v.split('.').length <= 2) return c;
+      return resolveWebkitCommit(v.split('.').slice(0, 2).join('.'));
+    };
     const [stableCommit, betaCommit] = await Promise.all([
-      stableVersion ? resolveWebkitCommit(stableVersion) : Promise.resolve(null),
+      resolveStableCommit(stableVersion),
       betaVersion   ? resolveWebkitCommit(betaVersion)   : Promise.resolve(null),
     ]);
 
@@ -196,8 +232,8 @@ async function main() {
         version:       stableVersion,
         stp_number:    null,
         webkit_commit: stableCommit,
-        link:          latestStable.link,
-        updated:       latestStable.updated ? new Date(latestStable.updated).toISOString() : new Date().toISOString(),
+        link:          stableLink,
+        updated:       stableUpdated ? new Date(stableUpdated).toISOString() : new Date().toISOString(),
         platform:      'macos',
       },
       betaVersion && {
