@@ -1,17 +1,8 @@
 {
-  "generated": "2026-07-04T22:26:40.444Z",
+  "generated": "2026-07-05T11:50:13.518Z",
   "site": "https://jsehub.dev",
-  "count": 93,
+  "count": 82,
   "items": [
-    {
-      "cve": "CVE-2026-11645",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "3c869652b039fc1fc9fbe035c6af879317e8b9f3",
-      "unpatched_commit": "74b1be3dced3478c21e44fff3746b3480206d76d",
-      "patched_date": "2026-06-05T17:08:43.000Z"
-    },
     {
       "cve": "CVE-2025-31277",
       "engine": "jsc",
@@ -83,15 +74,6 @@
       "patched_commit": "70b208e94c0b49966cd73c142418f9b7f038600f",
       "unpatched_commit": "ebb50f8e5df4bfa65e361bc2ba68ad477f12ab85",
       "patched_date": "2010-10-27T01:55:06Z"
-    },
-    {
-      "cve": "CVE-2025-10585",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "ec6c184783824fa8f974013aae28a45c36c0112f",
-      "unpatched_commit": "61f5b4c8a5bb1dce7f3690e80140ab04d83993d3",
-      "patched_date": "2025-09-25T18:35:29.000Z"
     },
     {
       "cve": "CVE-2025-6558",
@@ -182,15 +164,6 @@
       "patched_commit": "97975764885482e92e53f65352446b5c4ea68f20",
       "unpatched_commit": "79f3f1276efa17a6172a0923dd13436ad8337a86",
       "patched_date": "2024-08-24T16:19:47.000Z"
-    },
-    {
-      "cve": "CVE-2024-5274",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "3e037e195e508dea045f5626862412e8f64fc919",
-      "unpatched_commit": "bf4298bafd04910c2cd634738ae73f4a4151b47d",
-      "patched_date": "2024-05-22T19:01:12.000Z"
     },
     {
       "cve": "CVE-2024-4947",
@@ -364,15 +337,6 @@
       "patched_date": "2023-04-17T22:27:09Z"
     },
     {
-      "cve": "CVE-2022-3038",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "51daffbf5cd816b951bdfa5b7e0b01cb953b40f5",
-      "unpatched_commit": "981f458b727b56b271f2418fd51846102a3680a2",
-      "patched_date": "2022-09-13T12:25:39.000Z"
-    },
-    {
       "cve": "CVE-2023-23529",
       "engine": "jsc",
       "project": "webkit/webkit",
@@ -418,15 +382,6 @@
       "patched_date": "2022-10-27T08:50:25.000Z"
     },
     {
-      "cve": "CVE-2022-3075",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "9b5207569882e59cc81f11fb364753569211dc48",
-      "unpatched_commit": "456a79d6c2bd7fa8f7d63334a581a749a2f560f4",
-      "patched_date": "2023-04-15T00:22:00.000Z"
-    },
-    {
       "cve": "CVE-2022-2856",
       "engine": "chrome",
       "project": "chromium/src",
@@ -443,15 +398,6 @@
       "patched_commit": "1ed1e4a336e15a59b94a21b0300658e2f7dc9fef",
       "unpatched_commit": "53740558e56f83708d2b5a097d3b120d4182bbe3",
       "patched_date": "2022-08-04T21:50:04Z"
-    },
-    {
-      "cve": "CVE-2021-30533",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "c732f0ddc0573a0926d39b2f20c81591057c2878",
-      "unpatched_commit": "5170ceb51435eea2e795e87edc762d98a71e795b",
-      "patched_date": "2021-06-14T19:34:13.000Z"
     },
     {
       "cve": "CVE-2019-5825",
@@ -535,15 +481,6 @@
       "patched_date": "2020-01-03T04:35:41.000Z"
     },
     {
-      "cve": "CVE-2019-13720",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "6a2e670a243b815cf043f8da4d26ecb9a64d307b",
-      "unpatched_commit": "ed6d1f0b4a2179dbc0899333ea9a8516bdc42b27",
-      "patched_date": "2019-10-30T16:54:03.000Z"
-    },
-    {
       "cve": "CVE-2019-11707",
       "engine": "sm",
       "project": "mozilla-firefox/firefox",
@@ -551,6 +488,15 @@
       "patched_commit": "fc3134cc8ae017abcdef47acc3ce052473c91516",
       "unpatched_commit": "962d9502a2ca97a659b529128dce70e371f9ef60",
       "patched_date": "2019-05-08T17:48:26Z"
+    },
+    {
+      "cve": "CVE-2022-1364",
+      "engine": "chrome",
+      "project": "v8/v8",
+      "confidence": "high",
+      "patched_commit": "8081a5ffa7ebdb0e5b35cf63aa0490ad3578b940",
+      "unpatched_commit": "7a5f4f55aa58ab5ddf4349b415906d45b34777f3",
+      "patched_date": "2022-04-18T13:56:17.000Z"
     },
     {
       "cve": "CVE-2022-1096",
@@ -607,15 +553,6 @@
       "patched_date": "2020-04-03T21:03:17.000Z"
     },
     {
-      "cve": "CVE-2021-4102",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "4fae8b16802a416fe3aab0e7792fabe96cf1ecd8",
-      "unpatched_commit": "6d7ed2e8707cb865408da6a04d645c65553cd0b1",
-      "patched_date": "2021-12-15T10:42:08.000Z"
-    },
-    {
       "cve": "CVE-2020-16010",
       "engine": "chrome",
       "project": "chromium/src",
@@ -625,15 +562,6 @@
       "patched_date": "2020-11-05T08:50:18.000Z"
     },
     {
-      "cve": "CVE-2021-21166",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "b9e60ddc7606689e508f295077656389380288ba",
-      "unpatched_commit": "02b59c8242c68ec47244424e4f6cab95d32f7994",
-      "patched_date": "2021-03-02T15:17:19.000Z"
-    },
-    {
       "cve": "CVE-2020-16017",
       "engine": "chrome",
       "project": "chromium/src",
@@ -641,15 +569,6 @@
       "patched_commit": "cf054220a2e1570a9149220494de8826c2e9d4db",
       "unpatched_commit": "a9c66fa746e3d3f1b11a459bc6a48190832f37f8",
       "patched_date": "2020-11-12T17:14:35.000Z"
-    },
-    {
-      "cve": "CVE-2021-37976",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "d9cc471e122e9a2391a68fa7cd72ea50587d8d97",
-      "unpatched_commit": "4f6e94d8d4e491c1119b447fe530450684ea701e",
-      "patched_date": "2021-10-01T12:44:24.000Z"
     },
     {
       "cve": "CVE-2020-16009",
@@ -668,15 +587,6 @@
       "patched_commit": "6391d7a58d0c58cd5d096d22453b954b3ecc6fec",
       "unpatched_commit": "62ed75a1d26932754ffcaef2db7c4ce2b0b5737e",
       "patched_date": "2021-09-16T11:10:35.000Z"
-    },
-    {
-      "cve": "CVE-2020-16013",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "633f67caa6d0a126487a489c240ed86a59b2b291",
-      "unpatched_commit": "daf0799828c249f4fd313e811f469539c07423cf",
-      "patched_date": "2020-11-10T09:40:45.000Z"
     },
     {
       "cve": "CVE-2021-30633",
@@ -740,15 +650,6 @@
       "patched_commit": "01b6f7e0a70648d7c7302454993f0bf86d5a0241",
       "unpatched_commit": "b430430380b9543c50f345994e1a1821498af35f",
       "patched_date": "2021-06-22T13:43:53.000Z"
-    },
-    {
-      "cve": "CVE-2021-21206",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "5425d3b100fab533ea9ddc2ed8fbfc4870db0587",
-      "unpatched_commit": "9705071a23cfb56f21d41fd5921cee61c5144953",
-      "patched_date": "2021-04-14T08:40:10.000Z"
     },
     {
       "cve": "CVE-2021-38000",
