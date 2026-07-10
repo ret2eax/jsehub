@@ -1,8 +1,8 @@
 {
-  "generated": "2026-07-10T10:54:18.490Z",
+  "generated": "2026-07-10T22:44:02.841Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 95,
+  "count": 93,
   "items": [
     {
       "cve": "CVE-2026-15133",
@@ -1219,44 +1219,6 @@
       "patched_date": "2026-05-23T14:05:37.000Z",
       "bug": 515155946,
       "url": "https://jsehub.dev/#cve=CVE-2026-10016"
-    },
-    {
-      "cve": "CVE-2026-9113",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "c6eed09fc8b174b0f3eebedcceb1e792",
-      "disclosed": "2026-05-19T20:02:36.900Z",
-      "class": "Out-of-bounds read",
-      "description": "Out of bounds read in GPU",
-      "fix_subject": null,
-      "project": "v8/v8",
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
-      "bug": 489585044,
-      "url": "https://jsehub.dev/#cve=CVE-2026-9113"
-    },
-    {
-      "cve": "CVE-2026-9112",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "c6eed09fc8b174b0f3eebedcceb1e792",
-      "disclosed": "2026-05-19T20:02:36.900Z",
-      "class": "Use-after-free",
-      "description": "Use after free in GPU",
-      "fix_subject": null,
-      "project": "v8/v8",
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
-      "bug": 489791425,
-      "url": "https://jsehub.dev/#cve=CVE-2026-9112"
     },
     {
       "cve": "CVE-2026-8947",
