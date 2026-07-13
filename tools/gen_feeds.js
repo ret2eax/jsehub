@@ -8,7 +8,8 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { classifyComponent } from '../lib/engineRelevance.js';
+import { classifyWithFiles } from '../lib/engineRelevance.js';
+import { readDiffIndex } from '../lib/diffIndex.js';
 
 const ROOT = process.cwd();
 const DATA = path.join(ROOT, 'data');
@@ -47,6 +48,7 @@ function classify(s) {
 
 async function main() {
   const all = [];
+  const diffIndex = readDiffIndex(path.join(OUT_API, 'diff'));
   const cveYear = (cve) => { const m = String(cve || '').match(/CVE-(\d{4})/); return m ? Number(m[1]) : 0; };
   for (const e of ENGINES) {
     const data = await readJSON(e.file, {});
@@ -56,7 +58,7 @@ async function main() {
     for (const x of rows) {
       const pm = x.patchmap || {};
       const project = pm.project || e.project;
-      const comp = classifyComponent(e.key, { project, subject: pm.subject, text: x.shortDescription || x.description });
+      const comp = classifyWithFiles(e.key, x, diffIndex.get(x.cve));
       all.push({
         cve: x.cve,
         engine: e.key,
@@ -116,7 +118,7 @@ async function main() {
     for (const x of (data.items || [])) {
       const pm = x.patchmap || {};
       const project = pm.project || e.project;
-      const comp = classifyComponent(e.key, { project, subject: pm.subject, text: x.shortDescription || x.description });
+      const comp = classifyWithFiles(e.key, x, diffIndex.get(x.cve));
       disc.push({
         cve: x.cve,
         engine: e.key,
