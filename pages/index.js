@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { useMemo, useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { isEngineBug } from '../lib/engineRelevance.js';
 
 /* ------------------ utils ------------------ */
 function formatDate(v) {
@@ -30,6 +31,14 @@ const cveYear = (cve) => { const m = String(cve || '').match(/CVE-(\d{4})/); ret
 // Pre-2022 WebKit CVEs are dropped: Apple published no bugzilla ids before then, so they are
 // systematically unresolvable (no public CVE->commit linkage exists for them).
 const jscShown = (x) => Boolean(x.patchmap?.confident || (x.webkit === true && cveYear(x.cve) >= 2022));
+
+// jsehub is a JS-engine hub, so tables show engine bugs only. An ITW CVE is shown
+// when it is engine-relevant; for JSC we first keep WebKit-family/resolvable rows
+// (jscShown) and then drop any that resolve to a non-engine WebKit component.
+function itwShown(engine, x) {
+  if (engine === 'jsc' && !jscShown(x)) return false;
+  return isEngineBug(engine, x);
+}
 
 /* --------- CISA KEV: derive vulnerability class from shortDescription ---------- */
 function kevClassFromShort(s) {
@@ -107,12 +116,12 @@ function regressionFiles(files) {
   );
 }
 
-// Engine-relevant ITW CVEs. JSC's KEV slice bundles non-engine Apple components
-// (Kernel/CoreAudio/ImageIO/...); keep only WebKit-family (JS engine) entries there.
+// Engine-relevant ITW CVEs. The KEV slices are whole-browser (Chrome bundles
+// Blink/GPU/Skia/..., JSC bundles Kernel/CoreAudio/WebCore/..., SM bundles
+// Gecko/DOM/...); keep only the JS-engine entries for each.
 function engineItwRows(props, key) {
   const arr = props[key]?.cves?.[ENGINES[key].cvesKey] || [];
-  if (key === 'jsc') return arr.filter(jscShown);
-  return arr;
+  return arr.filter(x => itwShown(key, x));
 }
 
 // Flatten every engine's ITW CVEs into one list tagged with engine, newest first.
@@ -124,11 +133,12 @@ function allItwRows(props) {
   return rows.sort(cmpCveDesc);
 }
 
-// Flatten every engine's recent disclosures into one list tagged with engine, newest disclosed first.
+// Flatten every engine's recent disclosures into one list tagged with engine, newest disclosed
+// first. Non-engine components (DOM/graphics/media/IPC/...) are dropped so only JS-engine bugs show.
 function allDisclosureRows(props) {
   const rows = [];
   for (const key of ENGINE_ORDER) {
-    for (const x of (props[key]?.disclosures?.items || [])) rows.push({ ...x, engine: key });
+    for (const x of (props[key]?.disclosures?.items || [])) if (isEngineBug(key, x)) rows.push({ ...x, engine: key });
   }
   return rows.sort((a, b) => (new Date(b.disclosed || 0) - new Date(a.disclosed || 0)) || cmpCveDesc(a, b));
 }
@@ -148,10 +158,10 @@ function coverage(props) {
   return out;
 }
 
-// Per-engine recent-disclosure patch-map coverage.
+// Per-engine recent-disclosure patch-map coverage (JS-engine bugs only).
 function disclosureCoverage(props) {
   const out = {};
-  for (const key of ENGINE_ORDER) out[key] = confidenceBreakdown(props[key]?.disclosures?.items || []);
+  for (const key of ENGINE_ORDER) out[key] = confidenceBreakdown((props[key]?.disclosures?.items || []).filter(x => isEngineBug(key, x)));
   return out;
 }
 
@@ -1133,7 +1143,7 @@ function disclosureDescClass(row, engineKey) {
 
 // Recent researcher disclosures (critical/high, not in-the-wild) for one engine.
 function DisclosuresSection({ data, engineKey, openCve }) {
-  const items = data.disclosures?.items || [];
+  const items = useMemo(() => (data.disclosures?.items || []).filter(x => isEngineBug(engineKey, x)), [data, engineKey]);
   const ordered = useMemo(() => [...items].sort(cmpCveDesc), [items]);
   const [limit, setLimit] = useState(10);
   if (!items.length) return null;
@@ -1183,6 +1193,8 @@ function DisclosuresSection({ data, engineKey, openCve }) {
 function ChromeSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'chrome';
   const [itwLimit, setItwLimit] = useState(10);
+  // JS-engine (V8) ITW CVEs only; the KEV Chrome slice also bundles Blink/GPU/Skia/etc.
+  const itwOrdered = useMemo(() => (data.cves.itw_chrome_related || []).filter(x => itwShown('chrome', x)).sort(cmpCveDesc), [data]);
   const channels = ['Canary','Dev','Beta','Stable'];
   const latest = Object.fromEntries(channels.map(ch => [ch, latestByChannel(data.releases, ch)]));
   const asan = normalizeAsan(data.builds);
@@ -1290,7 +1302,7 @@ function ChromeSection({ data, openModal, openCve }) {
               </tr>
             </thead>
             <tbody>
-              {[...data.cves.itw_chrome_related].sort(cmpCveDesc).slice(0,itwLimit).map(x=>{
+              {itwOrdered.slice(0,itwLimit).map(x=>{
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
@@ -1325,15 +1337,15 @@ function ChromeSection({ data, openModal, openCve }) {
                   </tr>
                 );
               })}
-              {data.cves.itw_chrome_related.length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
+              {itwOrdered.length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
-        {data.cves.itw_chrome_related.length > itwLimit && (
+        {itwOrdered.length > itwLimit && (
           <div style={{ marginTop:10 }}>
             <span className="more-link" role="button" tabIndex={0}
-              onClick={()=>setItwLimit(data.cves.itw_chrome_related.length)}
-              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit(data.cves.itw_chrome_related.length)}>≫ show more ({data.cves.itw_chrome_related.length - itwLimit} more)</span>
+              onClick={()=>setItwLimit(itwOrdered.length)}
+              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit(itwOrdered.length)}>≫ show more ({itwOrdered.length - itwLimit} more)</span>
           </div>
         )}
       </section>
@@ -1363,10 +1375,11 @@ function ChromeSection({ data, openModal, openCve }) {
 
 function JscSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'jsc';
-  // Keep only WebKit-family (JS engine) CVEs, dropping non-engine Apple components and
-  // pre-2022 WebKit CVEs (systematically unresolvable). Resolved rows always count. Newest first.
+  // Keep only JavaScriptCore CVEs: drop non-WebKit Apple components (Kernel/CoreAudio/...) and
+  // pre-2022 unresolvable WebKit CVEs (jscShown), then drop WebCore/non-engine WebKit entries.
+  // Newest first.
   const itwOrdered = [...(data.cves.itw_related||[])]
-    .filter(jscShown)
+    .filter(x => itwShown('jsc', x))
     .sort(cmpCveDesc);
   const [itwLimit, setItwLimit] = useState(10);
   const showMoreJscCLs = () => {
@@ -1524,6 +1537,8 @@ function JscSection({ data, openModal, openCve }) {
 function SmSection({ data, openModal, openCve }) {
   const ENGINE_TAB = 'sm';
   const [itwLimit, setItwLimit] = useState(10);
+  // JS-engine (SpiderMonkey) ITW CVEs only; the KEV Firefox slice also bundles Gecko/DOM/etc.
+  const itwOrdered = useMemo(() => (data.cves.itw_related || []).filter(x => itwShown('sm', x)).sort(cmpCveDesc), [data]);
   const showMoreSmCLs = () => {
     const items = (data.gcls.items || []).slice(0, 50);
     openModal('Recent SpiderMonkey CLs', (
@@ -1671,7 +1686,7 @@ function SmSection({ data, openModal, openCve }) {
               </tr>
             </thead>
             <tbody>
-              {[...(data.cves.itw_related||[])].sort(cmpCveDesc).slice(0,itwLimit).map(x=>{
+              {itwOrdered.slice(0,itwLimit).map(x=>{
                 const p = coalescePatched(x);
                 const u = coalesceUnpatched(x);
                 return (
@@ -1694,15 +1709,15 @@ function SmSection({ data, openModal, openCve }) {
                   </tr>
                 );
               })}
-              {(data.cves.itw_related||[]).length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
+              {itwOrdered.length===0 && <tr><td colSpan={7} className="muted">No KEV entries.</td></tr>}
             </tbody>
           </table>
         </div>
-        {(data.cves.itw_related||[]).length > itwLimit && (
+        {itwOrdered.length > itwLimit && (
           <div style={{ marginTop:10 }}>
             <span className="more-link" role="button" tabIndex={0}
-              onClick={()=>setItwLimit((data.cves.itw_related||[]).length)}
-              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit((data.cves.itw_related||[]).length)}>≫ show more ({(data.cves.itw_related||[]).length - itwLimit} more)</span>
+              onClick={()=>setItwLimit(itwOrdered.length)}
+              onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&setItwLimit(itwOrdered.length)}>≫ show more ({itwOrdered.length - itwLimit} more)</span>
           </div>
         )}
       </section>
@@ -1808,7 +1823,7 @@ function OverviewSection({ chrome, jsc, sm, openCve }) {
         <div className="statrow">
           <div className="stat"><div className="label">Engines tracked</div><div className="value">3</div><div className="meta">V8 / JSC / SpiderMonkey</div></div>
           <div className="stat"><div className="label">Recent disclosures</div><div className="value">{discRows.length}</div><div className="meta">researcher disclosed bugs, last {discWindow}d</div></div>
-          <div className="stat"><div className="label">Known In-the-wild exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [browser scope]</div></div>
+          <div className="stat"><div className="label">Known In-the-wild exploit</div><div className="value">{totalItw}</div><div className="meta">CISA KEV [JS-engine scope]</div></div>
           <div className="stat"><div className="label">Mapped coverage</div><div className="value">{(totalItw + discRows.length) ? Math.round(((totalHigh + discHigh) / (totalItw + discRows.length)) * 100) : 0}%</div><div className="meta">verified patch maps across all engines</div></div>
         </div>
       </section>
