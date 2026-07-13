@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { isEngineBug } from '../lib/engineRelevance.js';
+import { readDiffIndex } from '../lib/diffIndex.js';
 
 /* ------------------ utils ------------------ */
 function formatDate(v) {
@@ -32,12 +33,17 @@ const cveYear = (cve) => { const m = String(cve || '').match(/CVE-(\d{4})/); ret
 // systematically unresolvable (no public CVE->commit linkage exists for them).
 const jscShown = (x) => Boolean(x.patchmap?.confident || (x.webkit === true && cveYear(x.cve) >= 2022));
 
-// jsehub is a JS-engine hub, so tables show engine bugs only. An ITW CVE is shown
-// when it is engine-relevant; for JSC we first keep WebKit-family/resolvable rows
-// (jscShown) and then drop any that resolve to a non-engine WebKit component.
+// jsehub is a JS-engine hub, so tables show engine bugs only. Engine-relevance is
+// precomputed per row in getStaticProps (x._engineShown), where it can consult the
+// resolved patch files; fall back to the text-only classifier if it is missing.
+function engineShown(engine, x) {
+  return (typeof x._engineShown === 'boolean') ? x._engineShown : isEngineBug(engine, x);
+}
+// An ITW CVE is shown when it is engine-relevant; for JSC we first keep
+// WebKit-family/resolvable rows (jscShown) and then drop non-engine components.
 function itwShown(engine, x) {
   if (engine === 'jsc' && !jscShown(x)) return false;
-  return isEngineBug(engine, x);
+  return engineShown(engine, x);
 }
 
 /* --------- CISA KEV: derive vulnerability class from shortDescription ---------- */
@@ -138,7 +144,7 @@ function allItwRows(props) {
 function allDisclosureRows(props) {
   const rows = [];
   for (const key of ENGINE_ORDER) {
-    for (const x of (props[key]?.disclosures?.items || [])) if (isEngineBug(key, x)) rows.push({ ...x, engine: key });
+    for (const x of (props[key]?.disclosures?.items || [])) if (engineShown(key, x)) rows.push({ ...x, engine: key });
   }
   return rows.sort((a, b) => (new Date(b.disclosed || 0) - new Date(a.disclosed || 0)) || cmpCveDesc(a, b));
 }
@@ -161,7 +167,7 @@ function coverage(props) {
 // Per-engine recent-disclosure patch-map coverage (JS-engine bugs only).
 function disclosureCoverage(props) {
   const out = {};
-  for (const key of ENGINE_ORDER) out[key] = confidenceBreakdown((props[key]?.disclosures?.items || []).filter(x => isEngineBug(key, x)));
+  for (const key of ENGINE_ORDER) out[key] = confidenceBreakdown((props[key]?.disclosures?.items || []).filter(x => engineShown(key, x)));
   return out;
 }
 
@@ -383,6 +389,14 @@ export async function getStaticProps() {
   const chrome_disc = readJSON('data/chrome_disclosures.json', { items: [] });
   const jsc_disc    = readJSON('data/jsc_disclosures.json', { items: [] });
   const sm_disc     = readJSON('data/sm_disclosures.json', { items: [] });
+
+  // Precompute engine-relevance per row, consulting the resolved patch files
+  // (public/api/diff) as ground truth for cases the advisory text can't decide.
+  const diffIndex = readDiffIndex(path.join(process.cwd(), 'public', 'api', 'diff'));
+  const markEngine = (key, arr) => (arr || []).forEach(x => { x._engineShown = isEngineBug(key, x, diffIndex.get(x.cve)); });
+  markEngine('chrome', cves.itw_chrome_related); markEngine('chrome', chrome_disc.items);
+  markEngine('jsc', jsc_cves.itw_related);        markEngine('jsc', jsc_disc.items);
+  markEngine('sm', sm_cves.itw_related);          markEngine('sm', sm_disc.items);
 
   return {
     props: {
@@ -1143,7 +1157,7 @@ function disclosureDescClass(row, engineKey) {
 
 // Recent researcher disclosures (critical/high, not in-the-wild) for one engine.
 function DisclosuresSection({ data, engineKey, openCve }) {
-  const items = useMemo(() => (data.disclosures?.items || []).filter(x => isEngineBug(engineKey, x)), [data, engineKey]);
+  const items = useMemo(() => (data.disclosures?.items || []).filter(x => engineShown(engineKey, x)), [data, engineKey]);
   const ordered = useMemo(() => [...items].sort(cmpCveDesc), [items]);
   const [limit, setLimit] = useState(10);
   if (!items.length) return null;
