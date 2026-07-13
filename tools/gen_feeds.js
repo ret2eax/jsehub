@@ -8,6 +8,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { classifyComponent } from '../lib/engineRelevance.js';
 
 const ROOT = process.cwd();
 const DATA = path.join(ROOT, 'data');
@@ -54,6 +55,8 @@ async function main() {
       .filter(x => e.key !== 'jsc' || x.patchmap?.confident || (x.webkit === true && cveYear(x.cve) >= 2022));
     for (const x of rows) {
       const pm = x.patchmap || {};
+      const project = pm.project || e.project;
+      const comp = classifyComponent(e.key, { project, subject: pm.subject, text: x.shortDescription || x.description });
       all.push({
         cve: x.cve,
         engine: e.key,
@@ -63,7 +66,9 @@ async function main() {
         date_added: x.dateAdded || null,
         class: classify(x.shortDescription || x.description),
         description: x.shortDescription || x.description || null,
-        project: pm.project || e.project,
+        project,
+        component: comp.component,
+        engine_relevant: comp.engine_relevant,
         confidence: pm.confident ? 'high' : (x.patchmap ? 'low' : null),
         patched_commit: x.patched_commit || pm.patched_commit || null,
         unpatched_commit: x.unpatched_commit || pm.unpatched_commit || null,
@@ -77,9 +82,17 @@ async function main() {
   const generated = new Date().toISOString();
   await fs.mkdir(OUT_API, { recursive: true });
 
+  // Roll up how many indexed entries are actually JS-engine bugs vs other
+  // browser components (null = undetermined from the indexed data).
+  const engineTally = (items) => ({
+    engine: items.filter(x => x.engine_relevant === true).length,
+    non_engine: items.filter(x => x.engine_relevant === false).length,
+    undetermined: items.filter(x => x.engine_relevant == null).length,
+  });
+
   // 1) full ITW feed
   await fs.writeFile(path.join(OUT_API, 'itw.json'),
-    JSON.stringify({ generated, site: SITE, count: all.length, items: all }, null, 2));
+    JSON.stringify({ generated, site: SITE, count: all.length, engine_relevance: engineTally(all), items: all }, null, 2));
 
   // 2) resolved patch maps only
   const maps = all.filter(x => x.patched_commit && x.unpatched_commit).map(x => ({
@@ -102,6 +115,8 @@ async function main() {
     if (data.window_days) discWindow = data.window_days;
     for (const x of (data.items || [])) {
       const pm = x.patchmap || {};
+      const project = pm.project || e.project;
+      const comp = classifyComponent(e.key, { project, subject: pm.subject, text: x.shortDescription || x.description });
       disc.push({
         cve: x.cve,
         engine: e.key,
@@ -113,7 +128,9 @@ async function main() {
         class: classify(x.shortDescription || x.description),
         description: x.shortDescription || x.description || null,
         fix_subject: pm.subject || null,
-        project: pm.project || e.project,
+        project,
+        component: comp.component,
+        engine_relevant: comp.engine_relevant,
         confidence: pm.confident ? 'high' : (x.patchmap ? 'low' : null),
         patched_commit: x.patched_commit || pm.patched_commit || null,
         unpatched_commit: x.unpatched_commit || pm.unpatched_commit || null,
@@ -125,7 +142,7 @@ async function main() {
   }
   disc.sort((a, b) => new Date(b.disclosed || 0) - new Date(a.disclosed || 0));
   await fs.writeFile(path.join(OUT_API, 'disclosures.json'),
-    JSON.stringify({ generated, site: SITE, window_days: discWindow, count: disc.length, items: disc }, null, 2));
+    JSON.stringify({ generated, site: SITE, window_days: discWindow, count: disc.length, engine_relevance: engineTally(disc), items: disc }, null, 2));
 
   // 3) Atom feed (recent)
   const recent = all.slice(0, 40);
