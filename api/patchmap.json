@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-21T22:36:25.173Z",
+  "generated": "2026-07-22T09:52:47.228Z",
   "site": "https://jsehub.dev",
   "count": 94,
   "items": [
@@ -10,7 +10,7 @@
       "confidence": "high",
       "patched_commit": "3c869652b039fc1fc9fbe035c6af879317e8b9f3",
       "unpatched_commit": "74b1be3dced3478c21e44fff3746b3480206d76d",
-      "patched_date": "2026-06-05T17:08:43.000Z"
+      "patched_date": "2026-07-22T08:07:54.000Z"
     },
     {
       "cve": "CVE-2025-31277",
