@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-31T22:35:56.428Z",
+  "generated": "2026-08-01T09:37:08.183Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 83,
@@ -586,15 +586,15 @@
       "disclosed": "2026-07-21T00:00:00.000Z",
       "class": "Unspecified",
       "description": "JIT miscompilation in the JavaScript: WebAssembly component",
-      "fix_subject": "Bug 2047689.  r=rhunt.",
+      "fix_subject": null,
       "project": "mozilla-firefox/firefox",
       "component": "SpiderMonkey",
       "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "d5141eb7fa74394dd56b55e8c9f57ff2adfd9856",
-      "unpatched_commit": "082e7a042e29f071e7d5bcbc7316b9625ec69f74",
-      "patched_date": "2026-07-06T13:00:15Z",
-      "bug": 2047689,
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
+      "bug": null,
       "url": "https://jsehub.dev/#cve=CVE-2026-16363"
     },
     {
