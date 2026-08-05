@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-04T22:38:16.142Z",
+  "generated": "2026-08-05T10:08:31.167Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 83,
+  "count": 82,
   "engine_relevance": {
     "engine": 31,
-    "non_engine": 39,
+    "non_engine": 38,
     "undetermined": 13
   },
   "items": [
@@ -1730,27 +1730,6 @@
       "patched_date": "2026-05-08T06:54:30Z",
       "bug": 2036983,
       "url": "https://jsehub.dev/#cve=CVE-2026-8389"
-    },
-    {
-      "cve": "CVE-2026-8090",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "Kevin Brosnan",
-      "disclosed": "2026-05-07T00:00:00.000Z",
-      "class": "Use-after-free",
-      "description": "Use-after-free in the DOM: Networking component",
-      "fix_subject": "Bug 2034352 - Make URL::SearchParams return an already_AddRefed r=necko-reviewers,jesup",
-      "project": "mozilla-firefox/firefox",
-      "component": "Networking",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "cbd8affa6f1c0036cce978501e2a2661e1a0eb58",
-      "unpatched_commit": "b3644ba42ba2a171b57b0087e4f6099af2a36def",
-      "patched_date": "2026-04-30T08:28:30Z",
-      "bug": 2034352,
-      "url": "https://jsehub.dev/#cve=CVE-2026-8090"
     }
   ]
 }
