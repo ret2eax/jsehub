@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-07T01:24:58.789Z",
+  "generated": "2026-08-07T08:38:38.041Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 91,
@@ -992,7 +992,7 @@
       "confidence": "high",
       "patched_commit": "de11d56041d5aa9c5e69b031990ad17068dbef7a",
       "unpatched_commit": "e1590c91f03dddbeaada2c3bb8ac3021f53cc3cb",
-      "patched_date": "2026-07-13T13:29:05.000Z",
+      "patched_date": "2026-08-07T02:17:08.000Z",
       "bug": 532595489,
       "url": "https://jsehub.dev/#cve=CVE-2026-15776"
     },
