@@ -1,10 +1,10 @@
 {
-  "generated": "2026-08-09T22:07:48.831Z",
+  "generated": "2026-08-10T09:11:14.034Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 91,
+  "count": 89,
   "engine_relevance": {
-    "engine": 33,
+    "engine": 31,
     "non_engine": 45,
     "undetermined": 13
   },
@@ -1877,48 +1877,6 @@
       "patched_date": "2026-06-11T15:10:18Z",
       "bug": 308707,
       "url": "https://jsehub.dev/#cve=CVE-2026-28847"
-    },
-    {
-      "cve": "CVE-2026-8390",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "OpenAI Preparedness, Bill Demirkapi",
-      "disclosed": "2026-05-12T00:00:00.000Z",
-      "class": "Use-after-free",
-      "description": "Use-after-free in the JavaScript: WebAssembly component",
-      "fix_subject": "Bug 2038081 - wasm: Refactor array.copy. r=yury",
-      "project": "mozilla-firefox/firefox",
-      "component": "SpiderMonkey",
-      "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "15fe5707e93d810c482b6716f12bd1820186a63c",
-      "unpatched_commit": "4139519fb6cb816661c6a369a8ffcfb8b1601d3d",
-      "patched_date": "2026-05-09T12:26:18Z",
-      "bug": 2038081,
-      "url": "https://jsehub.dev/#cve=CVE-2026-8390"
-    },
-    {
-      "cve": "CVE-2026-8389",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "ggwhyp",
-      "disclosed": "2026-05-12T00:00:00.000Z",
-      "class": "Unspecified",
-      "description": "JIT miscompilation in the JavaScript Engine: JIT component",
-      "fix_subject": "Bug 2036983 - Add CanBaselineCompileScript for all can-baseline-compile checks. r=iain",
-      "project": "mozilla-firefox/firefox",
-      "component": "SpiderMonkey",
-      "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "b9f347dfccdb86794e274711ad6788bd6c4ae430",
-      "unpatched_commit": "404b6bb3000185547d18f2566584f4908ef7d0ef",
-      "patched_date": "2026-05-08T06:54:30Z",
-      "bug": 2036983,
-      "url": "https://jsehub.dev/#cve=CVE-2026-8389"
     }
   ]
 }
