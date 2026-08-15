@@ -7,11 +7,13 @@ import { isEngineBug } from '../lib/engineRelevance.js';
 import { readDiffIndex } from '../lib/diffIndex.js';
 
 /* ------------------ utils ------------------ */
+// Render in UTC: local getters would shift the date by the build machine's
+// timezone and mismatch the client render on hydration.
 function formatDate(v) {
   if (!v) return '-';
   const d = new Date(v);
   const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 function readJSON(rel, fallback) {
   try { return JSON.parse(fs.readFileSync(path.join(process.cwd(), rel), 'utf8')); }
