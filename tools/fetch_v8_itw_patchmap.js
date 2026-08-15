@@ -69,6 +69,15 @@ function parseCherryPickedFrom(message) {
   return m ? m[1] : null;
 }
 
+// Gitiles commit time ("Fri Jul 31 12:36:20 2026", sometimes with a trailing
+// "+0000"-style offset) -> ISO. Times without an explicit offset are UTC.
+function parseGitilesTime(t) {
+  if (!t) return null;
+  const s = String(t).trim();
+  const d = new Date(/[+-]\d{4}$/.test(s) ? s : s + ' +0000');
+  return isNaN(d) ? null : d.toISOString();
+}
+
 function parseProjectAndChangeFromUrl(url) {
   if (!url) return null;
   try {
@@ -262,10 +271,12 @@ export async function resolveTracks(project, changeNumber) {
   const original = parseCherryPickedFrom(message) || null;
 
   let originalParent = null;
+  let originalDate = null;
   if (original) {
     try {
       const gl = await gitilesJSON(project, original);
       originalParent = gl?.parents?.[0] || null;
+      originalDate = parseGitilesTime(gl?.committer?.time || gl?.author?.time);
     } catch (e) {
       console.log(`[v8-patchmap] warn: gitiles parent fetch failed for ${project} ${short(original)} → ${e?.message || e}`);
     }
@@ -284,7 +295,9 @@ export async function resolveTracks(project, changeNumber) {
     change: changeNumber,
     status: (detail?.status || '').toUpperCase(),
     message_preview: message.slice(0, 300),
-    patched_date: submitted,
+    // Backport CLs merge days after the fix; the date must match the mainline
+    // original the UI displays, so it wins whenever the cherry-pick resolves.
+    patched_date: originalDate || submitted,
     patched_backport: landed,
     unpatched_backport: landedParent,
     patched_original: original,
