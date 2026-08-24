@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-23T21:55:26.589Z",
+  "generated": "2026-08-24T08:28:16.387Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 99,
   "engine_relevance": {
-    "engine": 27,
+    "engine": 28,
     "non_engine": 47,
-    "undetermined": 25
+    "undetermined": 24
   },
   "items": [
     {
@@ -355,14 +355,14 @@
       "disclosed": "2026-08-18T00:00:00.000Z",
       "class": "Unspecified",
       "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
-      "fix_subject": null,
+      "fix_subject": "Handle overflows in UnlinkedMetadataTable::finalize().",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "97df94ead028cddcfc21e48ec6f2f72d25ec1662",
+      "unpatched_commit": "16c6a9971daca74d3b6bdddba6daf8d2c4c57d8c",
+      "patched_date": "2026-08-24T02:25:02Z",
       "bug": 317632,
       "url": "https://jsehub.dev/#cve=CVE-2026-64784"
     },
