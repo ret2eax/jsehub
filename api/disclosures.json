@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-25T22:02:31.739Z",
+  "generated": "2026-08-26T08:18:30.366Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 108,
   "engine_relevance": {
-    "engine": 36,
+    "engine": 37,
     "non_engine": 52,
-    "undetermined": 20
+    "undetermined": 19
   },
   "items": [
     {
@@ -607,14 +607,14 @@
       "disclosed": "2026-08-18T00:00:00.000Z",
       "class": "Unspecified",
       "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
-      "fix_subject": null,
+      "fix_subject": "[JSC] Procedure::usesSIMD() not set when OMG inlines a SIMD callee into a non-SIMD root",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "9a17cd1100ad6cd41afa7aa1f0a2fa5a2e797a10",
+      "unpatched_commit": "ba29ff41e0a023bd1c7d3e64d4c35cc20046efbf",
+      "patched_date": "2026-08-26T00:53:54Z",
       "bug": 316918,
       "url": "https://jsehub.dev/#cve=CVE-2026-64780"
     },
