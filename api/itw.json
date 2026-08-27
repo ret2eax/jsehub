@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T01:06:48.272Z",
+  "generated": "2026-08-27T18:39:09.637Z",
   "site": "https://jsehub.dev",
   "count": 104,
   "engine_relevance": {
@@ -1565,13 +1565,13 @@
       "date_added": "2021-11-03",
       "class": "Use-after-free",
       "description": "Google Chromium Indexed DB API contains a use-after-free vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "IndexedDB",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "f9bf7be854ed80a792953e94dd56e1269a5bbe98",
-      "unpatched_commit": "aeac224a9206f6f62fb8a3117a970f5bcf3eaffd",
-      "patched_date": "2021-09-10T18:53:33.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2021-30633"
     },
     {

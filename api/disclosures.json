@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-27T01:06:48.272Z",
+  "generated": "2026-08-27T18:39:09.637Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 107,
   "engine_relevance": {
-    "engine": 37,
+    "engine": 38,
     "non_engine": 51,
-    "undetermined": 19
+    "undetermined": 18
   },
   "items": [
     {
@@ -26,7 +26,7 @@
       "confidence": "high",
       "patched_commit": "9abbc0c6d03fa8ce0ff450e7cf5b5ac29df8a641",
       "unpatched_commit": "0be0e27b052e9afa2000eb1d4eed1d87c86caff7",
-      "patched_date": "2026-07-10T23:05:41.000Z",
+      "patched_date": "2026-07-10T16:05:41.000-07:00",
       "bug": 496807874,
       "url": "https://jsehub.dev/#cve=CVE-2026-79282"
     },
@@ -481,14 +481,14 @@
       "disclosed": "2026-08-18T00:00:00.000Z",
       "class": "Unspecified",
       "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
-      "fix_subject": null,
+      "fix_subject": "[JSC] WebAssembly try/catch result-type confusion omits optimized reference checks",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "8f229fb72961093d2f552ecfef65a8f13afd402a",
+      "unpatched_commit": "eb1d4acd949bce09871ee4b5a320630283cfe3b0",
+      "patched_date": "2026-08-27T18:04:21Z",
       "bug": 317450,
       "url": "https://jsehub.dev/#cve=CVE-2026-65332"
     },
@@ -1286,7 +1286,7 @@
       "confidence": "high",
       "patched_commit": "36e3c8b0d681b51b59b71238630c97d291639c95",
       "unpatched_commit": "f9655083b7cfac480de3d35c50574a7e6bb27da3",
-      "patched_date": "2026-07-27T22:53:34.000Z",
+      "patched_date": "2026-07-27T15:53:34.000-07:00",
       "bug": 538332338,
       "url": "https://jsehub.dev/#cve=CVE-2026-19173"
     },
@@ -1328,7 +1328,7 @@
       "confidence": "high",
       "patched_commit": "25e013dd59d3e6eb9cafb4d730f86c532fd2789b",
       "unpatched_commit": "5123996724940487ecdc37f47669330804d429ee",
-      "patched_date": "2026-07-23T08:03:39.000Z",
+      "patched_date": "2026-07-23T01:03:39.000-07:00",
       "bug": 536584251,
       "url": "https://jsehub.dev/#cve=CVE-2026-19166"
     },
