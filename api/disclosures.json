@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-26T08:18:30.366Z",
+  "generated": "2026-08-27T01:06:48.272Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 108,
+  "count": 107,
   "engine_relevance": {
     "engine": 37,
-    "non_engine": 52,
+    "non_engine": 51,
     "undetermined": 19
   },
   "items": [
@@ -1961,27 +1961,6 @@
       "patched_date": "2026-06-26T22:40:50.000Z",
       "bug": 527676561,
       "url": "https://jsehub.dev/#cve=CVE-2026-15773"
-    },
-    {
-      "cve": "CVE-2026-15133",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "Jihyeon Jeong (Compsec Lab, Seoul National University / Research Intern)",
-      "disclosed": "2026-07-08T22:28:48.399Z",
-      "class": "Use-after-free",
-      "description": "Use after free in InterestGroups",
-      "fix_subject": null,
-      "project": "chromium/src",
-      "component": "Chromium (non-V8)",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "5a68bc6c97d97312ffa0f9ac04e2288f1cdadd13",
-      "unpatched_commit": "ce8e75161d0388fa68ebc01a48cbdaa04d863d94",
-      "patched_date": "2026-06-26T22:18:17.000Z",
-      "bug": 527406824,
-      "url": "https://jsehub.dev/#cve=CVE-2026-15133"
     },
     {
       "cve": "CVE-2026-43716",
