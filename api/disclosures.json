@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-27T18:39:09.637Z",
+  "generated": "2026-08-28T05:43:17.800Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 107,
+  "count": 105,
   "engine_relevance": {
-    "engine": 38,
-    "non_engine": 51,
+    "engine": 37,
+    "non_engine": 50,
     "undetermined": 18
   },
   "items": [
@@ -26,7 +26,7 @@
       "confidence": "high",
       "patched_commit": "9abbc0c6d03fa8ce0ff450e7cf5b5ac29df8a641",
       "unpatched_commit": "0be0e27b052e9afa2000eb1d4eed1d87c86caff7",
-      "patched_date": "2026-07-10T16:05:41.000-07:00",
+      "patched_date": "2026-07-10T23:05:41.000Z",
       "bug": 496807874,
       "url": "https://jsehub.dev/#cve=CVE-2026-79282"
     },
@@ -1286,7 +1286,7 @@
       "confidence": "high",
       "patched_commit": "36e3c8b0d681b51b59b71238630c97d291639c95",
       "unpatched_commit": "f9655083b7cfac480de3d35c50574a7e6bb27da3",
-      "patched_date": "2026-07-27T15:53:34.000-07:00",
+      "patched_date": "2026-07-27T22:53:34.000Z",
       "bug": 538332338,
       "url": "https://jsehub.dev/#cve=CVE-2026-19173"
     },
@@ -1328,7 +1328,7 @@
       "confidence": "high",
       "patched_commit": "25e013dd59d3e6eb9cafb4d730f86c532fd2789b",
       "unpatched_commit": "5123996724940487ecdc37f47669330804d429ee",
-      "patched_date": "2026-07-23T01:03:39.000-07:00",
+      "patched_date": "2026-07-23T08:03:39.000Z",
       "bug": 536584251,
       "url": "https://jsehub.dev/#cve=CVE-2026-19166"
     },
@@ -1919,48 +1919,6 @@
       "patched_date": "2026-07-07T09:40:29.000Z",
       "bug": 531503216,
       "url": "https://jsehub.dev/#cve=CVE-2026-15903"
-    },
-    {
-      "cve": "CVE-2026-15776",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "Salvatore Gulizia (nickname: Serotav)",
-      "disclosed": "2026-07-14T17:00:33.817Z",
-      "class": "Type confusion",
-      "description": "Type Confusion in V8",
-      "fix_subject": null,
-      "project": "v8/v8",
-      "component": "V8",
-      "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "de11d56041d5aa9c5e69b031990ad17068dbef7a",
-      "unpatched_commit": "e1590c91f03dddbeaada2c3bb8ac3021f53cc3cb",
-      "patched_date": "2026-07-09T15:57:59.000Z",
-      "bug": 532595489,
-      "url": "https://jsehub.dev/#cve=CVE-2026-15776"
-    },
-    {
-      "cve": "CVE-2026-15773",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "xinchaotian of Microsoft",
-      "disclosed": "2026-07-14T17:00:33.817Z",
-      "class": "Use-after-free",
-      "description": "Use after free in Core",
-      "fix_subject": null,
-      "project": "chromium/src",
-      "component": "Chromium (non-V8)",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "c889717537a805003583d4f5d88fd45204b58c67",
-      "unpatched_commit": "f80907d7311a74c6e04277fc8e9db2697fc188d1",
-      "patched_date": "2026-06-26T22:40:50.000Z",
-      "bug": 527676561,
-      "url": "https://jsehub.dev/#cve=CVE-2026-15773"
     },
     {
       "cve": "CVE-2026-43716",
