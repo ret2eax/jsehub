@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-28T05:43:17.800Z",
+  "generated": "2026-08-28T19:45:07.847Z",
   "site": "https://jsehub.dev",
   "count": 104,
   "engine_relevance": {
@@ -827,13 +827,13 @@
       "date_added": "2023-03-30",
       "class": "Use-after-free",
       "description": "Google Chromium Network Service contains a use-after-free vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "v8/v8",
+      "project": "chromium/src",
       "component": "Networking",
       "engine_relevant": false,
-      "confidence": null,
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "confidence": "high",
+      "patched_commit": "51daffbf5cd816b951bdfa5b7e0b01cb953b40f5",
+      "unpatched_commit": "981f458b727b56b271f2418fd51846102a3680a2",
+      "patched_date": "2022-07-04T11:48:20.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2022-3038"
     },
     {
@@ -953,13 +953,13 @@
       "date_added": "2022-08-18",
       "class": "Unspecified",
       "description": "Google Chromium Intents contains an insufficient validation of untrusted input vulnerability that allows a remote attacker to browse to a malicious website via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "Intents",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "10d468759a2c065fe6a1fc4d25ba81849424e5a6",
-      "unpatched_commit": "6ec0d3f0f7d2ef7fcb13c8359e1c30b6e672ae16",
-      "patched_date": "2022-08-10T22:24:21.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2022-2856"
     },
     {
@@ -1385,13 +1385,13 @@
       "date_added": "2022-01-10",
       "class": "Use-after-free",
       "description": "Google Chrome Media contains a use-after-free vulnerability that allows a remote attacker to execute code via a crafted HTML page.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "Audio/Video",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "c0268599d1161f4c57a7911c7f036f70af88c8d0",
-      "unpatched_commit": "6838e6219c679713b9b47b905edf2849334d0ae1",
-      "patched_date": "2020-04-03T21:03:17.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2020-6572"
     },
     {
