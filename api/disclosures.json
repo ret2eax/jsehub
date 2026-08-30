@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-30T13:10:45.430Z",
+  "generated": "2026-08-30T23:46:03.185Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 105,
   "engine_relevance": {
     "engine": 38,
-    "non_engine": 50,
-    "undetermined": 17
+    "non_engine": 51,
+    "undetermined": 16
   },
   "items": [
     {
@@ -691,14 +691,14 @@
       "disclosed": "2026-08-18T00:00:00.000Z",
       "class": "Memory corruption",
       "description": "Processing maliciously crafted web content may lead to memory corruption",
-      "fix_subject": null,
+      "fix_subject": "Race window lead to reads from deallocated memory",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "non-engine",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "d4a150e51b113197eacb4580d89142a4a0f8f318",
+      "unpatched_commit": "e4856c6696f58bae6f5cf1e864d0550f9eff09f8",
+      "patched_date": "2026-08-30T15:23:28Z",
       "bug": 317317,
       "url": "https://jsehub.dev/#cve=CVE-2026-43794"
     },
