@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-30T23:46:03.185Z",
+  "generated": "2026-08-31T15:27:54.116Z",
   "site": "https://jsehub.dev",
   "count": 104,
   "engine_relevance": {
@@ -989,13 +989,13 @@
       "date_added": "2022-06-27",
       "class": "Code execution",
       "description": "Google Chromium PopupBlocker contains an insufficient policy enforcement vulnerability that allows a remote attacker to bypass navigation restrictions via a crafted iframe. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "DocShell/Navigation",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "c732f0ddc0573a0926d39b2f20c81591057c2878",
-      "unpatched_commit": "5170ceb51435eea2e795e87edc762d98a71e795b",
-      "patched_date": "2021-03-01T19:19:08.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2021-30533"
     },
     {

@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-30T23:46:03.185Z",
+  "generated": "2026-08-31T15:27:54.116Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 105,
+  "count": 103,
   "engine_relevance": {
-    "engine": 38,
-    "non_engine": 51,
+    "engine": 37,
+    "non_engine": 50,
     "undetermined": 16
   },
   "items": [
@@ -2171,48 +2171,6 @@
       "patched_date": "2026-06-03T09:39:45Z",
       "bug": 2024852,
       "url": "https://jsehub.dev/#cve=CVE-2026-12290"
-    },
-    {
-      "cve": "CVE-2026-10702",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "Nebula Security",
-      "disclosed": "2026-06-02T00:00:00.000Z",
-      "class": "Unspecified",
-      "description": "JIT miscompilation in the JavaScript Engine: JIT component",
-      "fix_subject": "Bug 2040903: Update alias set of ObjectToIterator r=jandem",
-      "project": "mozilla-firefox/firefox",
-      "component": "SpiderMonkey",
-      "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "e43e6780c6c0aad349a6e4fe77350ee6253d9c08",
-      "unpatched_commit": "7be36ab56ae337c7c7bdedd8d3ec948b6dbee586",
-      "patched_date": "2026-05-26T19:38:28Z",
-      "bug": 2040903,
-      "url": "https://jsehub.dev/#cve=CVE-2026-10702"
-    },
-    {
-      "cve": "CVE-2026-10701",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "taiho kim",
-      "disclosed": "2026-06-02T00:00:00.000Z",
-      "class": "Unspecified",
-      "description": "Incorrect boundary conditions in the Graphics: Text component",
-      "fix_subject": "Bug 2038537 - Cherry-pick recent truetype interpreter fixes. r=gfx-reviewers,lsalzman,nical",
-      "project": "mozilla-firefox/firefox",
-      "component": "Graphics",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "e1b2f7ec555c55b5acbc4005dca01f40c5478c1d",
-      "unpatched_commit": "f2ec13393e455b8de901f55216814e54c68f0f03",
-      "patched_date": "2026-05-20T08:26:29Z",
-      "bug": 2038537,
-      "url": "https://jsehub.dev/#cve=CVE-2026-10701"
     }
   ]
 }
