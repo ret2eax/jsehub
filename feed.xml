@@ -4,7 +4,14 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-09-04T12:29:54.807Z</updated>
+  <updated>2026-09-04T23:18:48.778Z</updated>
+  <entry>
+    <title>CVE-2026-85046 · Chrome / V8 · Type confusion</title>
+    <id>https://jsehub.dev/#cve=CVE-2026-85046</id>
+    <link href="https://jsehub.dev/#cve=CVE-2026-85046"/>
+    <updated>2026-09-04T00:00:00.000Z</updated>
+    <summary>Google Chromium V8 contains a type confusion vulnerability that allows a remote attacker to execute arbitrary code inside the sandbox via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
+  </entry>
   <entry>
     <title>CVE-2026-11645 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-11645</id>
@@ -277,12 +284,5 @@
     <link href="https://jsehub.dev/#cve=CVE-2023-3079"/>
     <updated>2023-06-07T00:00:00.000Z</updated>
     <summary>Google Chromium V8 Engine contains a type confusion vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
-  </entry>
-  <entry>
-    <title>CVE-2023-32409 · Safari / JSC · Unspecified</title>
-    <id>https://jsehub.dev/#cve=CVE-2023-32409</id>
-    <link href="https://jsehub.dev/#cve=CVE-2023-32409"/>
-    <updated>2023-05-22T00:00:00.000Z</updated>
-    <summary>Apple iOS, iPadOS, macOS, tvOS, watchOS, and Safari WebKit contain an unspecified vulnerability that can allow a remote attacker to break out of the Web Content sandbox. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing. [patch map: high]</summary>
   </entry>
 </feed>

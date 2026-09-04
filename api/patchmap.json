@@ -1,8 +1,17 @@
 {
-  "generated": "2026-09-04T12:29:54.807Z",
+  "generated": "2026-09-04T23:18:48.778Z",
   "site": "https://jsehub.dev",
-  "count": 94,
+  "count": 95,
   "items": [
+    {
+      "cve": "CVE-2026-85046",
+      "engine": "chrome",
+      "project": "v8/v8",
+      "confidence": "high",
+      "patched_commit": "e0562d87ad9c17042b581582c99237d798572e67",
+      "unpatched_commit": "b74028b55c1625ac0518212b0029eaa1607f6aa2",
+      "patched_date": "2026-08-07T08:23:45.000Z"
+    },
     {
       "cve": "CVE-2026-11645",
       "engine": "chrome",
