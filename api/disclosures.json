@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-04T23:18:48.778Z",
+  "generated": "2026-09-05T11:38:10.290Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 113,
   "engine_relevance": {
-    "engine": 40,
+    "engine": 41,
     "non_engine": 59,
-    "undetermined": 14
+    "undetermined": 13
   },
   "items": [
     {
@@ -670,14 +670,14 @@
       "disclosed": "2026-08-18T00:00:00.000Z",
       "class": "Unspecified",
       "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
-      "fix_subject": null,
+      "fix_subject": "[JSC] Validate RegExps in DFG strength reduction phase",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "d5531cc083bc63a525b1d442f3c102173ae9b17b",
+      "unpatched_commit": "ceed1b6b79e820afac817dd8bd4f0dd751476818",
+      "patched_date": "2026-09-04T23:15:44Z",
       "bug": 316723,
       "url": "https://jsehub.dev/#cve=CVE-2026-65335"
     },
