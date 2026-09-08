@@ -1,11 +1,11 @@
 {
-  "generated": "2026-09-08T12:33:35.440Z",
+  "generated": "2026-09-08T23:40:56.522Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 113,
+  "count": 112,
   "engine_relevance": {
     "engine": 41,
-    "non_engine": 59,
+    "non_engine": 58,
     "undetermined": 13
   },
   "items": [
@@ -1835,27 +1835,6 @@
       "patched_date": null,
       "bug": 315951,
       "url": "https://jsehub.dev/#cve=CVE-2026-43707"
-    },
-    {
-      "cve": "CVE-2026-16420",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "Found by XBOW and triaged by Brendan Dolan-Gavitt",
-      "disclosed": "2026-07-21T20:52:46.928Z",
-      "class": "Type confusion",
-      "description": "Type Confusion in WebAudio",
-      "fix_subject": null,
-      "project": "chromium/src",
-      "component": "Web Audio",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "d3b91ccae2842f11bad90ce73e600e1dd771b8a7",
-      "unpatched_commit": "439dd775c1ba86dcbce9cbe2efc7918ea25fc060",
-      "patched_date": "2026-07-08T14:08:33.000-07:00",
-      "bug": 527930356,
-      "url": "https://jsehub.dev/#cve=CVE-2026-16420"
     },
     {
       "cve": "CVE-2026-16369",
