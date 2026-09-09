@@ -4,7 +4,14 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-09-09T12:43:10.618Z</updated>
+  <updated>2026-09-09T23:34:33.929Z</updated>
+  <entry>
+    <title>CVE-2026-87491 · Chrome / V8 · Out-of-bounds write</title>
+    <id>https://jsehub.dev/#cve=CVE-2026-87491</id>
+    <link href="https://jsehub.dev/#cve=CVE-2026-87491"/>
+    <updated>2026-09-09T00:00:00.000Z</updated>
+    <summary>Google Chromium V8 contains an out of bounds write vulnerability that allows a remote attacker to execute arbitrary code inside the sandbox via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
+  </entry>
   <entry>
     <title>CVE-2026-85046 · Chrome / V8 · Type confusion</title>
     <id>https://jsehub.dev/#cve=CVE-2026-85046</id>
@@ -277,12 +284,5 @@
     <link href="https://jsehub.dev/#cve=CVE-2016-9079"/>
     <updated>2023-06-22T00:00:00.000Z</updated>
     <summary>Mozilla Firefox, Firefox ESR, and Thunderbird contain a use-after-free vulnerability in SVG Animation, targeting Firefox and Tor browser users on Windows. [patch map: high]</summary>
-  </entry>
-  <entry>
-    <title>CVE-2023-3079 · Chrome / V8 · Type confusion</title>
-    <id>https://jsehub.dev/#cve=CVE-2023-3079</id>
-    <link href="https://jsehub.dev/#cve=CVE-2023-3079"/>
-    <updated>2023-06-07T00:00:00.000Z</updated>
-    <summary>Google Chromium V8 Engine contains a type confusion vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
   </entry>
 </feed>

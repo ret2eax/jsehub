@@ -1,13 +1,31 @@
 {
-  "generated": "2026-09-09T12:43:10.618Z",
+  "generated": "2026-09-09T23:34:33.929Z",
   "site": "https://jsehub.dev",
-  "count": 105,
+  "count": 106,
   "engine_relevance": {
-    "engine": 56,
+    "engine": 57,
     "non_engine": 47,
     "undetermined": 2
   },
   "items": [
+    {
+      "cve": "CVE-2026-87491",
+      "engine": "chrome",
+      "engine_label": "Chrome / V8",
+      "vendor": "Google",
+      "product": "Chromium V8",
+      "date_added": "2026-09-09",
+      "class": "Out-of-bounds write",
+      "description": "Google Chromium V8 contains an out of bounds write vulnerability that allows a remote attacker to execute arbitrary code inside the sandbox via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
+      "project": "v8/v8",
+      "component": "V8",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "36079c36283aaf3d0cee0797e46ddc278988f7f2",
+      "unpatched_commit": "2bbfbfb580673329220665906108830285decfd3",
+      "patched_date": "2026-08-11T19:43:17.000Z",
+      "url": "https://jsehub.dev/#cve=CVE-2026-87491"
+    },
     {
       "cve": "CVE-2026-85046",
       "engine": "chrome",
@@ -1007,13 +1025,13 @@
       "date_added": "2022-06-27",
       "class": "Code execution",
       "description": "Google Chromium PopupBlocker contains an insufficient policy enforcement vulnerability that allows a remote attacker to bypass navigation restrictions via a crafted iframe. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "DocShell/Navigation",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "c732f0ddc0573a0926d39b2f20c81591057c2878",
-      "unpatched_commit": "5170ceb51435eea2e795e87edc762d98a71e795b",
-      "patched_date": "2021-03-01T19:19:08.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2021-30533"
     },
     {
@@ -1457,13 +1475,13 @@
       "date_added": "2021-11-03",
       "class": "Code execution",
       "description": "Google Chrome uses FreeType, an open-source software library to render fonts, which contains a heap buffer overflow vulnerability in the function Load_SBit_Png when processing PNG images embedded into fonts. This vulnerability is part of an exploit chain with CVE-2020-17087 on Windows and CVE-2020-16010 on Android.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "Fonts",
       "engine_relevant": false,
-      "confidence": "low",
+      "confidence": null,
       "patched_commit": null,
       "unpatched_commit": null,
-      "patched_date": "2020-10-21T07:59:49.000Z",
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2020-15999"
     },
     {
