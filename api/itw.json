@@ -1,11 +1,11 @@
 {
-  "generated": "2026-09-10T23:29:12.881Z",
+  "generated": "2026-09-11T12:34:08.496Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
-    "engine": 56,
+    "engine": 57,
     "non_engine": 47,
-    "undetermined": 3
+    "undetermined": 2
   },
   "items": [
     {
@@ -251,13 +251,13 @@
       "date_added": "2025-07-22",
       "class": "Sandbox escape",
       "description": "Google Chromium contains an improper input validation vulnerability in ANGLE and GPU. This vulnerability could allow a remote attacker to potentially perform a sandbox escape via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "v8/v8",
+      "project": "chromium/src",
       "component": "ANGLE",
       "engine_relevant": false,
-      "confidence": null,
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "confidence": "high",
+      "patched_commit": "be1272f94a48e81906ba30f27864c41eb08f4e4c",
+      "unpatched_commit": "3da23db83a6ebce5e35e0e877338b9052e1e73f3",
+      "patched_date": "2025-06-25T14:48:35.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2025-6558"
     },
     {
@@ -630,8 +630,8 @@
       "class": "Code execution",
       "description": "Apple iOS, iPadOS, macOS, and Safari WebKit contain an unspecified vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "08d5d17c766ffc7ca6a7c833c5720eb71b427784",
       "unpatched_commit": "538c84a313edd834976fd519fc3aea603aa5a167",

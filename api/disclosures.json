@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-10T23:29:12.881Z",
+  "generated": "2026-09-11T12:34:08.496Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 123,
   "engine_relevance": {
-    "engine": 45,
-    "non_engine": 63,
-    "undetermined": 15
+    "engine": 46,
+    "non_engine": 65,
+    "undetermined": 12
   },
   "items": [
     {
@@ -68,7 +68,7 @@
       "confidence": "high",
       "patched_commit": "46be9fe1d78e9fa53a3bb4d1a401207e1a7ebb07",
       "unpatched_commit": "46880060e34a472af2bc2700521c98c489d2a111",
-      "patched_date": "2026-08-31T16:14:10.000-07:00",
+      "patched_date": "2026-08-31T23:14:10.000Z",
       "bug": 553770012,
       "url": "https://jsehub.dev/#cve=CVE-2026-87628"
     },
@@ -1008,8 +1008,8 @@
       "description": "Processing maliciously crafted web content may lead to an unexpected process termination",
       "fix_subject": "Use-after-free of Document in trustedTypeCompliantString",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
+      "component": "non-engine",
+      "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "cb83583e5f4d955355574006a1bebf4b98a42a5d",
       "unpatched_commit": "971435fdd3868e7fe45ec6ce8386e93766de1266",
@@ -1029,8 +1029,8 @@
       "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
       "fix_subject": "Handle overflows in UnlinkedMetadataTable::finalize().",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "97df94ead028cddcfc21e48ec6f2f72d25ec1662",
       "unpatched_commit": "16c6a9971daca74d3b6bdddba6daf8d2c4c57d8c",
@@ -1974,8 +1974,8 @@
       "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
       "fix_subject": "[WebCore] Use-after-free in `DataListButtonElement::defaultEventHandler`",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
+      "component": "non-engine",
+      "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "be08720593705c04826f1e0804581ea8aafb2748",
       "unpatched_commit": "0c51f43daa3b812261b117b60bdfeeeb8aee1b7d",

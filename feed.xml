@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-09-10T23:29:12.881Z</updated>
+  <updated>2026-09-11T12:34:08.496Z</updated>
   <entry>
     <title>CVE-2026-87491 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-87491</id>
@@ -101,7 +101,7 @@
     <id>https://jsehub.dev/#cve=CVE-2025-6558</id>
     <link href="https://jsehub.dev/#cve=CVE-2025-6558"/>
     <updated>2025-07-22T00:00:00.000Z</updated>
-    <summary>Google Chromium contains an improper input validation vulnerability in ANGLE and GPU. This vulnerability could allow a remote attacker to potentially perform a sandbox escape via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.</summary>
+    <summary>Google Chromium contains an improper input validation vulnerability in ANGLE and GPU. This vulnerability could allow a remote attacker to potentially perform a sandbox escape via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
   </entry>
   <entry>
     <title>CVE-2025-6554 · Chrome / V8 · Type confusion</title>
