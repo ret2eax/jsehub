@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-13T23:26:02.170Z",
+  "generated": "2026-09-14T14:20:16.886Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
@@ -290,10 +290,10 @@
       "project": "v8/v8",
       "component": "V8",
       "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "7bc0a67ebfbf44e7adab47fc2bbbe308660e27f4",
-      "unpatched_commit": "5c198837c21b9b6cde113c4cb35d00e6b368f9a5",
-      "patched_date": "2025-05-27T19:13:45.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2025-5419"
     },
     {
@@ -452,10 +452,10 @@
       "project": "v8/v8",
       "component": "V8",
       "engine_relevant": true,
-      "confidence": "high",
-      "patched_commit": "b3c01ac1e60afc9addad9942f7a9a6c5e8a4a6da",
-      "unpatched_commit": "473318dfdb09464902c7633cad03b16431145800",
-      "patched_date": "2024-05-13T19:03:05.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2024-4947"
     },
     {
@@ -1205,13 +1205,13 @@
       "date_added": "2022-05-23",
       "class": "Use-after-free",
       "description": "Google Chrome Blink contains a heap use-after-free vulnerability that allows an attacker to potentially perform out of bounds memory access via a crafted HTML page.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "Blink",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "afe3dffee91adc10c3415ba1ace9d2c30524f4ac",
-      "unpatched_commit": "c55653d43a848c8000cadd550b64988685167f8c",
-      "patched_date": "2020-01-03T04:35:41.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2019-5786"
     },
     {

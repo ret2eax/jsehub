@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-09-13T23:26:02.170Z</updated>
+  <updated>2026-09-14T14:20:16.886Z</updated>
   <entry>
     <title>CVE-2026-87491 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-87491</id>
@@ -115,7 +115,7 @@
     <id>https://jsehub.dev/#cve=CVE-2025-5419</id>
     <link href="https://jsehub.dev/#cve=CVE-2025-5419"/>
     <updated>2025-06-05T00:00:00.000Z</updated>
-    <summary>Google Chromium V8 contains an out-of-bounds read and write vulnerability that could allow a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
+    <summary>Google Chromium V8 contains an out-of-bounds read and write vulnerability that could allow a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.</summary>
   </entry>
   <entry>
     <title>CVE-2025-2783 · Chrome / V8 · Sandbox escape</title>
@@ -178,7 +178,7 @@
     <id>https://jsehub.dev/#cve=CVE-2024-4947</id>
     <link href="https://jsehub.dev/#cve=CVE-2024-4947"/>
     <updated>2024-05-20T00:00:00.000Z</updated>
-    <summary>Google Chromium V8 contains a type confusion vulnerability that allows a remote attacker to execute code via a crafted HTML page. [patch map: high]</summary>
+    <summary>Google Chromium V8 contains a type confusion vulnerability that allows a remote attacker to execute code via a crafted HTML page.</summary>
   </entry>
   <entry>
     <title>CVE-2024-4761 · Chrome / V8 · Out-of-bounds write</title>

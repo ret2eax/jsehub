@@ -1,7 +1,7 @@
 {
-  "generated": "2026-09-13T23:26:02.170Z",
+  "generated": "2026-09-14T14:20:16.886Z",
   "site": "https://jsehub.dev",
-  "count": 96,
+  "count": 93,
   "items": [
     {
       "cve": "CVE-2026-87491",
@@ -130,15 +130,6 @@
       "patched_date": "2025-06-26T09:13:24.000Z"
     },
     {
-      "cve": "CVE-2025-5419",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "7bc0a67ebfbf44e7adab47fc2bbbe308660e27f4",
-      "unpatched_commit": "5c198837c21b9b6cde113c4cb35d00e6b368f9a5",
-      "patched_date": "2025-05-27T19:13:45.000Z"
-    },
-    {
       "cve": "CVE-2025-2783",
       "engine": "chrome",
       "project": "chromium/src",
@@ -209,15 +200,6 @@
       "patched_commit": "3e037e195e508dea045f5626862412e8f64fc919",
       "unpatched_commit": "bf4298bafd04910c2cd634738ae73f4a4151b47d",
       "patched_date": "2024-05-21T17:36:07.000Z"
-    },
-    {
-      "cve": "CVE-2024-4947",
-      "engine": "chrome",
-      "project": "v8/v8",
-      "confidence": "high",
-      "patched_commit": "b3c01ac1e60afc9addad9942f7a9a6c5e8a4a6da",
-      "unpatched_commit": "473318dfdb09464902c7633cad03b16431145800",
-      "patched_date": "2024-05-13T19:03:05.000Z"
     },
     {
       "cve": "CVE-2024-4761",
@@ -542,15 +524,6 @@
       "patched_commit": "1e0799aaf4232e661d0c4e34ce6b455a69ec30bc",
       "unpatched_commit": "f7fe659a3a013c95e2765516e38c7ab4f4359e6b",
       "patched_date": "2015-07-02T16:09:45Z"
-    },
-    {
-      "cve": "CVE-2019-5786",
-      "engine": "chrome",
-      "project": "chromium/src",
-      "confidence": "high",
-      "patched_commit": "afe3dffee91adc10c3415ba1ace9d2c30524f4ac",
-      "unpatched_commit": "c55653d43a848c8000cadd550b64988685167f8c",
-      "patched_date": "2020-01-03T04:35:41.000Z"
     },
     {
       "cve": "CVE-2019-13720",
