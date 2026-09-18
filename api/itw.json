@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-17T23:49:39.918Z",
+  "generated": "2026-09-18T12:39:53.439Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
@@ -1709,13 +1709,13 @@
       "date_added": "2021-11-03",
       "class": "Use-after-free",
       "description": "Google Chromium WebGL contains a use-after-free vulnerability that allows a remote attacker to potentially exploit heap corruption via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "chromium/src",
+      "project": "v8/v8",
       "component": "WebGL",
       "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "01b6f7e0a70648d7c7302454993f0bf86d5a0241",
-      "unpatched_commit": "b430430380b9543c50f345994e1a1821498af35f",
-      "patched_date": "2021-06-15T18:25:57.000Z",
+      "confidence": null,
+      "patched_commit": null,
+      "unpatched_commit": null,
+      "patched_date": null,
       "url": "https://jsehub.dev/#cve=CVE-2021-30554"
     },
     {
