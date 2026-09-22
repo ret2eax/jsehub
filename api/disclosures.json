@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-22T00:23:26.652Z",
+  "generated": "2026-09-22T13:01:18.949Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 137,
@@ -2294,7 +2294,7 @@
       "confidence": "high",
       "patched_commit": "6c0cbb8496513976cb3d1b446b3ffe37f1463f72",
       "unpatched_commit": "9dfcec1639c48fc21299cbb08fecdb9a945e9a5d",
-      "patched_date": "2026-07-30T21:57:52.000Z",
+      "patched_date": "2026-07-30T14:57:52.000-07:00",
       "bug": 540482895,
       "url": "https://jsehub.dev/#cve=CVE-2026-19560"
     },
@@ -2523,9 +2523,9 @@
       "component": "WebGL",
       "engine_relevant": false,
       "confidence": "high",
-      "patched_commit": "7f40995cc185017a53392b8b32c23ef258a712dd",
-      "unpatched_commit": "4e6d3cc9d4edf19b2532d7c140a8e1bf26faef36",
-      "patched_date": "2026-07-30T17:21:50.000Z",
+      "patched_commit": "c5974c4fcceb7bf94d72fd275f497697dbd72e2e",
+      "unpatched_commit": "df4d8f27f632f280f26de0ec710b4bbe2a5ed70d",
+      "patched_date": "2026-07-31T14:37:43.000-07:00",
       "bug": 499602793,
       "url": "https://jsehub.dev/#cve=CVE-2026-19137"
     },
