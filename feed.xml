@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-09-25T13:20:03.307Z</updated>
+  <updated>2026-09-26T00:22:10.332Z</updated>
   <entry>
     <title>CVE-2026-87491 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-87491</id>
