@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T00:22:10.332Z",
+  "generated": "2026-09-26T12:35:09.155Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
@@ -40,8 +40,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "e0562d87ad9c17042b581582c99237d798572e67",
-      "unpatched_commit": "b74028b55c1625ac0518212b0029eaa1607f6aa2",
-      "patched_date": "2026-08-07T08:23:45.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2026-09-01T10:02:23.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2026-85046"
     },
     {
@@ -274,8 +274,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "22e9d9621de58ec6fe6581b56215059a48451b9f",
-      "unpatched_commit": "47c9ee633a84c0f9b990dee0b9f288e03cbcf495",
-      "patched_date": "2025-06-26T09:13:24.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2025-07-02T08:57:52.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2025-6554"
     },
     {
@@ -292,8 +292,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "7bc0a67ebfbf44e7adab47fc2bbbe308660e27f4",
-      "unpatched_commit": "5c198837c21b9b6cde113c4cb35d00e6b368f9a5",
-      "patched_date": "2025-05-27T19:13:45.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2025-06-03T08:27:28.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2025-5419"
     },
     {
@@ -472,8 +472,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "f320600cd1f48ba6bb57c0395823fe0c5e5ec52e",
-      "unpatched_commit": "66c0bd3237b1577e6291de56003f8fddc6b65b16",
-      "patched_date": "2024-05-09T19:50:44.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2024-05-10T08:46:47.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2024-4761"
     },
     {
@@ -490,8 +490,8 @@
       "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "b2cc7b7ac538b11bbe08f0d3141c31f4a7ca5894",
-      "unpatched_commit": "77937a9132dfc191522a0eee21919773dea6fb56",
-      "patched_date": "2024-05-08T15:32:48.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2024-05-08T21:44:46.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2024-4671"
     },
     {
@@ -526,8 +526,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "389ea9be7d68bb189e16da79f6414edbd4f7594f",
-      "unpatched_commit": "6f98fbe86a0d11e6c902e2ee50f609db046daf71",
-      "patched_date": "2024-01-11T13:00:32.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2024-01-15T18:40:46.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2024-0519"
     },
     {
@@ -742,8 +742,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "e144f3b71e64e01d6ffd247eb15ca1ff56f6287b",
-      "unpatched_commit": "4217c51611830d98d7fd7b8c922571942a87ad2e",
-      "patched_date": "2023-06-02T13:48:27.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2023-06-15T07:34:46.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2023-3079"
     },
     {
@@ -922,8 +922,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "27fa951ae4a3801126e84bc94d5c82dd2370d18b",
-      "unpatched_commit": "323ada0128db42088ee76dbeefa577fd07bfd7df",
-      "patched_date": "2022-11-30T14:47:34.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2022-12-13T12:30:19.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2022-4262"
     },
     {
@@ -940,8 +940,8 @@
       "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "2bd6ab1a16090fd20d422c11d794edf5c0ff6b89",
-      "unpatched_commit": "15e5eed02e9dd0b762b76e1b33d85ef39de29b05",
-      "patched_date": "2022-11-22T21:39:10.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2022-12-06T15:48:44.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2022-4135"
     },
     {
@@ -1030,8 +1030,8 @@
       "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "c732f0ddc0573a0926d39b2f20c81591057c2878",
-      "unpatched_commit": "5170ceb51435eea2e795e87edc762d98a71e795b",
-      "patched_date": "2021-03-01T19:19:08.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2021-06-14T19:34:13.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-30533"
     },
     {
@@ -1624,8 +1624,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "dfcf1e86fac0a7b067caf8fdfc13eaf3e3f445e4",
-      "unpatched_commit": "fe95e24656436c09c185cd6801c873524c10d076",
-      "patched_date": "2021-01-28T21:44:42.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2021-02-01T20:31:29.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-21148"
     },
     {
@@ -1768,8 +1768,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "be55c16e50e714475034b00ed2682f0813794d15",
-      "unpatched_commit": "a4252db3228433fed5c2bdb0fdff9a6b7b638f3b",
-      "patched_date": "2021-10-26T16:52:31.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2021-11-10T13:38:28.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-38003"
     },
     {
@@ -1840,8 +1840,8 @@
       "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "374354bfe4a30740b96936b33e522d6fcd1cda67",
-      "unpatched_commit": "5165e3f4a5620d1ae1a556b2d7d30f0384f51ebb",
-      "patched_date": "2021-07-13T18:14:25.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2021-08-05T11:49:01.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-30563"
     },
     {
