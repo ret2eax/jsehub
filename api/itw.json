@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-02T14:20:19.344Z",
+  "generated": "2026-10-03T00:51:41.426Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
     "engine": 57,
-    "non_engine": 46,
-    "undetermined": 3
+    "non_engine": 47,
+    "undetermined": 2
   },
   "items": [
     {
@@ -216,8 +216,8 @@
       "class": "Memory corruption",
       "description": "Mozilla Firefox, SeaMonkey, and Thunderbird contain an unspecified vulnerability when JavaScript is enabled. This allows remote attackers to execute arbitrary code via vectors related to nsCSSFrameConstructor::ContentAppended, the appendChild method, incorrect index tracking, and the creation of multiple frames, which triggers memory corruption.",
       "project": "mozilla-firefox/firefox",
-      "component": null,
-      "engine_relevant": null,
+      "component": "non-engine",
+      "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "70b208e94c0b49966cd73c142418f9b7f038600f",
       "unpatched_commit": "ebb50f8e5df4bfa65e361bc2ba68ad477f12ab85",
