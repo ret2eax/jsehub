@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-07T14:55:20.625Z",
+  "generated": "2026-10-08T01:25:12.408Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 211,
+  "count": 210,
   "engine_relevance": {
     "engine": 59,
-    "non_engine": 142,
+    "non_engine": 141,
     "undetermined": 10
   },
   "items": [
@@ -3641,27 +3641,6 @@
       "patched_date": "2026-08-06T10:33:33.000Z",
       "bug": 540430406,
       "url": "https://jsehub.dev/#cve=CVE-2026-78899"
-    },
-    {
-      "cve": "CVE-2026-76022",
-      "engine": "chrome",
-      "engine_label": "Chrome / V8",
-      "vendor": "Google",
-      "severity": "high",
-      "reporter": "0xAlessandro",
-      "disclosed": "2026-08-20T20:22:44.595Z",
-      "class": "Unspecified",
-      "description": "Buffer overflow in Network",
-      "fix_subject": null,
-      "project": "chromium/src",
-      "component": "Chromium (non-V8)",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "f0171e077fe31182c571370f49f8959369e7cb8d",
-      "unpatched_commit": "35827b1edac121d90d8e0d09811e8024971035a7",
-      "patched_date": "2026-08-14T17:01:58.000Z",
-      "bug": 543798025,
-      "url": "https://jsehub.dev/#cve=CVE-2026-76022"
     },
     {
       "cve": "CVE-2026-74944",
