@@ -1,7 +1,7 @@
 {
-  "generated": "2026-10-11T00:42:11.920Z",
+  "generated": "2026-10-11T14:24:14.435Z",
   "site": "https://jsehub.dev",
-  "count": 94,
+  "count": 96,
   "items": [
     {
       "cve": "CVE-2026-87491",
@@ -562,6 +562,15 @@
       "patched_date": "2019-10-30T02:47:57.000Z"
     },
     {
+      "cve": "CVE-2019-11707",
+      "engine": "sm",
+      "project": "mozilla-firefox/firefox",
+      "confidence": "high",
+      "patched_commit": "fc3134cc8ae017abcdef47acc3ce052473c91516",
+      "unpatched_commit": "962d9502a2ca97a659b529128dce70e371f9ef60",
+      "patched_date": "2019-05-08T17:48:26Z"
+    },
+    {
       "cve": "CVE-2022-1364",
       "engine": "chrome",
       "project": "v8/v8",
@@ -587,6 +596,15 @@
       "patched_commit": "ffe0af090f8f41e7482862d080818ec7b4db0911",
       "unpatched_commit": "05fc0de0ae2e238965ee16824d9986c14a8a076a",
       "patched_date": "2013-05-15T11:35:41Z"
+    },
+    {
+      "cve": "CVE-2022-26485",
+      "engine": "sm",
+      "project": "mozilla-firefox/firefox",
+      "confidence": "high",
+      "patched_commit": "3d6b4d37e9908134bed6f3b7219aa4c46bf4a89a",
+      "unpatched_commit": "8f2e5a600e536428bb93d4f2461c4cee573fe4fe",
+      "patched_date": "2022-03-04T14:00:25Z"
     },
     {
       "cve": "CVE-2013-1675",

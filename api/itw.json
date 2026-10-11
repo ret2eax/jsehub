@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-11T00:42:11.920Z",
+  "generated": "2026-10-11T14:24:14.435Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
-    "engine": 56,
+    "engine": 57,
     "non_engine": 47,
-    "undetermined": 3
+    "undetermined": 2
   },
   "items": [
     {
@@ -1242,12 +1242,12 @@
       "class": "Type confusion",
       "description": "Mozilla Firefox and Thunderbird contain a type confusion vulnerability that can occur when manipulating JavaScript objects due to issues in Array.pop, allowing for an exploitable crash.",
       "project": "mozilla-firefox/firefox",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": "2019-08-07T12:07:43Z",
+      "component": "SpiderMonkey",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "fc3134cc8ae017abcdef47acc3ce052473c91516",
+      "unpatched_commit": "962d9502a2ca97a659b529128dce70e371f9ef60",
+      "patched_date": "2019-05-08T17:48:26Z",
       "url": "https://jsehub.dev/#cve=CVE-2019-11707"
     },
     {
@@ -1352,10 +1352,10 @@
       "project": "mozilla-firefox/firefox",
       "component": "XSLT",
       "engine_relevant": false,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": "2024-03-06T08:46:26Z",
+      "confidence": "high",
+      "patched_commit": "3d6b4d37e9908134bed6f3b7219aa4c46bf4a89a",
+      "unpatched_commit": "8f2e5a600e536428bb93d4f2461c4cee573fe4fe",
+      "patched_date": "2022-03-04T14:00:25Z",
       "url": "https://jsehub.dev/#cve=CVE-2022-26485"
     },
     {
