@@ -1,10 +1,10 @@
 {
-  "generated": "2026-10-19T15:06:02.095Z",
+  "generated": "2026-10-20T00:44:56.556Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 241,
+  "count": 242,
   "engine_relevance": {
-    "engine": 62,
+    "engine": 63,
     "non_engine": 169,
     "undetermined": 10
   },
@@ -3620,6 +3620,27 @@
       "patched_date": "2026-08-20T05:08:09Z",
       "bug": 2056051,
       "url": "https://jsehub.dev/#cve=CVE-2026-92005"
+    },
+    {
+      "cve": "CVE-2026-86922",
+      "engine": "jsc",
+      "engine_label": "Safari / JSC",
+      "vendor": "Apple",
+      "severity": null,
+      "reporter": "Nathaniel Oh (@calysteon), Kwak Kiyong / kakaogames",
+      "disclosed": "2026-09-14T00:00:00.000Z",
+      "class": "Code execution",
+      "description": "Processing maliciously crafted web content may lead to arbitrary code execution",
+      "fix_subject": "[JSC] Respect shouldNegate() on WasmRefTypeCheckValue nodes in OMG",
+      "project": "webkit/webkit",
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "af957bf20474d10f05178f7c72952bd9bed0260e",
+      "unpatched_commit": "61e4908945f721505bf6b404648679836ba5a7ae",
+      "patched_date": "2026-02-19T23:20:52Z",
+      "bug": 308231,
+      "url": "https://jsehub.dev/#cve=CVE-2026-86922"
     },
     {
       "cve": "CVE-2026-84635",
