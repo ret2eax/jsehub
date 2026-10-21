@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-20T13:02:41.382Z",
+  "generated": "2026-10-21T00:18:11.310Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
@@ -1714,8 +1714,8 @@
       "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "01b6f7e0a70648d7c7302454993f0bf86d5a0241",
-      "unpatched_commit": null,
-      "patched_date": "2021-06-22T13:43:53.000Z",
+      "unpatched_commit": "b430430380b9543c50f345994e1a1821498af35f",
+      "patched_date": "2021-06-15T18:25:57.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-30554"
     },
     {
