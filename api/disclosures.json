@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-24T23:28:12.300Z",
+  "generated": "2026-10-25T12:59:25.520Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 267,
+  "count": 264,
   "engine_relevance": {
     "engine": 66,
-    "non_engine": 191,
-    "undetermined": 10
+    "non_engine": 190,
+    "undetermined": 8
   },
   "items": [
     {
@@ -5552,69 +5552,6 @@
       "patched_date": "2026-05-29T00:39:33Z",
       "bug": 310234,
       "url": "https://jsehub.dev/#cve=CVE-2026-28947"
-    },
-    {
-      "cve": "CVE-2026-64783",
-      "engine": "jsc",
-      "engine_label": "Safari / JSC",
-      "vendor": "Apple",
-      "severity": null,
-      "reporter": "Luke Francis, Francisco Alonso (@revskills), Shubham Chaskar, Jiyong Yang (@Sy2n0), 杉山 壮太, lattice, Behzad Najjarpour Jabbari (@_G4ru_), Junyeong Lee, Mooth.ai, OGINOME Tomohito, Using GLM From Z.AI, Gia Bui (@yabeow) from Calif.io",
-      "disclosed": "2026-07-27T00:00:00.000Z",
-      "class": "Unspecified",
-      "description": "Processing maliciously crafted web content may lead to an unexpected Safari crash",
-      "fix_subject": "[WebCore] Use-after-free in `DataListButtonElement::defaultEventHandler`",
-      "project": "webkit/webkit",
-      "component": "non-engine",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "be08720593705c04826f1e0804581ea8aafb2748",
-      "unpatched_commit": "0c51f43daa3b812261b117b60bdfeeeb8aee1b7d",
-      "patched_date": "2026-08-12T23:25:16Z",
-      "bug": 313521,
-      "url": "https://jsehub.dev/#cve=CVE-2026-64783"
-    },
-    {
-      "cve": "CVE-2026-43712",
-      "engine": "jsc",
-      "engine_label": "Safari / JSC",
-      "vendor": "Apple",
-      "severity": null,
-      "reporter": "Kwak Kiyong, Song nuri, Tristan Madani (@TristanInSec) from Talence Security",
-      "disclosed": "2026-07-27T00:00:00.000Z",
-      "class": "Unspecified",
-      "description": "Processing maliciously crafted web content may lead to an unexpected process crash",
-      "fix_subject": null,
-      "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
-      "bug": 314235,
-      "url": "https://jsehub.dev/#cve=CVE-2026-43712"
-    },
-    {
-      "cve": "CVE-2026-43707",
-      "engine": "jsc",
-      "engine_label": "Safari / JSC",
-      "vendor": "Apple",
-      "severity": null,
-      "reporter": "stratan (@5tratan) of Almamater Technologies, OpenAI Codex Security - Amy Burnett",
-      "disclosed": "2026-07-27T00:00:00.000Z",
-      "class": "Unspecified",
-      "description": "Processing maliciously crafted web content may lead to an unexpected process crash",
-      "fix_subject": null,
-      "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
-      "bug": 315951,
-      "url": "https://jsehub.dev/#cve=CVE-2026-43707"
     }
   ]
 }
