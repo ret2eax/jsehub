@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-25T23:40:27.957Z",
+  "generated": "2026-10-26T14:39:40.990Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
@@ -1136,10 +1136,10 @@
       "project": "v8/v8",
       "component": "V8",
       "engine_relevant": true,
-      "confidence": null,
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "confidence": "high",
+      "patched_commit": "8284359ed0607e452a4dda2ce89811fb019b4aaa",
+      "unpatched_commit": "818dbad4f252b284fe5f974e71850a8636db7c85",
+      "patched_date": "2021-04-12T08:39:12.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2017-5030"
     },
     {

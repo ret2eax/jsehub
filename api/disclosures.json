@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-25T23:40:27.957Z",
+  "generated": "2026-10-26T14:39:40.990Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 264,
@@ -318,9 +318,9 @@
       "component": "V8",
       "engine_relevant": true,
       "confidence": "high",
-      "patched_commit": "9f911f0527030894ac69b47fcf564b95a7e53c5a",
-      "unpatched_commit": "ff45662b8337e962e049986b3cf3830e36eb5222",
-      "patched_date": "2026-09-23T11:48:39.000Z",
+      "patched_commit": "af7d1483a5daa0321a0a1254c1de7dbdf535f66b",
+      "unpatched_commit": "7825f9239d06aad7ff1706e35b4b0ba5dcb2f078",
+      "patched_date": "2026-09-18T06:22:54.000Z",
       "bug": 559932543,
       "url": "https://jsehub.dev/#cve=CVE-2026-113193"
     },
@@ -509,7 +509,7 @@
       "confidence": "high",
       "patched_commit": "6bc3005112c94fda252f66b1ebd7b520195b3de3",
       "unpatched_commit": "0c452bc401462c19ca884362143d9b9f94e4e16e",
-      "patched_date": "2026-09-25T12:26:09.000-07:00",
+      "patched_date": "2026-09-25T19:26:09.000Z",
       "bug": 557075191,
       "url": "https://jsehub.dev/#cve=CVE-2026-113119"
     },
