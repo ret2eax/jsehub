@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-29T01:32:16.228Z",
+  "generated": "2026-10-29T14:55:10.566Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 395,
   "engine_relevance": {
     "engine": 81,
-    "non_engine": 278,
-    "undetermined": 36
+    "non_engine": 279,
+    "undetermined": 35
   },
   "items": [
     {
@@ -2539,14 +2539,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Code execution",
       "description": "Processing maliciously crafted web content may lead to arbitrary code execution",
-      "fix_subject": null,
+      "fix_subject": "CSSStyleSheet::forEachStyleScope: iterate through a copy of m_adoptingTreeScopes",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "non-engine",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "91e125de4c03fee98fdebee149e021ee513da7bd",
+      "unpatched_commit": "028f1148fedb0ab7e684a2a4820a8bff71322cde",
+      "patched_date": "2026-10-29T14:26:13Z",
       "bug": 322916,
       "url": "https://jsehub.dev/#cve=CVE-2026-112697"
     },
