@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-30T14:37:42.590Z",
+  "generated": "2026-10-31T01:15:56.061Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 393,
   "engine_relevance": {
     "engine": 83,
-    "non_engine": 278,
-    "undetermined": 32
+    "non_engine": 279,
+    "undetermined": 31
   },
   "items": [
     {
@@ -24,9 +24,9 @@
       "component": "HTML Forms",
       "engine_relevant": false,
       "confidence": "high",
-      "patched_commit": "dbefa3bf41687456c245fcafe948d010047903e6",
-      "unpatched_commit": "c89e300afc1ca5c197087d01557e286d43381902",
-      "patched_date": "2026-10-27T17:01:40.000Z",
+      "patched_commit": "bb79a99bd4473e26031cd5433e34d047fa527f3c",
+      "unpatched_commit": "c39eda07fa46e5a6c2679df9f3881bba09664547",
+      "patched_date": "2026-10-22T22:33:17.000Z",
       "bug": 572556403,
       "url": "https://jsehub.dev/#cve=CVE-2026-76031"
     },
@@ -3001,14 +3001,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Code execution",
       "description": "Processing maliciously crafted web content may lead to arbitrary code execution",
-      "fix_subject": null,
+      "fix_subject": "BroadcastChannel.postMessage() IPC-encodes a SerializedScriptValue a worker is already deserializing",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "Workers",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "5a14691684cdc0da018e7d0de2f5f3bf18016e8d",
+      "unpatched_commit": "a906134775d802c9a8096db545ad5b7f2c3bd38e",
+      "patched_date": "2026-10-30T20:30:50Z",
       "bug": 322743,
       "url": "https://jsehub.dev/#cve=CVE-2026-112639"
     },
@@ -6620,7 +6620,7 @@
       "confidence": "high",
       "patched_commit": "8b5549467725a5e444c8a45c2d6f131c9fc0ca73",
       "unpatched_commit": "aa900622e6567567f92149f0f278055ff5dc5058",
-      "patched_date": "2026-09-17T17:24:44.000Z",
+      "patched_date": "2026-09-17T10:24:44.000-07:00",
       "bug": 562242429,
       "url": "https://jsehub.dev/#cve=CVE-2026-95351"
     },
