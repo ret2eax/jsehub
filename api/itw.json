@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31T01:15:56.061Z",
+  "generated": "2026-10-31T14:07:03.697Z",
   "site": "https://jsehub.dev",
   "count": 106,
   "engine_relevance": {
@@ -593,13 +593,13 @@
       "date_added": "2023-11-30",
       "class": "Integer overflow",
       "description": "Google Chromium Skia contains an integer overflow vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a malicious file. This vulnerability affects Google Chrome and ChromeOS, Android, Flutter, and possibly other products.",
-      "project": "v8/v8",
+      "project": "chromium/src",
       "component": "Skia",
       "engine_relevant": false,
-      "confidence": null,
+      "confidence": "low",
       "patched_commit": null,
       "unpatched_commit": null,
-      "patched_date": null,
+      "patched_date": "2023-11-26T18:56:31.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2023-6345"
     },
     {

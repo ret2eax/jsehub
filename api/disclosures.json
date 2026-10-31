@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-31T01:15:56.061Z",
+  "generated": "2026-10-31T14:07:03.697Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 393,
   "engine_relevance": {
-    "engine": 83,
+    "engine": 84,
     "non_engine": 279,
-    "undetermined": 31
+    "undetermined": 30
   },
   "items": [
     {
@@ -2812,14 +2812,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Unspecified",
       "description": "Processing maliciously crafted web content may lead to an unexpected process termination",
-      "fix_subject": null,
+      "fix_subject": "[JSC] GetByStatus::computeFor's prototype walk must not skip a base structure's non-reified static properties",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "d5af1b7159b9714c649f12a27ae627ad11693711",
+      "unpatched_commit": "f3a15c44e740b49d479faa69b2d731e95badec64",
+      "patched_date": "2026-10-31T02:28:35Z",
       "bug": 322033,
       "url": "https://jsehub.dev/#cve=CVE-2026-112673"
     },
@@ -6620,7 +6620,7 @@
       "confidence": "high",
       "patched_commit": "8b5549467725a5e444c8a45c2d6f131c9fc0ca73",
       "unpatched_commit": "aa900622e6567567f92149f0f278055ff5dc5058",
-      "patched_date": "2026-09-17T10:24:44.000-07:00",
+      "patched_date": "2026-09-17T17:24:44.000Z",
       "bug": 562242429,
       "url": "https://jsehub.dev/#cve=CVE-2026-95351"
     },

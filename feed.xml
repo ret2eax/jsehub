@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-10-31T01:15:56.061Z</updated>
+  <updated>2026-10-31T14:07:03.697Z</updated>
   <entry>
     <title>CVE-2026-87491 · Chrome / V8 · Out-of-bounds write</title>
     <id>https://jsehub.dev/#cve=CVE-2026-87491</id>
@@ -234,7 +234,7 @@
     <id>https://jsehub.dev/#cve=CVE-2023-6345</id>
     <link href="https://jsehub.dev/#cve=CVE-2023-6345"/>
     <updated>2023-11-30T00:00:00.000Z</updated>
-    <summary>Google Chromium Skia contains an integer overflow vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a malicious file. This vulnerability affects Google Chrome and ChromeOS, Android, Flutter, and possibly other products.</summary>
+    <summary>Google Chromium Skia contains an integer overflow vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a malicious file. This vulnerability affects Google Chrome and ChromeOS, Android, Flutter, and possibly other products. [patch map: low]</summary>
   </entry>
   <entry>
     <title>CVE-2023-5217 · Chrome / V8 · Unspecified</title>
