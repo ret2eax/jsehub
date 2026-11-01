@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-31T14:07:03.697Z",
+  "generated": "2026-11-01T00:28:03.235Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 393,
   "engine_relevance": {
-    "engine": 84,
+    "engine": 85,
     "non_engine": 279,
-    "undetermined": 30
+    "undetermined": 29
   },
   "items": [
     {
@@ -2938,14 +2938,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Unspecified",
       "description": "Processing maliciously crafted web content may lead to an unexpected process termination",
-      "fix_subject": null,
+      "fix_subject": "[JSC] Defer GC while operationNewArrayBuffer switches to slow-put array storage",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "bee80115a0c1a24d5879861a233e2215ed7bfb9a",
+      "unpatched_commit": "26f9c1ed403d57bc02637d1e4b5c8b5cac63e1a5",
+      "patched_date": "2026-10-31T15:33:04Z",
       "bug": 323227,
       "url": "https://jsehub.dev/#cve=CVE-2026-112653"
     },
