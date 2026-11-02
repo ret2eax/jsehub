@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-02T01:21:34.661Z",
+  "generated": "2026-11-02T17:35:55.749Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 393,
   "engine_relevance": {
     "engine": 85,
-    "non_engine": 279,
-    "undetermined": 29
+    "non_engine": 280,
+    "undetermined": 28
   },
   "items": [
     {
@@ -2896,14 +2896,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Code execution",
       "description": "Processing maliciously crafted web content may lead to arbitrary code execution",
-      "fix_subject": null,
+      "fix_subject": "[web-animations] ASan crash under `KeyframeEffect::getKeyframes()`",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "Animation",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "e8e55d52c0da8f3b43019d8110d4a42f85d4823c",
+      "unpatched_commit": "32121a9375177e9b2dd2f42386a25b1e800c2a7e",
+      "patched_date": "2026-11-02T09:37:22Z",
       "bug": 324150,
       "url": "https://jsehub.dev/#cve=CVE-2026-112655"
     },
