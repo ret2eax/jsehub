@@ -1,14 +1,35 @@
 {
-  "generated": "2026-11-03T03:35:10.975Z",
+  "generated": "2026-11-03T15:34:02.904Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 393,
+  "count": 394,
   "engine_relevance": {
     "engine": 86,
-    "non_engine": 280,
+    "non_engine": 281,
     "undetermined": 27
   },
   "items": [
+    {
+      "cve": "CVE-2026-120572",
+      "engine": "sm",
+      "engine_label": "Firefox / SpiderMonkey",
+      "vendor": "Mozilla",
+      "severity": "high",
+      "reporter": "Mozilla",
+      "disclosed": "2026-11-03T00:00:00.000Z",
+      "class": "Unspecified",
+      "description": "Incorrect boundary conditions in the Layout: Block and Inline component",
+      "fix_subject": "Bug 2079035 - Pull all abspos children from later fragmentainers before destroying inline frame continuations. r=layout-reviewers,emilio",
+      "project": "mozilla-firefox/firefox",
+      "component": "non-engine",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "586ae990b6b1ec6a61d710c431608dfa87762c67",
+      "unpatched_commit": "e70bde08449454a4a34805b7172e380233bbd881",
+      "patched_date": "2026-10-17T17:48:34Z",
+      "bug": 2079035,
+      "url": "https://jsehub.dev/#cve=CVE-2026-120572"
+    },
     {
       "cve": "CVE-2026-76031",
       "engine": "chrome",
