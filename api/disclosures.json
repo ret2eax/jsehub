@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-04T02:01:13.487Z",
+  "generated": "2026-11-04T16:07:34.807Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 433,
   "engine_relevance": {
     "engine": 92,
-    "non_engine": 316,
-    "undetermined": 25
+    "non_engine": 317,
+    "undetermined": 24
   },
   "items": [
     {
@@ -1200,9 +1200,9 @@
       "component": "Chromium (non-V8)",
       "engine_relevant": false,
       "confidence": "high",
-      "patched_commit": "0609c16f1f026d8c5ec0519671cfc8f943a64bcf",
-      "unpatched_commit": "627211e64b02f87a1e40b247b3b5709985503f83",
-      "patched_date": "2026-10-16T15:20:12.000Z",
+      "patched_commit": "9061b8ae875346502fc306ed0269587ab81d5fb3",
+      "unpatched_commit": "d3f7df388b6858f6524dc821eb46b9cbdc47dd0e",
+      "patched_date": "2026-10-14T18:22:04.000Z",
       "bug": 572422506,
       "url": "https://jsehub.dev/#cve=CVE-2026-118349"
     },
@@ -4051,14 +4051,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Code execution",
       "description": "Processing maliciously crafted web content may lead to arbitrary code execution",
-      "fix_subject": null,
+      "fix_subject": "Make CanvasRenderingContext2DBase::FontProxy ref-counted",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "Canvas",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "673f4df5f272cbea2986c270536b47f3453526f2",
+      "unpatched_commit": "9c90e89e5b0cdae67a0fa9341c5649db83547112",
+      "patched_date": "2026-11-04T15:28:36Z",
       "bug": 323377,
       "url": "https://jsehub.dev/#cve=CVE-2026-112637"
     },
