@@ -1,8 +1,17 @@
 {
-  "generated": "2026-11-04T16:07:34.807Z",
+  "generated": "2026-11-05T02:11:37.165Z",
   "site": "https://jsehub.dev",
-  "count": 96,
+  "count": 97,
   "items": [
+    {
+      "cve": "CVE-2024-27834",
+      "engine": "jsc",
+      "project": "webkit/webkit",
+      "confidence": "high",
+      "patched_commit": "3e3d0883c84955472ece1b2f2e63f31522c5440d",
+      "unpatched_commit": "e90f899882e41a77d0baaa336e347b4e19da3f2f",
+      "patched_date": "2024-05-20T15:58:34Z"
+    },
     {
       "cve": "CVE-2026-87491",
       "engine": "chrome",

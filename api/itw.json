@@ -1,13 +1,31 @@
 {
-  "generated": "2026-11-04T16:07:34.807Z",
+  "generated": "2026-11-05T02:11:37.165Z",
   "site": "https://jsehub.dev",
-  "count": 106,
+  "count": 107,
   "engine_relevance": {
-    "engine": 57,
+    "engine": 58,
     "non_engine": 47,
     "undetermined": 2
   },
   "items": [
+    {
+      "cve": "CVE-2024-27834",
+      "engine": "jsc",
+      "engine_label": "Safari / JSC",
+      "vendor": "Apple",
+      "product": "Multiple Products",
+      "date_added": "2026-11-04",
+      "class": "Unspecified",
+      "description": "Apple iOS, iPadOS, macOS, Safari, tvOS and watchOS 10.5 contain an improper authentication vulnerability which could allow an attacker with arbitrary read and write capability to bypass pointer authentication.",
+      "project": "webkit/webkit",
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "3e3d0883c84955472ece1b2f2e63f31522c5440d",
+      "unpatched_commit": "e90f899882e41a77d0baaa336e347b4e19da3f2f",
+      "patched_date": "2024-05-20T15:58:34Z",
+      "url": "https://jsehub.dev/#cve=CVE-2024-27834"
+    },
     {
       "cve": "CVE-2026-87491",
       "engine": "chrome",
