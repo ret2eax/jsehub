@@ -1,13 +1,31 @@
 {
-  "generated": "2026-11-10T16:12:46.729Z",
+  "generated": "2026-11-11T01:48:57.630Z",
   "site": "https://jsehub.dev",
-  "count": 107,
+  "count": 108,
   "engine_relevance": {
     "engine": 58,
-    "non_engine": 47,
+    "non_engine": 48,
     "undetermined": 2
   },
   "items": [
+    {
+      "cve": "CVE-2026-125350",
+      "engine": "chrome",
+      "engine_label": "Chrome / V8",
+      "vendor": "Google",
+      "product": "Chromium",
+      "date_added": "2026-11-10",
+      "class": "Use-after-free",
+      "description": "Google Chromium contains a use-after-free vulnerability in the XML component that could allow a remote attacker to execute arbitrary code inside the sandbox via a specially crafted webpage. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
+      "project": "chromium/src",
+      "component": "IPC/Sandbox",
+      "engine_relevant": false,
+      "confidence": "high",
+      "patched_commit": "61cab3f77203671e09402e68738aa217632aed8d",
+      "unpatched_commit": "6eade082d6e540035cdb35ce1715b583116cf733",
+      "patched_date": "2026-11-07T00:02:06.000Z",
+      "url": "https://jsehub.dev/#cve=CVE-2026-125350"
+    },
     {
       "cve": "CVE-2024-27834",
       "engine": "jsc",

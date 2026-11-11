@@ -1,8 +1,17 @@
 {
-  "generated": "2026-11-10T16:12:46.729Z",
+  "generated": "2026-11-11T01:48:57.630Z",
   "site": "https://jsehub.dev",
-  "count": 97,
+  "count": 98,
   "items": [
+    {
+      "cve": "CVE-2026-125350",
+      "engine": "chrome",
+      "project": "chromium/src",
+      "confidence": "high",
+      "patched_commit": "61cab3f77203671e09402e68738aa217632aed8d",
+      "unpatched_commit": "6eade082d6e540035cdb35ce1715b583116cf733",
+      "patched_date": "2026-11-07T00:02:06.000Z"
+    },
     {
       "cve": "CVE-2024-27834",
       "engine": "jsc",
