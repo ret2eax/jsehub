@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-13T02:15:52.471Z",
+  "generated": "2026-11-13T15:57:39.580Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 470,
@@ -8335,15 +8335,15 @@
       "disclosed": "2026-09-29T00:00:00.000Z",
       "class": "Use-after-free",
       "description": "Use-after-free in the XSLT component",
-      "fix_subject": null,
+      "fix_subject": "Bug 2092211 - Add tests for bug 2068417 and bug 2072432. r=smaug",
       "project": "mozilla-firefox/firefox",
       "component": "XSLT",
       "engine_relevant": false,
-      "confidence": null,
+      "confidence": "low",
       "patched_commit": null,
       "unpatched_commit": null,
-      "patched_date": null,
-      "bug": null,
+      "patched_date": "2026-11-12T22:40:23Z",
+      "bug": 2068417,
       "url": "https://jsehub.dev/#cve=CVE-2026-100779"
     },
     {
