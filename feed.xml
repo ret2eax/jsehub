@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-11-12T16:30:05.150Z</updated>
+  <updated>2026-11-13T02:15:52.471Z</updated>
   <entry>
     <title>CVE-2026-125350 · Chrome / V8 · Use-after-free</title>
     <id>https://jsehub.dev/#cve=CVE-2026-125350</id>
@@ -136,7 +136,7 @@
     <id>https://jsehub.dev/#cve=CVE-2025-2783</id>
     <link href="https://jsehub.dev/#cve=CVE-2025-2783"/>
     <updated>2025-03-27T00:00:00.000Z</updated>
-    <summary>Google Chromium Mojo on Windows contains a sandbox escape vulnerability caused by a logic error, which results from an incorrect handle being provided in unspecified circumstances. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
+    <summary>Google Chromium Mojo on Windows contains a sandbox escape vulnerability caused by a logic error, which results from an incorrect handle being provided in unspecified circumstances. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.</summary>
   </entry>
   <entry>
     <title>CVE-2025-24201 · Safari / JSC · Out-of-bounds write</title>
