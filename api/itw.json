@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-13T15:57:39.580Z",
+  "generated": "2026-11-14T02:04:00.398Z",
   "site": "https://jsehub.dev",
   "count": 108,
   "engine_relevance": {
@@ -502,7 +502,7 @@
       "product": "Chromium V8",
       "date_added": "2024-05-16",
       "class": "Out-of-bounds write",
-      "description": "Google Chromium V8 Engine contains an unspecified out-of-bounds memory write vulnerability via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. ",
+      "description": "Google Chromium V8 Engine contains an unspecified out-of-bounds memory write vulnerability via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
       "project": "v8/v8",
       "component": "V8",
       "engine_relevant": true,
@@ -1546,7 +1546,7 @@
       "product": "Chrome",
       "date_added": "2021-11-03",
       "class": "Use-after-free",
-      "description": "Google Chrome contains a use-after-free vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a crafted HTML page.  ",
+      "description": "Google Chrome contains a use-after-free vulnerability that allows a remote attacker, who has compromised the renderer process, to potentially perform a sandbox escape via a crafted HTML page.",
       "project": "chromium/src",
       "component": "IPC/Sandbox",
       "engine_relevant": false,

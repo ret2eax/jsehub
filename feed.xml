@@ -4,7 +4,7 @@
   <id>https://jsehub.dev/feed.xml</id>
   <link href="https://jsehub.dev/feed.xml" rel="self"/>
   <link href="https://jsehub.dev/"/>
-  <updated>2026-11-13T15:57:39.580Z</updated>
+  <updated>2026-11-14T02:04:00.398Z</updated>
   <entry>
     <title>CVE-2026-125350 · Chrome / V8 · Use-after-free</title>
     <id>https://jsehub.dev/#cve=CVE-2026-125350</id>
@@ -199,7 +199,7 @@
     <id>https://jsehub.dev/#cve=CVE-2024-4761</id>
     <link href="https://jsehub.dev/#cve=CVE-2024-4761"/>
     <updated>2024-05-16T00:00:00.000Z</updated>
-    <summary>Google Chromium V8 Engine contains an unspecified out-of-bounds memory write vulnerability via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.  [patch map: high]</summary>
+    <summary>Google Chromium V8 Engine contains an unspecified out-of-bounds memory write vulnerability via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera. [patch map: high]</summary>
   </entry>
   <entry>
     <title>CVE-2024-4671 · Chrome / V8 · Use-after-free</title>
