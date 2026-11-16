@@ -1,11 +1,11 @@
 {
-  "generated": "2026-11-16T01:33:33.284Z",
+  "generated": "2026-11-16T17:39:02.671Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 454,
+  "count": 453,
   "engine_relevance": {
     "engine": 89,
-    "non_engine": 344,
+    "non_engine": 343,
     "undetermined": 21
   },
   "items": [
@@ -4943,27 +4943,6 @@
       "patched_date": "2026-10-07T21:35:55Z",
       "bug": 2068362,
       "url": "https://jsehub.dev/#cve=CVE-2026-117869"
-    },
-    {
-      "cve": "CVE-2026-117868",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "Yaqoub Aldurayhim",
-      "disclosed": "2026-10-27T00:00:00.000Z",
-      "class": "Sandbox escape",
-      "description": "Sandbox escape in the DOM: Networking component",
-      "fix_subject": "Bug 2059961: Re-dispatch stale WebTransportSessionProxy callbacks after RetargetTo. r=necko-reviewers,kershaw",
-      "project": "mozilla-firefox/firefox",
-      "component": "Networking",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "315f2bc612414bcf088fc865d2b2225489aba010",
-      "unpatched_commit": "af74be2245e1f882e6bca1b44ec4672e620d2ee0",
-      "patched_date": "2026-10-15T13:36:21Z",
-      "bug": 2059961,
-      "url": "https://jsehub.dev/#cve=CVE-2026-117868"
     },
     {
       "cve": "CVE-2026-117867",
