@@ -1,11 +1,11 @@
 {
-  "generated": "2026-11-16T17:39:02.671Z",
+  "generated": "2026-11-17T04:20:12.891Z",
   "site": "https://jsehub.dev",
   "count": 108,
   "engine_relevance": {
-    "engine": 56,
+    "engine": 58,
     "non_engine": 48,
-    "undetermined": 4
+    "undetermined": 2
   },
   "items": [
     {
@@ -594,8 +594,8 @@
       "class": "Memory corruption",
       "description": "Apple iOS, iPadOS, macOS, and Safari WebKit contain a memory corruption vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "e1048521aef5bf2f660d0d1826450f0588d2eec2",
       "unpatched_commit": "b2788c65e9c925f0484298df163aa2b7fee81ede",
@@ -666,8 +666,8 @@
       "class": "Code execution",
       "description": "Apple iOS, iPadOS, macOS, and Safari WebKit contain an unspecified vulnerability that leads to code execution when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
       "confidence": "high",
       "patched_commit": "08d5d17c766ffc7ca6a7c833c5720eb71b427784",
       "unpatched_commit": "538c84a313edd834976fd519fc3aea603aa5a167",
