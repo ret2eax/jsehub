@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-18T04:04:30.986Z",
+  "generated": "2026-11-18T17:34:24.514Z",
   "site": "https://jsehub.dev",
   "count": 108,
   "engine_relevance": {
@@ -197,13 +197,13 @@
       "date_added": "2025-12-12",
       "class": "Out-of-bounds",
       "description": "Google Chromium contains an out of bounds memory access vulnerability in ANGLE that could allow a remote attacker to perform out of bounds memory access via a crafted HTML page. This vulnerability could affect multiple web browsers that utilize Chromium, including, but not limited to, Google Chrome, Microsoft Edge, and Opera.",
-      "project": "v8/v8",
+      "project": "chromium/src",
       "component": "ANGLE",
       "engine_relevant": false,
-      "confidence": null,
+      "confidence": "low",
       "patched_commit": null,
       "unpatched_commit": null,
-      "patched_date": null,
+      "patched_date": "2026-06-10T01:25:53.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2025-14174"
     },
     {
