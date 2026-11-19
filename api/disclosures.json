@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-18T17:34:24.514Z",
+  "generated": "2026-11-19T03:14:45.598Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
   "count": 464,
   "engine_relevance": {
-    "engine": 89,
+    "engine": 90,
     "non_engine": 354,
-    "undetermined": 21
+    "undetermined": 20
   },
   "items": [
     {
@@ -5941,14 +5941,14 @@
       "disclosed": "2026-10-26T00:00:00.000Z",
       "class": "Code execution",
       "description": "Processing maliciously crafted web content may lead to arbitrary code execution",
-      "fix_subject": null,
+      "fix_subject": "[JSC] Reuse retired BBQCallee in epilogue OSR",
       "project": "webkit/webkit",
-      "component": null,
-      "engine_relevant": null,
-      "confidence": "low",
-      "patched_commit": null,
-      "unpatched_commit": null,
-      "patched_date": null,
+      "component": "JavaScriptCore",
+      "engine_relevant": true,
+      "confidence": "high",
+      "patched_commit": "d2b97df3e4b8a6d7a006fce571f2d9bc14220f1f",
+      "unpatched_commit": "75c4254e270f9eb1ff79f9a5aebadec0d37dfcc9",
+      "patched_date": "2026-11-18T20:58:25Z",
       "bug": 323265,
       "url": "https://jsehub.dev/#cve=CVE-2026-112623"
     },
