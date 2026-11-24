@@ -1,11 +1,11 @@
 {
-  "generated": "2026-11-23T19:39:55.412Z",
+  "generated": "2026-11-24T05:45:17.484Z",
   "site": "https://jsehub.dev",
   "window_days": 90,
-  "count": 439,
+  "count": 438,
   "engine_relevance": {
     "engine": 87,
-    "non_engine": 332,
+    "non_engine": 331,
     "undetermined": 20
   },
   "items": [
@@ -911,27 +911,6 @@
       "patched_date": null,
       "bug": null,
       "url": "https://jsehub.dev/#cve=CVE-2026-124908"
-    },
-    {
-      "cve": "CVE-2026-124906",
-      "engine": "sm",
-      "engine_label": "Firefox / SpiderMonkey",
-      "vendor": "Mozilla",
-      "severity": "high",
-      "reporter": "Mozilla",
-      "disclosed": "2026-11-10T00:00:00.000Z",
-      "class": "Use-after-free",
-      "description": "Use-after-free in the Graphics: WebRender component",
-      "fix_subject": "Bug 2086296 - Keep destroyed actors queued with deferred destroy commands in offscreen WebRender transactions. r=gfx-reviewers,nical",
-      "project": "mozilla-firefox/firefox",
-      "component": "Graphics",
-      "engine_relevant": false,
-      "confidence": "high",
-      "patched_commit": "141096d7cd9e6f6118d94d79ea0c1777839efe9e",
-      "unpatched_commit": "7da69462c2786d9a27a8f319ff4cda40df0e091b",
-      "patched_date": "2026-11-01T19:20:21Z",
-      "bug": 2086296,
-      "url": "https://jsehub.dev/#cve=CVE-2026-124906"
     },
     {
       "cve": "CVE-2026-124905",
