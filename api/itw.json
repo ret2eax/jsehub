@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-25T04:42:48.061Z",
+  "generated": "2026-11-25T18:47:51.056Z",
   "site": "https://jsehub.dev",
   "count": 108,
   "engine_relevance": {
@@ -1840,8 +1840,8 @@
       "engine_relevant": false,
       "confidence": "high",
       "patched_commit": "2dbdabb28d647c8ee20cbe36e3c957e74aff663b",
-      "unpatched_commit": "85bc9b380db7cbb6f175076c63b2f028470bd882",
-      "patched_date": "2021-03-10T22:03:07.000Z",
+      "unpatched_commit": null,
+      "patched_date": "2021-03-16T14:07:07.000Z",
       "url": "https://jsehub.dev/#cve=CVE-2021-21193"
     },
     {
